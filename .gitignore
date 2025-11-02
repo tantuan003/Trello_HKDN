@@ -1,0 +1,39 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# IDE / Editor folders
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Temporary files
+tmp/
+temp/
+
+# Optional npm/yarn lock files (chỉ nếu anh không muốn commit)
+# package-lock.json
+# yarn.lock
+
+# Uploaded files (nếu sau này có upload ảnh hoặc tệp)
+src/public/uploads/
+src/config/Public/Upload/
