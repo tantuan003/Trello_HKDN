@@ -5,6 +5,8 @@ import { Server } from "socket.io";
 import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 import userRoutes from "./routes/UserRoutes.js";
+import boardRoutes from "./routes/boardRoutes.js";
+
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -18,8 +20,9 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*" } // Cho phép frontend truy cập
 });
-
 app.use(express.json());
+
+app.use("/v1/board", boardRoutes);
 
 // ⚙️ Public nằm cùng cấp với src
 app.use(express.static(path.join(__dirname, "../Public")));

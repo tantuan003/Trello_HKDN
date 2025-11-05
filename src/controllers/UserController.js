@@ -1,4 +1,5 @@
 import User from "../models/UserModel.js";
+import Workspace from "../models/Workspace.js";
 import bcrypt from "bcrypt";
 
 export const registerUser = async (req, res) => {
