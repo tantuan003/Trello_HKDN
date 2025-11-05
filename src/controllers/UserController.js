@@ -22,6 +22,16 @@ export const registerUser = async (req, res) => {
     });
 
     await newUser.save();
+    const workspace = new Workspace({
+      name: `Workspace của ${username}`,
+      owner: newUser._id,
+      members: [newUser._id],
+    });
+    await workspace.save();
+
+    // 3️⃣ Cập nhật user để lưu reference workspace
+    newUser.workspaces.push(workspace._id);
+    await newUser.save();
     res.status(201).json({ message: "Đăng ký thành công", user: newUser });
   } catch (error) {
     res.status(500).json({ message: "Lỗi server", error: error.message });
