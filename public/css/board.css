@@ -1,0 +1,151 @@
+:root{
+  --bg:#ffffff;
+  --sidebar-bg:#f6f8fc;
+  --primary:#0c66e4;
+  --text:#1f2937;
+  --muted:#6b7280;
+  --border:#e5e7eb;
+}
+
+
+/* Căn chính giữa nội dung trung tâm */
+#page-content {
+  max-width: 1200px;       /* Giới hạn chiều rộng nội dung */
+  margin: 0 auto;          /* Căn ngang giữa */
+  padding: 20px;           /* Khoảng cách từ viền */
+  box-sizing: border-box;
+}
+
+/* Nếu muốn căn cả theo chiều dọc */
+.app {
+  display: flex;
+  flex-direction: column;  /* Header + sidebar ở trên cùng, content bên dưới */
+  min-height: 100vh;
+}
+
+.main {
+  flex: 1;                 /* Chiếm toàn bộ không gian còn lại */
+  display: flex;
+  justify-content: center; /* Căn ngang */
+  align-items: center; /* Căn dọc từ trên xuống, hoặc center nếu muốn giữa màn hình */
+}
+
+
+/* layout.css hoặc board.css */
+
+/* ---------------- Top Actions ---------------- */
+.top-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #333;
+  background-color: #f0f0f0;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pill:hover {
+  background-color: #e0e0e0;
+}
+
+.pill.is-active {
+  background-color: #0079bf;
+  color: #fff;
+}
+
+/* ---------------- Section ---------------- */
+.section {
+  margin-bottom: 30px;
+}
+
+.section h3 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------------- Board Grid ---------------- */
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.board-card {
+  background-color: #fff;
+  border-radius: 6px;
+  padding: 12px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.board-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.board-thumb {
+  background-color: #e2e4e6;
+  border-radius: 4px;
+  height: 100px;
+  margin-bottom: 10px;
+}
+
+.board-title {
+  font-weight: 500;
+  font-size: 1rem;
+  color: #333;
+  text-align: center;
+}
+
+/* Card tạo mới */
+.board-card.create {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f4f5f7;
+}
+
+.create-box {
+  font-size: 1rem;
+  color: #0079bf;
+  font-weight: 500;
+}
+
+/* ---------------- Workspace Inline ---------------- */
+.workspace-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.workspace-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background-color: #0079bf;
+  color: #fff;
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+.workspace-name {
+  font-weight: 500;
+  font-size: 0.95rem;
+}

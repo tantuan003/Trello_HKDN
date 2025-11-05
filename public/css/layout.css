@@ -1,0 +1,116 @@
+/* ====== HEADER ====== */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #026aa7;
+  color: white;
+  padding: 10px 20px;
+  height: 30px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 100;
+}
+
+.header .logo {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.user-btn {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: white;
+}
+
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+
+/* ====== SIDEBAR ====== */
+.sidebar {
+  position: fixed;
+  top: 60px;
+  left: 0;
+  width: 230px;
+  height: calc(100% - 60px);
+  background: #f4f5f7;
+  padding: 10px;
+  overflow-y: auto;
+  border-right: 1px solid #ccc;
+}
+
+.side-item, .side-subitem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #333;
+  text-decoration: none;
+  padding: 8px;
+  border-radius: 5px;
+}
+
+.side-item:hover, .side-subitem:hover {
+  background-color: #e1e3e6;
+}
+
+.ic {
+  width: 20px;
+  height: 20px;
+}
+
+.sm {
+  width: 16px;
+  height: 16px;
+}
+
+.divider {
+  margin: 10px 0;
+  border: none;
+  border-top: 1px solid #ccc;
+}
+
+.ws-header {
+  font-size: 13px;
+  font-weight: bold;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.ws-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: none;
+  border: none;
+  width: 100%;
+  padding: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ws-badge {
+  background-color: #026aa7;
+  color: white;
+  border-radius: 50%;
+  padding: 5px 8px;
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+.ws-submenu {
+  margin-left: 15px;
+}
+
+.plus {
+  margin-left: auto;
+  color: #026aa7;
+  font-weight: bold;
+}
