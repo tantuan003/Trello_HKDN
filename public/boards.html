@@ -1,82 +1,99 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Boards | Teamhub</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Boards</title>
 
-  <!-- CSS -->
-  <link rel="stylesheet" href="/css/layout.css">
-  <link rel="stylesheet" href="/css/board.css">
+  <!-- CSS chung cho header + sidebar -->
+  <link rel="stylesheet" href="./css/sidebar_header.css?v=1" />
+  <!-- CSS riêng cho trang Boards -->
+  <link rel="stylesheet" href="./css/boards.css?v=1" />
 </head>
 <body>
-  <div class="app" id="app">
-    <!-- Sidebar + Header sẽ được nạp động -->
-    <div data-include="/layout.html"></div>
+  <!-- Header + Sidebar sẽ được inject vào đây -->
+  <div id="app-shell"></div>
 
-    <!-- Nội dung chính -->
-    <div id="page-content" class="main">
-      <!-- Đây là nơi nạp nội dung riêng từng trang -->
-    </div>
-  </div>
+  <!-- MAIN CONTENT của trang Boards -->
+  <main class="content content-boards">
+    <!-- Recently viewed -->
+    <section class="section-block">
+      <div class="section-head">
+        <div class="section-title"><h3>Recently viewed</h3></div>
+      </div>
+      <div class="card-grid">
+        <a class="board-card" href="#">
+          <div class="board-cover gradient-1"></div>
+          <div class="board-footer"><span class="board-title">My Trello board</span></div>
+        </a>
+        <a class="board-card" href="#">
+          <div class="board-cover img-cover"><span class="badge badge-dark">TEMPLATE</span></div>
+          <div class="board-footer"><span class="board-title">Kanban Template</span></div>
+        </a>
+      </div>
+    </section>
 
-  <script>
-    // Load layout chung + kích hoạt sidebar
-    (async function includePartials() {
-      const includes = document.querySelectorAll('[data-include]');
-      for (const el of includes) {
-        const url = el.getAttribute('data-include');
-        if (!url) continue;
-        try {
-          const html = await fetch(url, {cache:'no-store'}).then(r => r.text());
-          el.outerHTML = html;
-        } catch (e) { console.error('Load partial failed:', url, e); }
-      }
-
-      // Sau khi sidebar đã được chèn → kích hoạt behavior
-      initSidebarBehavior();
-    })();
-
-    function initSidebarBehavior(){
-      document.querySelectorAll('.ws-main').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const ws = btn.closest('.workspace');
-          ws.querySelector('.ws-submenu').classList.toggle('hidden');
-          btn.classList.toggle('opened');
-        });
-      });
-
-      const current = location.pathname.split('/').pop() || 'boards.html';
-      document.querySelectorAll('.side-item, .side-subitem').forEach(a => {
-        const href = a.getAttribute('href');
-        a.classList.toggle('is-active', href === current);
-      });
-    }
-
-    // Ví dụ nạp nội dung riêng của trang
-    async function loadBoardContent() {
-      const content = `
-        <div class="top-actions">
-          <a class="pill is-active" href="boards.html">Boards</a>
-          <a class="pill" href="members.html">Members</a>
-          <a class="pill" href="settings.html">Settings</a>
+    <!-- Your workspaces -->
+    <section class="section-block">
+      <div class="section-head">
+        <h3 class="heading">YOUR WORKSPACES</h3>
+        <div class="actions-inline">
+          <a class="chip" href="#"><span class="ic">🗂️</span>Boards</a>
+          <a class="chip" href="#"><span class="ic">👤</span>Members</a>
+          <a class="chip" href="#"><span class="ic">⚙️</span>Settings</a>
         </div>
+      </div>
 
-        <section class="section">
-          <h3>Recently viewed</h3>
-          <div class="board-grid">
-            <div class="board-card">
-              <div class="board-thumb"></div>
-              <p class="board-title">My Teamhub board</p>
-            </div>
-          </div>
-        </section>
-      `;
-      document.getElementById('page-content').innerHTML = content;
+      <div class="workspace-row">
+        <div class="ws-title">
+          <span class="ws-badge">T</span>
+          <span class="ws-name">Trello Workspace</span>
+        </div>
+      </div>
+
+      <div class="card-grid mt-2">
+        <a class="board-card" href="#">
+          <div class="board-cover gradient-1"></div>
+          <div class="board-footer"><span class="board-title">My Trello board</span></div>
+        </a>
+
+        <button class="board-card create-card" type="button">
+          <div class="create-body">Create new board</div>
+        </button>
+      </div>
+
+      <div class="mt-3">
+        <a class="btn-outline" href="#">View all closed boards</a>
+      </div>
+    </section>
+  </main>
+<script>
+  // Chèn file components/sidebar_header.html vào #app-shell
+  async function inject(file, targetSelector) {
+    try {
+      const res = await fetch(file, { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+      const html = await res.text();
+      document.querySelector(targetSelector).innerHTML = html;
+    } catch (err) {
+      console.error('Load component failed:', file, err);
     }
+  }
 
-    // Gọi load nội dung cho board
-    loadBoardContent();
-  </script>
+  // Đánh dấu menu "Boards" sáng trong sidebar
+  function activateBoardsMenu() {
+    const links = document.querySelectorAll('.nav .nav-item');
+    links.forEach(a => a.classList.remove('is-active'));
+    const boardsLink = [...links].find(a => /boards/i.test(a.textContent.trim()));
+    if (boardsLink) boardsLink.classList.add('is-active');
+  }
+
+  document.addEventListener('DOMContentLoaded', async () => {
+    // boards.html ở /public → component ở ./components/...
+    await inject('./components/sidebar_header.html', '#app-shell');
+    activateBoardsMenu();
+  });
+</script>
+
 </body>
 </html>
