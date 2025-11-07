@@ -33,7 +33,4 @@ temp/
 # Optional npm/yarn lock files (chỉ nếu anh không muốn commit)
 # package-lock.json
 # yarn.lock
-
 # Uploaded files (nếu sau này có upload ảnh hoặc tệp)
-src/public/uploads/
-src/config/Public/Upload/
