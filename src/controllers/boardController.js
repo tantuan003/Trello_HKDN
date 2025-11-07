@@ -25,6 +25,9 @@ export const createBoard = async (req, res) => {
     workspace.boards = workspace.boards || [];
     workspace.boards.push(board._id);
     await workspace.save();
+    const io = req.app.get("socketio");
+    io.to(workspaceId).emit("board:new", newBoard);
+
 
     res.status(201).json({
       message: "Tạo board thành công",

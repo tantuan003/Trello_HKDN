@@ -4,17 +4,21 @@
   <meta charset="UTF-8">
   <title>Trang chủ</title>
   <link rel="stylesheet" href="/css/layout.css">
+    <link rel="stylesheet" href="/css/home.css">
+
+  <!-- Thêm thư viện Socket.IO client -->
+  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
   <div id="app"></div>
-
-  <script>
+</body>
+ <script>
     async function loadPage() {
-      // tải layout chung (header + sidebar)
+      // Tải layout chung (header + sidebar)
       const layout = await fetch('/layout.html').then(res => res.text());
       document.getElementById('app').innerHTML = layout;
 
-      // tải nội dung riêng của trang home
+      // Tải nội dung riêng của trang home
       const homeContent = `
         <h2>Chào mừng bạn đến với trang chủ!</h2>
         <p>Đây là nơi bạn theo dõi các hoạt động chính.</p>
@@ -25,10 +29,30 @@
         </div>
       `;
 
-      // chèn vào phần main
+      // Chèn vào phần main
       document.getElementById('page-content').innerHTML = homeContent;
+
+      // Sau khi trang đã load, khởi tạo socket
+      initSocket();
     }
+
+    function initSocket() {
+      // ✅ Kết nối đến server backend
+      const socket = io("http://localhost:8127", {
+        transports: ["websocket"],
+      });
+
+      // Khi kết nối thành công
+      socket.on("connect", () => {
+        console.log("✅ Kết nối thành công:", socket.id);
+      });
+
+      // Khi server gửi chào mừng
+      socket.on("welcome", (msg) => {
+        console.log("📩 Từ server:", msg);
+      });    
+    }
+
     loadPage();
   </script>
-</body>
 </html>

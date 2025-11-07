@@ -114,3 +114,11 @@
   color: #026aa7;
   font-weight: bold;
 }
+#page-content {
+  padding: 24px;
+  background: #f9fafc;
+  min-height: calc(100vh - 100px); /* trừ phần header/side */
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  transition: all 0.3s ease;
+}

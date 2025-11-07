@@ -8,75 +8,55 @@
   <!-- CSS -->
   <link rel="stylesheet" href="/css/layout.css">
   <link rel="stylesheet" href="/css/board.css">
+  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-  <div class="app" id="app">
+  <div id="app">
     <!-- Sidebar + Header sẽ được nạp động -->
     <div data-include="/layout.html"></div>
-
-    <!-- Nội dung chính -->
-    <div id="page-content" class="main">
-      <!-- Đây là nơi nạp nội dung riêng từng trang -->
-    </div>
   </div>
-
-  <script>
-    // Load layout chung + kích hoạt sidebar
-    (async function includePartials() {
-      const includes = document.querySelectorAll('[data-include]');
-      for (const el of includes) {
-        const url = el.getAttribute('data-include');
-        if (!url) continue;
-        try {
-          const html = await fetch(url, {cache:'no-store'}).then(r => r.text());
-          el.outerHTML = html;
-        } catch (e) { console.error('Load partial failed:', url, e); }
-      }
-
-      // Sau khi sidebar đã được chèn → kích hoạt behavior
-      initSidebarBehavior();
-    })();
-
-    function initSidebarBehavior(){
-      document.querySelectorAll('.ws-main').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const ws = btn.closest('.workspace');
-          ws.querySelector('.ws-submenu').classList.toggle('hidden');
-          btn.classList.toggle('opened');
-        });
-      });
-
-      const current = location.pathname.split('/').pop() || 'boards.html';
-      document.querySelectorAll('.side-item, .side-subitem').forEach(a => {
-        const href = a.getAttribute('href');
-        a.classList.toggle('is-active', href === current);
-      });
-    }
-
-    // Ví dụ nạp nội dung riêng của trang
-    async function loadBoardContent() {
-      const content = `
-        <div class="top-actions">
-          <a class="pill is-active" href="boards.html">Boards</a>
-          <a class="pill" href="members.html">Members</a>
-          <a class="pill" href="settings.html">Settings</a>
-        </div>
-
-        <section class="section">
-          <h3>Recently viewed</h3>
-          <div class="board-grid">
-            <div class="board-card">
-              <div class="board-thumb"></div>
-              <p class="board-title">My Teamhub board</p>
-            </div>
-          </div>
-        </section>
-      `;
-      document.getElementById('page-content').innerHTML = content;
-    }
-
-    // Gọi load nội dung cho board
-    loadBoardContent();
-  </script>
 </body>
+  <script>
+    async function loadPage() {
+      // Tải layout chung (header + sidebar)
+      const layout = await fetch('/layout.html').then(res => res.text());
+      document.getElementById('app').innerHTML = layout;
+
+      // Tải nội dung riêng của trang home
+      const homeContent = `
+        <h2>Boards của bạn</h2>
+        <p>Đây là nơi bạn theo dõi các hoạt động chính.</p>
+        <div class="cards">
+          <div class="card">📊 4 bảng công việc</div>
+          <div class="card">👥 12 thành viên</div>
+          <div class="card">🗓 23 nhiệm vụ</div>
+        </div>        
+      `;
+
+      // Chèn vào phần main
+      document.getElementById('page-content').innerHTML = homeContent;
+
+      // Sau khi trang đã load, khởi tạo socket
+      initSocket();
+    }
+
+    function initSocket() {
+      // ✅ Kết nối đến server backend
+      const socket = io("http://localhost:8127", {
+        transports: ["websocket"],
+      });
+
+      // Khi kết nối thành công
+      socket.on("connect", () => {
+        console.log("✅ Kết nối thành công:", socket.id);
+      });
+
+      // Khi server gửi chào mừng
+      socket.on("welcome", (msg) => {
+        console.log("📩 Từ server:", msg);
+      });
+    }
+
+    loadPage();
+  </script>
 </html>
