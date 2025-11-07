@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> Responsive Registration Form | CodingLab </title>
+  <link rel="stylesheet" href="./css/Register.css">
+</head>
+<body>
+  <div class="container">
+    <div class="title">Welcome to TeamHub</div>
+    <div class="content">
+ <form id="registerForm" action="http://localhost:8127/v1/User/register" method="POST">        <div class="user-details">
+          <!-- Input for Full Name -->
+          <div class="input-box">
+            <span class="details">Full Name</span>
+            <input type="text" name="username" placeholder="Enter your name" required>
+          </div>
+          <!-- Input for Email -->
+          <div class="input-box">
+            <span class="details">Email</span>
+<input type="email" name="email" placeholder="Enter your email" required>
+          </div>
+          <!-- Input for Password -->
+          <div class="input-box">
+            <span class="details">Password</span>
+<input type="password" name="password" placeholder="Enter your password" required>
+          </div>
+          <!-- Input for Confirm Password -->
+          <div class="input-box">
+            <span class="details">Confirm Password</span>
+<input type="password" name="confirmPassword" placeholder="Confirm your password" required>
+          </div>
+        </div>
+        <div class="gender-details">
+          <!-- Radio buttons for gender selection -->
+          <input type="radio" name="gender" id="dot-1">
+          <input type="radio" name="gender" id="dot-2">
+          <input type="radio" name="gender" id="dot-3">
+          <span class="gender-title">Gender</span>
+          <div class="category">
+            <!-- Label for Male -->
+            <label for="dot-1">
+              <span class="dot one"></span>
+              <span class="gender">Male</span>
+            </label>
+            <!-- Label for Female -->
+            <label for="dot-2">
+              <span class="dot two"></span>
+              <span class="gender">Female</span>
+            </label>
+            <!-- Label for Prefer not to say -->
+            <label for="dot-3">
+              <span class="dot three"></span>
+              <span class="gender">Prefer not to say</span>
+            </label>
+          </div>
+        </div>
+        <!-- Submit button -->
+        <div class="button">
+          <input type="submit" value="Create a new account">
+        </div>
+		<div class="signup-text">
+  			<span>Already have an account?</span>
+  			<a href="Login.html" class="signup-link">Login</a>
+		</div>
+      </form>
+    </div>
+  </div>
+  <script>
+const form = document.getElementById('registerForm');
+
+form.addEventListener('submit', function(e) {
+  e.preventDefault(); // Ngăn submit mặc định
+
+  const username = form.username.value.trim();
+  const email = form.email.value.trim();
+  const password = form.password.value;
+  const confirmPassword = form.confirmPassword.value;
+
+  // Kiểm tra confirm password
+  if (password !== confirmPassword) {
+    alert("Mật khẩu xác nhận không khớp");
+    return;
+  }
+
+  // Chuẩn bị dữ liệu gửi lên server
+  const data = { username, email, password };
+
+  fetch(form.action, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.json())
+  .then(result => {
+    if (result.message) alert(result.message);
+    console.log(result);
+    // Có thể redirect sau khi đăng ký thành công
+    if (result.success) window.location.href = '/login.html';
+  })
+  .catch(err => console.error(err));
+});
+</script>
+
+</body>
+</html>
