@@ -1,0 +1,182 @@
+/* ===== Boards page ===== */
+.content-boards {
+  background: #fff;
+  padding: 12px 28px 28px; /* giảm padding-top để không bị đẩy xuống */
+  min-height: calc(100vh - var(--header-h));
+  overflow-y: auto;
+}
+
+/* Bỏ khoảng trống đầu tiên */
+.content-boards .section-block:first-child {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
+
+/* Cấu trúc section */
+.section-block {
+  margin-bottom: 28px;
+}
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.heading {
+  margin: 0;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  color: #6b7280;
+  font-weight: 800;
+}
+
+.actions-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #eef2f6;
+  color: #1f2937;
+  text-decoration: none;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+}
+.chip .ic {
+  width: 16px;
+  text-align: center;
+  opacity: 0.85;
+}
+
+/* Grid cho các board */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
+}
+.mt-2 {
+  margin-top: 12px;
+}
+.mt-3 {
+  margin-top: 16px;
+}
+
+.board-card {
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  min-height: 120px;
+}
+.board-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+  border-color: #e2e8f0;
+}
+.board-cover {
+  height: 84px;
+  border-bottom: 1px solid #eef2f4;
+  position: relative;
+}
+.gradient-1 {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 48%, #f59e0b 100%);
+}
+.img-cover {
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+}
+.badge {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.badge-dark {
+  background: #111827;
+  color: #fff;
+}
+
+.board-footer {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+}
+.board-title {
+  font-weight: 600;
+}
+
+.create-card {
+  cursor: pointer;
+  border-style: dashed;
+  background: #f4f5f7;
+}
+.create-card .create-body {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.workspace-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 4px;
+}
+.ws-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ws-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: #0ea5a4;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.ws-name {
+  font-weight: 800;
+}
+
+.btn-outline {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  text-decoration: none;
+  color: #111827;
+  background: #fff;
+}
+.btn-outline:hover {
+  background: #f8fafc;
+}
