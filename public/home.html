@@ -3,56 +3,93 @@
 <head>
   <meta charset="UTF-8">
   <title>Trang chủ</title>
-  <link rel="stylesheet" href="/css/layout.css">
-    <link rel="stylesheet" href="/css/home.css">
+  <link rel="stylesheet" href="./css/sidebar_header.css?v=1" />
+  <link rel="stylesheet" href="./css/home.css" />
 
-  <!-- Thêm thư viện Socket.IO client -->
-  <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
-  <div id="app"></div>
-</body>
- <script>
-    async function loadPage() {
-      // Tải layout chung (header + sidebar)
-      const layout = await fetch('/layout.html').then(res => res.text());
-      document.getElementById('app').innerHTML = layout;
+  <!-- Header + Sidebar sẽ được inject vào đây -->
+  <div id="app-shell"></div>
 
-      // Tải nội dung riêng của trang home
-      const homeContent = `
-        <h2>Chào mừng bạn đến với trang chủ!</h2>
-        <p>Đây là nơi bạn theo dõi các hoạt động chính.</p>
-        <div class="cards">
-          <div class="card">📊 4 bảng công việc</div>
-          <div class="card">👥 12 thành viên</div>
-          <div class="card">🗓 23 nhiệm vụ</div>
+  <!-- MAIN CONTENT của trang Boards -->
+  <main class="content content-boards">
+    <!-- Recently viewed -->
+    <section class="section-block">
+      <div class="section-head">
+        <div class="section-title"><h3>Đây là trang home</h3></div>
+      </div>
+      <div class="card-grid">
+        <a class="board-card" href="#">
+          <div class="board-cover gradient-1"></div>
+          <div class="board-footer"><span class="board-title">Hello</span></div>
+        </a>
+        <a class="board-card" href="#">
+          <div class="board-cover img-cover"><span class="badge badge-dark">TEMPLATE</span></div>
+          <div class="board-footer"><span class="board-title">Kanban Template</span></div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Your workspaces -->
+    <section class="section-block">
+      <div class="section-head">
+        <h3 class="heading">YOUR WORKSPACES</h3>
+        <div class="actions-inline">
+          <a class="chip" href="#"><span class="ic">🗂️</span>Boards</a>
+          <a class="chip" href="#"><span class="ic">👤</span>Members</a>
+          <a class="chip" href="#"><span class="ic">⚙️</span>Settings</a>
         </div>
-      `;
+      </div>
 
-      // Chèn vào phần main
-      document.getElementById('page-content').innerHTML = homeContent;
+      <div class="workspace-row">
+        <div class="ws-title">
+          <span class="ws-badge">T</span>
+          <span class="ws-name">Trello Workspace</span>
+        </div>
+      </div>
 
-      // Sau khi trang đã load, khởi tạo socket
-      initSocket();
+      <div class="card-grid mt-2">
+        <a class="board-card" href="#">
+          <div class="board-cover gradient-1"></div>
+          <div class="board-footer"><span class="board-title">My Trello board</span></div>
+        </a>
+
+        <button class="board-card create-card" type="button">
+          <div class="create-body">Create new board</div>
+        </button>
+      </div>
+
+      <div class="mt-3">
+        <a class="btn-outline" href="#">View all closed boards</a>
+      </div>
+    </section>
+  </main>
+</body>
+<script>
+  // Chèn file components/sidebar_header.html vào #app-shell
+  async function inject(file, targetSelector) {
+    try {
+      const res = await fetch(file, { cache: 'no-store' });
+      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+      const html = await res.text();
+      document.querySelector(targetSelector).innerHTML = html;
+    } catch (err) {
+      console.error('Load component failed:', file, err);
     }
+  }
 
-    function initSocket() {
-      // ✅ Kết nối đến server backend
-      const socket = io("http://localhost:8127", {
-        transports: ["websocket"],
-      });
+  // Đánh dấu menu "Boards" sáng trong sidebar
+  function activateBoardsMenu() {
+    const links = document.querySelectorAll('.nav .nav-item');
+    links.forEach(a => a.classList.remove('is-active'));
+    const boardsLink = [...links].find(a => /boards/i.test(a.textContent.trim()));
+    if (boardsLink) boardsLink.classList.add('is-active');
+  }
 
-      // Khi kết nối thành công
-      socket.on("connect", () => {
-        console.log("✅ Kết nối thành công:", socket.id);
-      });
-
-      // Khi server gửi chào mừng
-      socket.on("welcome", (msg) => {
-        console.log("📩 Từ server:", msg);
-      });    
-    }
-
-    loadPage();
-  </script>
+  document.addEventListener('DOMContentLoaded', async () => {
+    // boards.html ở /public → component ở ./components/...
+    await inject('./components/sidebar_header.html', '#app-shell');
+    activateBoardsMenu();
+  });
+</script>
 </html>
