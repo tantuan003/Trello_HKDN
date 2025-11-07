@@ -21,14 +21,16 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: { origin: "*" } // Cho phép frontend truy cập
 });
+app.set("socketio", io);
 app.use(express.json());
 
+// Route API
+app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);
 
 // ⚙️ Public nằm cùng cấp với src
 app.use(express.static(path.join(__dirname, "../Public")));
 
-app.use("/v1/User", userRoutes);
 
 connectDB();
 
@@ -37,11 +39,15 @@ app.get("/", (req, res) => {
   res.send("Hello Trello Clone!");
 });
 
-// Socket.io
+// Socket.io logic
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
   socket.on("disconnect", () => {
     console.log("User disconnected:", socket.id);
+  });
+  socket.on("joinWorkspace", (workspaceId) => {
+    socket.join(workspaceId);
+    console.log(`🧩 Socket ${socket.id} joined workspace ${workspaceId}`);
   });
 });
 
