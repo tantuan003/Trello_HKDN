@@ -1,0 +1,84 @@
+/* ===== Templates page (chỉ style phần nội dung, không đụng sidebar/header) ===== */
+
+.content-templates {
+  /* content đã có padding từ sidebar_header.css.
+     Bổ sung spacing nhỏ theo layout ảnh */
+  padding-top: 18px;
+}
+
+/* Thanh tiêu đề + ô tìm kiếm (tiêu đề trái, search phải) */
+.template-bar{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.template-title{
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Ô tìm kiếm góc phải giống ảnh */
+.template-search{
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.template-search input{
+  width: 260px;
+  padding: 8px 36px 8px 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: #fff;
+  outline: none;
+  font-size: 14px;
+}
+.template-search svg{
+  position: absolute;
+  right: 10px;
+  pointer-events: none;
+  color: #6b7280;
+}
+
+/* Lưới 1 thẻ như ảnh (có thể mở rộng về sau) */
+.template-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 18px;
+}
+
+/* Card “Start with a blank board” */
+.template-card{
+  height: 132px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #EEF0F3; /* tông xám nhạt như ảnh */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  cursor: pointer;
+  transition: transform .08s ease, box-shadow .2s ease;
+}
+.template-card:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(0,0,0,.06);
+}
+.template-card__title{
+  color: #374151;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Responsive nhỏ: search co giãn */
+@media (max-width: 700px){
+  .template-bar{
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .template-search input{ width: 100%; }
+}
