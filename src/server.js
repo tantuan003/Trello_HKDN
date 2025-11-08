@@ -29,14 +29,14 @@ app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);
 
 // ⚙️ Public nằm cùng cấp với src
-app.use(express.static(path.join(__dirname, "../Public")));
+app.use(express.static(path.join(__dirname, "../public")));
 
 
 connectDB();
 
 // Route thử
 app.get("/", (req, res) => {
-  res.send("Hello Trello Clone!");
+  res.sendFile(path.join(__dirname,"../public","Login.html"));
 });
 
 // Socket.io logic
