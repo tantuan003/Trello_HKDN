@@ -4,6 +4,7 @@ const boardSchema = new mongoose.Schema({
   name: { type: String, required: true },
   workspace: { type: mongoose.Schema.Types.ObjectId, ref: "Workspace", required: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  background: { type: String, default: "gradient-1" },
   lists: [{ type: mongoose.Schema.Types.ObjectId, ref: "List" }],
   createdAt: { type: Date, default: Date.now },
 });
