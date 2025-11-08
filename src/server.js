@@ -6,10 +6,9 @@ import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 import userRoutes from "./routes/UserRoutes.js";
 import boardRoutes from "./routes/boardRoutes.js";
-
 import path from "path";
 import { fileURLToPath } from "url";
-
+import cookieParser from "cookie-parser";
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -23,7 +22,7 @@ const io = new Server(server, {
 });
 app.set("socketio", io);
 app.use(express.json());
-
+app.use(cookieParser());
 // Route API
 app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);

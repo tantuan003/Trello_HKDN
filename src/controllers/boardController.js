@@ -55,20 +55,18 @@ export const createBoard = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
-export const getBoardsByUser = async (req, res) => {
+export const getBoardsByCurrentUser = async (req, res) => {
   try {
-    const userId = req.params.userId.trim();
-    console.log("UserId nhận được:", userId);
+    const userId = req.userId; // lấy trực tiếp từ middleware
+    console.log("UserId từ token:", userId);
 
-
-    // Tìm tất cả board mà user là người tạo
     const boards = await Board.find({ createdBy: userId })
-      .populate("workspace", "name") // lấy tên workspace
-      .populate("createdBy", "username email") // lấy thông tin người tạo
-      .sort({ createdAt: -1 }); // mới nhất trước
+      .populate("workspace", "name")       // lấy tên workspace
+      .populate("createdBy", "username email") // thông tin người tạo
+      .sort({ createdAt: -1 });
 
     if (!boards.length) {
-      return res.status(404).json({ message: "Người dùng này chưa tạo board nào." });
+      return res.status(404).json({ message: "Bạn chưa tạo board nào." });
     }
 
     res.status(200).json(boards);

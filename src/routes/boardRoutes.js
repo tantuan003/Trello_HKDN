@@ -1,9 +1,9 @@
 import express from "express";
-import { createBoard,getBoardsByUser } from "../controllers/boardController.js";
+import { createBoard,getBoardsByCurrentUser } from "../controllers/boardController.js";
 const router = express.Router();
-
+import { verifyToken } from "../middlewares/verifyToken.js";
 // POST /v1/board/create
 router.post("/create", createBoard);
-router.get("/user/:userId", getBoardsByUser);
+router.get("/myboards",verifyToken, getBoardsByCurrentUser);
 
 export default router;
