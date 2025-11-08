@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Boards</title>
 
   <!-- CSS chung cho header + sidebar -->
@@ -10,6 +11,7 @@
   <!-- CSS riêng cho trang Boards -->
   <link rel="stylesheet" href="./css/boards.css?v=1" />
 </head>
+
 <body>
   <!-- Header + Sidebar sẽ được inject vào đây -->
   <div id="app-shell"></div>
@@ -19,7 +21,9 @@
     <!-- Recently viewed -->
     <section class="section-block">
       <div class="section-head">
-        <div class="section-title"><h3>Recently viewed</h3></div>
+        <div class="section-title">
+          <h3>Recently viewed</h3>
+        </div>
       </div>
       <div class="card-grid" id="boardContainer">
         <a class="board-card" href="#">
@@ -63,39 +67,34 @@
       </div>
     </section>
   </main>
-<script>
-  // Chèn file components/sidebar_header.html vào #app-shell
-  async function inject(file, targetSelector) {
-    try {
-      const res = await fetch(file, { cache: 'no-store' });
-      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-      const html = await res.text();
-      document.querySelector(targetSelector).innerHTML = html;
-    } catch (err) {
-      console.error('Load component failed:', file, err);
-    }
-  }
+  <div class="modal-overlay" id="createBoardModal" style="display:none;">
+    <div class="modal">
+      <h3>Create new board</h3>
+      <label>
+        Board title:
+        <input type="text" id="boardTitleInput" placeholder="Enter board title" />
+      </label>
+      <label>
+        Workspace:
+        <select id="workspaceSelect"></select>
+      </label>
 
-  // Đánh dấu menu "Boards" sáng trong sidebar
-  function activateBoardsMenu() {
-    const links = document.querySelectorAll('.nav .nav-item');
-    links.forEach(a => a.classList.remove('is-active'));
-    const boardsLink = [...links].find(a => /boards/i.test(a.textContent.trim()));
-    if (boardsLink) boardsLink.classList.add('is-active');
-  }
+      <label>
+        Background color:
+        <div class="color-options">
+          <span class="color-swatch gradient-1" data-color="gradient-1"></span>
+          <span class="color-swatch gradient-2" data-color="gradient-2"></span>
+          <span class="color-swatch gradient-3" data-color="gradient-3"></span>
+        </div>
+      </label>
 
-  document.addEventListener('DOMContentLoaded', async () => {
-    // boards.html ở /public → component ở ./components/...
-    await inject('./components/sidebar_header.html', '#app-shell');
-    activateBoardsMenu();
-  });
-    document.addEventListener('click', function (e) {
-    const head = e.target.closest('.wsp-head');
-    if (!head) return;
-    const workspace = head.closest('.workspaces');
-    workspace.classList.toggle('is-collapsed');
-  });
-</script>
-<script src="js/Boards.js"></script>
+      <div class="modal-actions">
+        <button id="createBoardBtn" class="btn-primary">Create</button>
+        <button id="cancelCreateBoard" class="btn-outline">Cancel</button>
+      </div>
+    </div>
+  </div>
 </body>
+<script src="js/Boards.js"></script>
+
 </html>

@@ -9,6 +9,7 @@ import boardRoutes from "./routes/boardRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
+import workspaceRoutes from "./routes/workspaceRoutes.js";
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
@@ -26,6 +27,7 @@ app.use(cookieParser());
 // Route API
 app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);
+app.use("/v1/workspace", workspaceRoutes);
 
 // ⚙️ Public nằm cùng cấp với src
 app.use(express.static(path.join(__dirname, "../public")));

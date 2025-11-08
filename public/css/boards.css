@@ -180,3 +180,94 @@
 .btn-outline:hover {
   background: #f8fafc;
 }
+/* Popup overlay */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+/* Popup box */
+.modal {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 300px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.modal h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.modal input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0 15px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+/* Color options */
+.color-options {
+  display: flex;
+  gap: 8px;
+  margin: 5px 0 15px 0;
+}
+
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.color-swatch.selected {
+  border-color: #000;
+}
+
+.gradient-1 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.gradient-2 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn-primary {
+  background-color: #0079bf;
+  color: white;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid #ccc;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.modal select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin: 5px 0 15px 0;
+}
