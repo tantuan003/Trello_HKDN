@@ -25,7 +25,6 @@ async function loadMyBoards() {
       const div = document.createElement("div");
       div.classList.add("board-card");
       div.dataset.id = board._id;
-
       const cover = document.createElement("div");
       if (board.type === "template") {
         cover.classList.add("board-cover", "img-cover");
@@ -326,6 +325,60 @@ addListBtn.addEventListener("click", async () => {
     console.error("Error adding list:", err);
     alert("Failed to add list");
   }
+});
+
+
+
+// mời user
+const inviteForm = document.getElementById("inviteForm");
+inviteForm.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const boardId = currentBoardId;
+  console.log(boardId);
+  const email = inviteForm.querySelector("input").value.trim();
+  console.log(email);
+
+  if (!email) return alert("Vui lòng nhập email!");
+
+  try {
+    const res = await fetch(`http://localhost:8127/v1/board/${boardId}/invite`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email })
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      alert(`Mời ${email} thành công!`); // thông báo thành công
+      inviteForm.reset(); // xóa giá trị input
+    } else {
+      alert(`Lỗi: ${data.message}`); // thông báo lỗi từ backend
+    }
+  } catch (err) {
+    console.error(err);
+    alert("Lỗi server, thử lại sau!");
+  }
+});
+//bật tắt invite
+document.addEventListener("DOMContentLoaded", () => {
+  const inviteIcon = document.getElementById("inviteIcon");
+  const inviteFormContainer = document.getElementById("inviteFormContainer");
+
+  inviteIcon.addEventListener("click", (e) => {
+    e.stopPropagation(); // tránh click ra ngoài tự ẩn form ngay
+    inviteFormContainer.classList.toggle("hidden");
+    inviteIcon.style.display = "none";
+  });
+
+  // Click ra ngoài sẽ ẩn form
+  document.addEventListener("click", (e) => {
+    if (!inviteFormContainer.contains(e.target) && e.target !== inviteIcon) {
+      inviteFormContainer.classList.add("hidden");
+       inviteIcon.style.display = "flex";
+    }
+  });
 });
 
 window.addEventListener("DOMContentLoaded", loadMyBoards);

@@ -3,6 +3,7 @@ import Workspace from "../models/Workspace.js";
 import mongoose from "mongoose";
 import List from "../models/ListModel.js";
 import Card from "../models/CardModel.js";
+import User from "../models/UserModel.js";
 
 export const createBoard = async (req, res) => {
   try {
@@ -155,3 +156,34 @@ export const getCardsByList = async (req, res) => {
 };
 
 
+// mời user
+export const inviteUser = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    if (!boardId) return res.status(400).json({ message: "Board ID không hợp lệ" });
+
+    const board = await Board.findById(boardId);
+    if (!board) return res.status(404).json({ message: "Board không tồn tại" });
+
+    // ✅ Khai báo email từ body trước khi dùng
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email không hợp lệ" });
+
+    const user = await User.findOne({ email });
+    if (!user) return res.status(404).json({ message: "User không tồn tại" });
+
+    // Kiểm tra user đã là member chưa
+    if (board.members.includes(user._id) || board.createdBy.equals(user._id)) {
+      return res.status(400).json({ message: "User đã ở trong board" });
+    }
+
+    // Thêm user vào board
+    board.members.push(user._id);
+    await board.save();
+
+    res.status(200).json({ message: "Mời user thành công!", user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
