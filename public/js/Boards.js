@@ -3,6 +3,7 @@ const cardGrid = document.querySelector(".card-grid"); // chỉ 1 grid
 const boardView = document.getElementById("boardView");
 const boardTitle = document.getElementById("boardTitle");
 const listsContainer = document.getElementById("listsContainer");
+let currentBoardId = null; 
 async function loadMyBoards() {
     try {
         const res = await fetch("http://localhost:8127/v1/board/myboards", {
@@ -51,6 +52,8 @@ async function loadMyBoards() {
             card.addEventListener("click", async (e) => {
                 e.preventDefault();
                 const boardId = card.dataset.id;
+                currentBoardId = boardId;
+                renderBoardLists(currentBoardId);
                 if (!boardId) return;
                 const res = await fetch(`http://localhost:8127/v1/board/${boardId}`);
                 const data = await res.json();
@@ -205,6 +208,78 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+// hiển thị list
+async function renderBoardLists(boardId) {
+  const res = await fetch(`http://localhost:8127/v1/board/list/${boardId}`);
+  const lists = await res.json();
+
+  listsContainer.innerHTML = "";
+
+  lists.forEach(list => {
+    const listEl = document.createElement("div");
+    listEl.className = "list";
+    listEl.innerHTML = `
+      <h3>${list.name}</h3>
+      <div class="cards-container">
+        ${list.cards.map(card => `<div class="card">${card.title}</div>`).join("")}
+      </div>
+    `;
+    boardContainer.appendChild(listEl);
+  });
+}
+const showAddListBtn = document.getElementById("showAddListBtn");
+const addListForm = document.getElementById("addListForm");
+const cancelAddListBtn = document.getElementById("cancelAddListBtn");
+const addListBtn = document.getElementById("addListBtn");
+const newListTitle = document.getElementById("newListTitle");
+
+showAddListBtn.addEventListener("click", () => {
+  showAddListBtn.style.display = "none";
+  addListForm.style.display = "flex";
+});
+
+cancelAddListBtn.addEventListener("click", () => {
+  addListForm.style.display = "none";
+  showAddListBtn.style.display = "inline-block";
+  newListTitle.value = "";
+});
+function renderLists(lists) {
+  lists.forEach(list => {
+    const listEl = document.createElement("div");
+    listEl.className = "list";
+    listEl.innerHTML = `
+      <h4>${list.name}</h4>
+      <div class="cards-container">
+        ${list.cards ? list.cards.map(card => `<div class="card">${card.title}</div>`).join('') : ''}
+      </div>
+    `;
+    listsContainer.appendChild(listEl);
+  });
+}
+async function renderBoardLists(boardId) {
+  listsContainer.innerHTML = ""; // xóa list cũ
+  const res = await fetch(`http://localhost:8127/v1/board/list/${boardId}`);
+  const lists = await res.json();
+  renderLists(lists);
+}
+addListBtn.addEventListener("click", async () => {
+  const title = newListTitle.value.trim();
+  if (!title) return alert("Please enter list title");
+  if (!currentBoardId) return alert("Board not selected");
+
+  const res = await fetch(`http://localhost:8127/v1/board/list/${currentBoardId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: title }) // chỉ cần name, backend đã có boardId trong params
+  });
+
+  const newList = await res.json();
+  renderLists([newList]); // render list mới
+
+  newListTitle.value = "";
+  addListForm.style.display = "none";
+  showAddListBtn.style.display = "inline-block";
+});
 
 
 

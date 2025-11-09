@@ -78,3 +78,26 @@ export const getBoardById = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
+
+export const createList = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const { name } = req.body;
+
+    const board = await Board.findById(boardId);
+    if (!board) return res.status(404).json({ message: "Board not found" });
+
+    const newList = await List.create({ name, board: boardId, cards: [] });
+
+    board.lists.push(newList._id);
+    await board.save();
+
+    res.status(201).json(newList);
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+

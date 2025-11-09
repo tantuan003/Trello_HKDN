@@ -33,43 +33,59 @@
       </div>
       <div id="boardView" class="boardView" style="display:none;">
         <h2 id="boardTitle"></h2>
-        <div id="listsContainer"></div>
+
+        <!-- Container chứa tất cả list -->
+        <div id="listsContainer" class="lists-container"></div>
+
+        <!-- Nút thêm list -->
+        <!-- Add List -->
+        <div class="add-list">
+          <button id="showAddListBtn">+ Add a list</button>
+          <div id="addListForm" style="display:none;">
+            <input type="text" id="newListTitle" placeholder="Enter list title">
+            <div class="list-btn">
+              <button id="addListBtn">Add List</button>
+              <button id="cancelAddListBtn">X</button>
+            </div>
+
+          </div>
+        </div>
       </div>
     </section>
 
     <!-- Your workspaces -->
     <section class="section-block">
       <div class="workspace-info">
-      <div class="section-head">
-        <h3 class="heading">YOUR WORKSPACES</h3>
-        <div class="actions-inline">
-          <a class="chip" href="#"><span class="ic">🗂️</span>Boards</a>
-          <a class="chip" href="#"><span class="ic">👤</span>Members</a>
-          <a class="chip" href="#"><span class="ic">⚙️</span>Settings</a>
+        <div class="section-head">
+          <h3 class="heading">YOUR WORKSPACES</h3>
+          <div class="actions-inline">
+            <a class="chip" href="#"><span class="ic">🗂️</span>Boards</a>
+            <a class="chip" href="#"><span class="ic">👤</span>Members</a>
+            <a class="chip" href="#"><span class="ic">⚙️</span>Settings</a>
+          </div>
         </div>
-      </div>
 
-      <div class="workspace-row">
-        <div class="ws-title">
-          <span class="ws-badge">T</span>
-          <span class="ws-name">Teamhub Workspace</span>
+        <div class="workspace-row">
+          <div class="ws-title">
+            <span class="ws-badge">T</span>
+            <span class="ws-name">Teamhub Workspace</span>
+          </div>
         </div>
-      </div>
 
-      <div class="card-grid mt-2">
-        <a class="board-card" href="#">
-          <div class="board-cover gradient-1"></div>
-          <div class="board-footer"><span class="board-title">My Trello board</span></div>
-        </a>
+        <div class="card-grid mt-2">
+          <a class="board-card" href="#">
+            <div class="board-cover gradient-1"></div>
+            <div class="board-footer"><span class="board-title">My Trello board</span></div>
+          </a>
 
-        <button class="board-card create-card" type="button">
-          <div class="create-body">Create new board</div>
-        </button>
-      </div>
+          <button class="board-card create-card" type="button">
+            <div class="create-body">Create new board</div>
+          </button>
+        </div>
 
-      <div class="mt-3">
-        <a class="btn-outline" href="#">View all closed boards</a>
-      </div>
+        <div class="mt-3">
+          <a class="btn-outline" href="#">View all closed boards</a>
+        </div>
       </div>
     </section>
   </main>
