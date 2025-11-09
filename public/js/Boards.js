@@ -263,7 +263,7 @@ async function renderBoardWithLists(boardId) {
       (Array.isArray(list.cards) ? list.cards : []).forEach(card => {
         const cardEl = document.createElement("div");
         cardEl.className = "card";
-        cardEl.textContent = card.title;
+        cardEl.textContent = card.name;
         cardsContainer.appendChild(cardEl);
       });
 
@@ -282,10 +282,11 @@ async function renderBoardWithLists(boardId) {
 
         // Gọi API tạo card backend nếu muốn lưu
         try {
-          await fetch(`http://localhost:8127/v1/card/${list._id}`, {
+          await fetch(`http://localhost:8127/v1/board/create-card/${list._id}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: cardName })
+            credentials: "include",
+            body: JSON.stringify({ name: cardName ,description:""})
           });
         } catch (err) {
           console.error("Error adding card:", err);

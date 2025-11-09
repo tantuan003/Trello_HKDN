@@ -3,9 +3,10 @@ import Workspace from "../models/Workspace.js";
 import mongoose from "mongoose";
 import List from "../models/ListModel.js";
 import Card from "../models/CardModel.js";
+
 export const createBoard = async (req, res) => {
   try {
-    const { name, workspaceId,visibility} = req.body;
+    const { name, workspaceId, visibility } = req.body;
     const userId = req.user?.id; // lấy từ token
 
     if (!name || !workspaceId) return res.status(400).json({ message: "Thiếu dữ liệu!" });
@@ -99,5 +100,58 @@ export const createList = async (req, res) => {
   }
 };
 
+// tạo card
+export const createCard = async (req, res) => {
+  try {
+    const { listId } = req.params;
+    const { name, description, assignedTo, labels, dueDate } = req.body;
+    const userId = req.user?.id;
+    console.log("userid là ",userId);
+
+    const list = await List.findById(listId);
+    if (!list) return res.status(404).json({ message: "List không tồn tại." });
+
+    const lastCard = await Card.findOne({ list: listId }).sort({ position: -1 });
+    const position = lastCard ? lastCard.position + 1 : 0;
+
+    const newCard = new Card({
+      name,
+      description,
+      list: list._id,       // theo schema Card
+      assignedTo: assignedTo || [],
+      labels: labels || [],
+      dueDate: dueDate || null,
+      createdBy:userId, // 🔑 bắt buộc phải gán
+      position
+    });
+
+    await newCard.save();
+    await List.findByIdAndUpdate(list._id, { $push: { cards: newCard._id } });
+
+    res.status(201).json({ message: "Tạo card thành công!", card: newCard });
+  } catch (error) {
+    console.error("Lỗi khi tạo card:", error);
+    res.status(500).json({ message: "Lỗi server khi tạo card." });
+  }
+};
+
+
+// lấy card theo list
+
+export const getCardsByList = async (req, res) => {
+  try {
+    const { listId } = req.params;
+
+    const cards = await Card.find({ listId })
+      .populate("assignedTo", "name email")
+      .populate("createdBy", "name email")
+      .sort({ position: 1 });
+
+    res.status(200).json(cards);
+  } catch (error) {
+    console.error("Lỗi khi lấy danh sách card:", error);
+    res.status(500).json({ message: "Lỗi server khi lấy card." });
+  }
+};
 
 

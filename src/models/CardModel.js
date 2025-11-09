@@ -4,15 +4,19 @@ const cardSchema = new mongoose.Schema({
   name: { type: String, required: true },
   description: { type: String, default: "" },
   list: { type: mongoose.Schema.Types.ObjectId, ref: "List", required: true },
-  assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // ai được assign
-  labels: [{ type: String }],  // nhãn màu
+  assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  labels: [{ type: String }],
   dueDate: { type: Date },
-  comments: [{
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    text: String,
-    createdAt: { type: Date, default: Date.now }
-  }],
-  attachments: [{ type: String }], // đường dẫn file
+  position: { type: Number, default: 0 },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  comments: [
+    {
+      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      text: String,
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
+  attachments: [{ type: String }]
 }, { timestamps: true });
 
 export default mongoose.model("Card", cardSchema);
