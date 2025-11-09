@@ -1,17 +1,32 @@
 /* ===== Boards page ===== */
 .content-boards {
+  flex: 1;
   background: #fff;
   padding: 12px 28px 28px; /* giảm padding-top để không bị đẩy xuống */
   min-height: calc(100vh - var(--header-h));
   overflow-y: auto;
+  transition: all 0.3s ease;
 }
-
+#app-shell {
+  display: flex;
+}
+.content-boards {
+  flex: 1; /* chiếm phần còn lại */
+  transition: all 0.3s ease;
+}
 /* Bỏ khoảng trống đầu tiên */
 .content-boards .section-block:first-child {
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
-
+.content-boards.fullwidth {
+   position: absolute;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+}
 /* Cấu trúc section */
 .section-block {
   margin-bottom: 28px;
@@ -237,6 +252,38 @@
 .gradient-2 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
 .gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
 
+.content-boards.fullwidth.gradient-3 {
+   position: absolute;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, #fa709a, #fee140);
+    border-radius: 20px;
+
+}
+.content-boards.fullwidth.gradient-2 {
+   position: absolute;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+    border-radius: 20px;
+
+}
+.content-boards.fullwidth.gradient-1 {
+  position: absolute;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  border-radius: 20px;
+}
 .modal-actions {
   display: flex;
   justify-content: flex-end;

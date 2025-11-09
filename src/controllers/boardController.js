@@ -1,8 +1,8 @@
 import Board from "../models/BoardModel.js";
 import Workspace from "../models/Workspace.js";
 import mongoose from "mongoose";
-import User from "../models/UserModel.js";
-
+import List from "../models/ListModel.js";
+import Card from "../models/CardModel.js";
 export const createBoard = async (req, res) => {
   try {
     const { name, workspaceId,visibility} = req.body;
@@ -56,5 +56,25 @@ export const getBoardsByCurrentUser = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Lỗi khi lấy danh sách board." });
+  }
+};
+
+export const getBoardById = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+
+    // Populate lists và cards
+    const board = await Board.findById(boardId)
+      .populate({
+        path: "lists",
+        populate: { path: "cards" }  // nested populate cards trong list
+      });
+
+    if (!board) return res.status(404).json({ message: "Board không tồn tại" });
+
+    res.status(200).json({ success: true, board });
+  } catch (error) {
+    console.error("Lỗi getBoardById:", error);
+    res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };

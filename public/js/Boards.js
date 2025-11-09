@@ -1,3 +1,8 @@
+const boardCards = document.querySelectorAll(".board-card"); // NodeList
+const cardGrid = document.querySelector(".card-grid"); // chỉ 1 grid
+const boardView = document.getElementById("boardView");
+const boardTitle = document.getElementById("boardTitle");
+const listsContainer = document.getElementById("listsContainer");
 async function loadMyBoards() {
     try {
         const res = await fetch("http://localhost:8127/v1/board/myboards", {
@@ -14,9 +19,9 @@ async function loadMyBoards() {
         }
 
         boards.forEach(board => {
-            const a = document.createElement("a");
-            a.classList.add("board-card");
-            a.href = `/board/${board._id}`;
+            const div = document.createElement("div"); // <div> thay cho <a>
+            div.classList.add("board-card");
+            div.dataset.id = board._id; // <--- quan trọng
 
             const cover = document.createElement("div");
             if (board.type === "template") {
@@ -26,7 +31,7 @@ async function loadMyBoards() {
                 badge.textContent = "TEMPLATE";
                 cover.appendChild(badge);
             } else {
-                cover.classList.add("board-cover", board.background || "gradient-1"); // <-- dùng background
+                cover.classList.add("board-cover", board.background || "gradient-1");
             }
 
             const footer = document.createElement("div");
@@ -36,11 +41,44 @@ async function loadMyBoards() {
             title.textContent = board.name;
             footer.appendChild(title);
 
-            a.appendChild(cover);
-            a.appendChild(footer);
+            div.appendChild(cover);
+            div.appendChild(footer);
 
-            container.appendChild(a);
+            container.appendChild(div);
         });
+        const boardCards = document.querySelectorAll(".board-card");
+        boardCards.forEach(card => {
+            card.addEventListener("click", async (e) => {
+                e.preventDefault();
+                const boardId = card.dataset.id;
+                if (!boardId) return;
+                const res = await fetch(`http://localhost:8127/v1/board/${boardId}`);
+                const data = await res.json();
+                const board = data.board;
+
+                document.querySelector(".card-grid").style.display = "none";
+                document.querySelector(".workspace-info").style.display = "none";
+                document.querySelector(".section-head").style.display = "none";
+                const sidebar = document.querySelector(".sidebar");
+                if (sidebar) sidebar.style.display = "none";
+                document.getElementById("boardView").style.display = "block";
+                document.querySelector(".content-boards").classList.add("fullwidth");
+                document.querySelector(".content-boards.fullwidth").classList.add(board.background);;
+
+
+                document.getElementById("boardTitle").textContent = board.name;
+                const listsContainer = document.getElementById("listsContainer");
+                listsContainer.innerHTML = "";
+                board.lists.forEach(list => {
+                    const listEl = document.createElement("div");
+                    listEl.className = "list";
+                    listEl.innerHTML = `<h3>${list.name}</h3>` +
+                        list.cards.map(c => `<div class="card">${c.name}</div>`).join("");
+                    listsContainer.appendChild(listEl);
+                });
+            });
+        });
+
 
     } catch (err) {
         console.error("Lỗi load boards:", err);
@@ -166,5 +204,8 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+
+
 
 window.addEventListener("DOMContentLoaded", loadMyBoards);

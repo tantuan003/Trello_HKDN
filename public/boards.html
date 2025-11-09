@@ -14,7 +14,7 @@
 
 <body>
   <!-- Header + Sidebar sẽ được inject vào đây -->
-  <div id="app-shell"></div>
+  <div class="sidebar_header" id="app-shell"></div>
 
   <!-- MAIN CONTENT của trang Boards -->
   <main class="content content-boards">
@@ -26,15 +26,20 @@
         </div>
       </div>
       <div class="card-grid" id="boardContainer">
-        <a class="board-card" href="#">
+        <div class="board-card" data-id="">
           <div class="board-cover gradient-1"></div>
           <div class="board-footer"><span class="board-title">My Trello board</span></div>
-        </a>
+        </div>
+      </div>
+      <div id="boardView" class="boardView" style="display:none;">
+        <h2 id="boardTitle"></h2>
+        <div id="listsContainer"></div>
       </div>
     </section>
 
     <!-- Your workspaces -->
     <section class="section-block">
+      <div class="workspace-info">
       <div class="section-head">
         <h3 class="heading">YOUR WORKSPACES</h3>
         <div class="actions-inline">
@@ -64,6 +69,7 @@
 
       <div class="mt-3">
         <a class="btn-outline" href="#">View all closed boards</a>
+      </div>
       </div>
     </section>
   </main>
