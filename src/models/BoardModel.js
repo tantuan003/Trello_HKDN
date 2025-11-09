@@ -11,6 +11,7 @@ const boardSchema = new mongoose.Schema({
     default: "private"
   },
   lists: [{ type: mongoose.Schema.Types.ObjectId, ref: "List" }],
+  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   createdAt: { type: Date, default: Date.now },
 });
 

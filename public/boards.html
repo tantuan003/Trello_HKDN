@@ -33,6 +33,17 @@
       </div>
       <div id="boardView" class="boardView" style="display:none;">
         <h2 id="boardTitle"></h2>
+        <div id="inviteIcon" title="Invite user">
+          <img src="../uploads/add-member-icon.png" alt="Invite" />
+        </div>
+
+        <!-- Form pop-up -->
+        <div id="inviteFormContainer" class="hidden">
+          <form id="inviteForm">
+            <input type="email" id="inviteEmail" placeholder="Enter user email" required />
+            <button type="submit">Invite</button>
+          </form>
+        </div>
 
         <!-- Container chứa tất cả list + nút add -->
         <div id="listsContainer" class="lists-container">
