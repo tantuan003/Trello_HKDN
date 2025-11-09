@@ -8,6 +8,6 @@ router.get("/myboards",verifyToken, getBoardsByCurrentUser);
 
 //load boards
 router.get("/:boardId", getBoardById);
-router.post("/list/:boardId", createList);
+router.post("/create-list/:boardId", createList);
 
 export default router;

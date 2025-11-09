@@ -34,23 +34,23 @@
       <div id="boardView" class="boardView" style="display:none;">
         <h2 id="boardTitle"></h2>
 
-        <!-- Container chứa tất cả list -->
-        <div id="listsContainer" class="lists-container"></div>
-
-        <!-- Nút thêm list -->
-        <!-- Add List -->
+        <!-- Container chứa tất cả list + nút add -->
+        <div id="listsContainer" class="lists-container">
+          <!-- List sẽ được JS render vào đây -->
+        </div>
         <div class="add-list">
           <button id="showAddListBtn">+ Add a list</button>
+
           <div id="addListForm" style="display:none;">
             <input type="text" id="newListTitle" placeholder="Enter list title">
             <div class="list-btn">
               <button id="addListBtn">Add List</button>
               <button id="cancelAddListBtn">X</button>
             </div>
-
           </div>
         </div>
       </div>
+
     </section>
 
     <!-- Your workspaces -->

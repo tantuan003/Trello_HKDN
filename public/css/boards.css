@@ -320,113 +320,221 @@
 }
  
 /* css cho list */
+/* ===== CONTAINER CHỨA CÁC LIST ===== */
+/* Vùng chứa tất cả list + nút add */
+.boardView {
+  padding: 20px;
+  overflow-x: auto;
+  height: calc(100vh - 120px);
+  box-sizing: border-box;
+}
+
+/* Container chứa list */
 .lists-container {
   display: flex;
-  gap: 10px;
+  align-items: flex-start;
+  gap: 20px;
+  flex-wrap: nowrap;
   overflow-x: auto;
-  padding: 10px 0;
+  padding-bottom: 10px;
+  scroll-behavior: smooth;
 }
 
+/* Thanh cuộn ngang */
+.lists-container::-webkit-scrollbar {
+  height: 8px;
+}
+.lists-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.15);
+  border-radius: 10px;
+}
+
+/* List */
 .list {
-  background: #f4f5f7;
-  border-radius: 5px;
-  width: 150px;
-  padding: 10px;
+ display: flex;
+  flex-direction: column;
+  background-color: #0a0303d8;
+  border-radius: 8px;
+  padding: 12px;
+  flex: 0 0 280px;
+  min-height: 100px; /* đảm bảo đủ chỗ hiển thị */
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
+.list h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffffd1;
+  margin-bottom: 10px;
+  text-transform: capitalize;
+}
+
+/* Cards container */
 .cards-container {
-  margin-top: 10px;
-}
-
-/* Container add-list */
-/* Container add-list */
-.add-list {
-  margin-top: 15px;
+  flex-grow: 1;
+  overflow-y: auto;
   display: flex;
-  gap: 5px;
-  min-width: 250px;
+  flex-direction: column;
+  gap: 10px;
+}
+.cards-container::-webkit-scrollbar {
+  width: 6px;
+}
+.cards-container::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 6px;
 }
 
-/* Nút "+ Add a list" */
-#showAddListBtn {
-  background-color: rgba(0, 0, 0, 0.1);
-  color: #172b4d;
-  border: none;
-  border-radius: 3px;
-  padding: 10px 12px;
+/* Card */
+.card {
+  background-color: #f7f8fa;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 0.95rem;
+  color: #222;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
   cursor: pointer;
-  font-weight: 500;
-  text-align: left;
-  transition: background 0.2s, transform 0.1s;
+  transition: all 0.2s ease;
+}
+.card:hover {
+  background-color: #f1f3f6;
+  transform: translateY(-1px);
+}
+
+/* --- Nút Add List --- */
+/* Nút Add List (container) */
+.add-list {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1.5px dashed rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  color: #444;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  min-height: 44px;
+}
+
+.add-list:hover {
+  background: rgba(255, 255, 255, 0.45);
+  border-color: #0079bf;
+  transform: translateY(-1px);
+}
+
+/* Nút hiển thị Add form */
+#showAddListBtn {
+  background: none;
+  border: none;
+  color: #0079bf;
+  font-size: 0.85rem;
+  font-weight: 500;   /* 👈 giảm bớt độ đậm */
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: color 0.2s, transform 0.2s;
 }
 
 #showAddListBtn:hover {
-  background-color: rgba(0, 0, 0, 0.15);
-  transform: translateY(-1px);
+  color: #026aa7;
+  transform: scale(1.02);
 }
 
-/* Form hiển thị khi click */
+/* Form thêm list */
+/* Form thêm list */
 #addListForm {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  background-color: #0e0f13da;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  width: 220px;            /* Chiều rộng vừa phải */
+  gap: 6px;                /* Khoảng cách giữa input và nút */
+  margin-top: 6px;
+  padding: 8px;
+  background-color: #020409cd; /* Nền nhạt, giống Trello */
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  animation: fadeIn 0.25s ease;
 }
 
-/* Input thêm list */
-#newListTitle {
+/* Input */
+#addListForm input {
+  width: 100%;
   padding: 8px 10px;
+  border: 1px solid #ccc;
   border-radius: 6px;
-  border: 1px solid #dfe1e6;
   outline: none;
-  font-size: 14px;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
 }
 
-#newListTitle:focus {
+#addListForm input:focus {
   border-color: #0079bf;
-  box-shadow: 0 0 0 4px rgba(5, 82, 126, 0.2);
+  box-shadow: 0 0 4px rgba(0, 121, 191, 0.4);
 }
 
-/* Container nút Add & Cancel */
+/* Container hai nút Add / Cancel */
 .list-btn {
   display: flex;
-  align-items: center;
-  gap: 5px;
+  gap: 6px;
+  margin-top: 4px;
 }
 
-/* Nút Add List */
-#addListBtn {
-  background-color: #1836db;
-  color: white;
+/* Nút Add / Cancel */
+.list-btn button {
+  flex: 1;
   border: none;
+  padding: 6px 0;
   border-radius: 6px;
-  padding: 6px 12px;
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s, transform 0.1s;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+/* Nút Add */
+#addListBtn {
+  background-color: #0079bf;
+  color: white;
 }
 
 #addListBtn:hover {
-  background-color: #1d16a5;
+  background-color: #026aa7;
   transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
 
 /* Nút Cancel */
 #cancelAddListBtn {
-  background-color: transparent;
-  color: #fefefe;
-  border: none;
-  font-weight: 500;
-  cursor: pointer;
-  font-size: 18px;
-  line-height: 18px;
-  padding: 2px 6px;
-  transition: color 0.2s;
+  background-color: #e1e2e6;
+  color: #333;
 }
 
 #cancelAddListBtn:hover {
-  color: #2e75ee;
+  background-color: #cfd0d4;
+}
+
+/* Hiệu ứng fade khi hiện form */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Nút thêm card */
+.add-card-btn {
+  background-color: transparent;
+  border: none;
+  color: #fbfdff;      /* Màu chữ giống Trello */
+  font-size: 0.85rem;
+  font-weight: 500;
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  margin-top: 6px;
+}
+
+.add-card-btn:hover {
+  background-color: rgba(9,30,66,0.08); /* Nền nhẹ khi hover */
+  color: #172b4d;                        /* Chữ đậm hơn khi hover */
+  transform: translateY(-1px);
 }
