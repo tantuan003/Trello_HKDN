@@ -81,6 +81,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const titleInput = document.getElementById("boardTitleInput");
     const colorOptions = document.querySelectorAll(".color-swatch");
     const workspaceSelect = document.getElementById("workspaceSelect");
+    const visibility = document.getElementById("visibilitySelect").value;
     let selectedColor = "gradient-1";
 
     // ====== LOAD WORKSPACES ======
@@ -145,7 +146,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify({
                     name,
                     workspaceId,
-                    background: selectedColor,
+                    visibility,
+                    background: selectedColor
                 }),
             });
 

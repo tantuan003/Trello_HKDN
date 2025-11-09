@@ -5,7 +5,7 @@ import User from "../models/UserModel.js";
 
 export const createBoard = async (req, res) => {
   try {
-    const { name, workspaceId } = req.body;
+    const { name, workspaceId,visibility} = req.body;
     const userId = req.user?.id; // lấy từ token
 
     if (!name || !workspaceId) return res.status(400).json({ message: "Thiếu dữ liệu!" });
@@ -18,7 +18,8 @@ export const createBoard = async (req, res) => {
       name,
       workspace: workspaceId,
       createdBy: new mongoose.Types.ObjectId(userId),
-      background: req.body.background || "gradient-1"
+      background: req.body.background || "gradient-1",
+      visibility: visibility || "workspace"
     });
 
     await board.save();

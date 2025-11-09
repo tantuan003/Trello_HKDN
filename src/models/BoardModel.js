@@ -5,6 +5,11 @@ const boardSchema = new mongoose.Schema({
   workspace: { type: mongoose.Schema.Types.ObjectId, ref: "Workspace", required: true },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   background: { type: String, default: "gradient-1" },
+  visibility: {
+    type: String,
+    enum: ["private", "workspace", "public"],
+    default: "private"
+  },
   lists: [{ type: mongoose.Schema.Types.ObjectId, ref: "List" }],
   createdAt: { type: Date, default: Date.now },
 });
