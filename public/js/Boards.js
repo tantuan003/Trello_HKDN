@@ -136,6 +136,7 @@ document.addEventListener("DOMContentLoaded", () => {
     createBtn.addEventListener("click", async () => {
         const name = titleInput.value.trim();
         const workspaceId = workspaceSelect.value;
+        const visibility = document.getElementById("visibilitySelect").value;
         if (!name) return alert("Vui lòng nhập tên board");
         if (!workspaceId) return alert("Vui lòng chọn workspace");
 
