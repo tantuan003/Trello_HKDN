@@ -45,7 +45,12 @@ export const getBoardsByCurrentUser = async (req, res) => {
     const userId = req.user?.id; // lấy trực tiếp từ middleware
     console.log("UserId từ token:", userId);
 
-    const boards = await Board.find({ createdBy: userId })
+    const boards = await Board.find({
+      $or: [
+        { createdBy: userId },
+        { members: userId }  // members là mảng lưu ObjectId của các user
+      ]
+    })
       .populate("workspace", "name")       // lấy tên workspace
       .populate("createdBy", "username email") // thông tin người tạo
       .sort({ createdAt: -1 });
