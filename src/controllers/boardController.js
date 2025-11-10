@@ -95,10 +95,11 @@ export const createList = async (req, res) => {
     if (!board) return res.status(404).json({ message: "Board not found" });
 
     const newList = await List.create({ name, board: boardId, cards: [] });
-
     board.lists.push(newList._id);
     await board.save();
 
+    const io = req.app.get("socketio");
+    io.to(boardId).emit("newList", newList);
     res.status(201).json(newList);
   } catch (error) {
     console.log(error);

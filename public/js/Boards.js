@@ -1,3 +1,6 @@
+import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
+const socket = io("http://localhost:8127", { withCredentials: true });
+
 const boardCards = document.querySelectorAll(".board-card"); // NodeList
 const cardGrid = document.querySelector(".card-grid"); // chỉ 1 grid
 const boardView = document.getElementById("boardView");
@@ -57,6 +60,7 @@ async function loadMyBoards() {
         if (!boardId) return;
 
         currentBoardId = boardId;
+        socket.emit("joinBoard", currentBoardId);
 
         // Render board với lists và add card
         await renderBoardWithLists(currentBoardId);
@@ -240,10 +244,8 @@ async function renderBoardWithLists(boardId) {
     // Lấy dữ liệu board
     const res = await fetch(`http://localhost:8127/v1/board/${boardId}`);
     const data = await res.json();
-
-    // Lấy mảng lists
     const lists = data.board?.lists || [];
-
+    console.log("📦 Board data:", data);
     // Xóa list cũ
     listsContainer.innerHTML = "";
 
@@ -314,19 +316,15 @@ addListBtn.addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: title })
     });
-
-    const newList = await res.json();
-
-    // Sau khi thêm list, gọi lại renderBoardLists để fetch tất cả list mới nhất
-    await renderBoardWithLists(currentBoardId);
-
     newListTitle.value = "";
   } catch (err) {
     console.error("Error adding list:", err);
     alert("Failed to add list");
   }
 });
-
+socket.on("newList", (list) => {
+  renderSingleList(list);
+});
 
 
 // mời user
@@ -379,6 +377,77 @@ document.addEventListener("DOMContentLoaded", () => {
        inviteIcon.style.display = "flex";
     }
   });
+});
+//socket
+function renderSingleList(list) {
+  const listsContainer = document.getElementById("listsContainer");
+
+  const listEl = document.createElement("div");
+  listEl.className = "list";
+  listEl.dataset.id = list._id;
+
+  const h3 = document.createElement("h3");
+  h3.textContent = list.name;
+  listEl.appendChild(h3);
+
+  const cardsContainer = document.createElement("div");
+  cardsContainer.className = "cards-container";
+
+  (Array.isArray(list.cards) ? list.cards : []).forEach(card => {
+    const cardEl = document.createElement("div");
+    cardEl.className = "card";
+    cardEl.textContent = card.name;
+    cardsContainer.appendChild(cardEl);
+  });
+
+  listEl.appendChild(cardsContainer);
+  listsContainer.appendChild(listEl);
+}
+function addListToBoard(list) {
+  // list là object list từ server
+  const listsContainer = document.getElementById("listsContainer");
+
+  const listEl = document.createElement("div");
+  listEl.className = "list";
+
+  const h3 = document.createElement("h3");
+  h3.textContent = list.name;
+  listEl.appendChild(h3);
+
+  const cardsContainer = document.createElement("div");
+  cardsContainer.className = "cards-container";
+
+  (list.cards || []).forEach(card => {
+    const cardEl = document.createElement("div");
+    cardEl.className = "card";
+    cardEl.textContent = card.name;
+    cardsContainer.appendChild(cardEl);
+  });
+
+  listEl.appendChild(cardsContainer);
+  listsContainer.appendChild(listEl);
+}
+
+
+// Lắng nghe list mới realtime
+socket.off("newList");
+socket.on("newList", (list) => {
+  console.log("📩 Received new list:", list);
+
+  // Gọi hàm riêng để thêm list mới vào giao diện
+  addListToBoard(list);
+});
+
+// Lắng nghe card mới realtime
+socket.on("newCard", (card) => {
+  console.log("Received new card:", card);
+  const listEl = document.querySelector(`.list[data-id="${card.list}"] .cards-container`);
+  if (listEl) {
+    const cardEl = document.createElement("div");
+    cardEl.className = "card";
+    cardEl.textContent = card.name;
+    listEl.appendChild(cardEl);
+  }
 });
 
 window.addEventListener("DOMContentLoaded", loadMyBoards);
