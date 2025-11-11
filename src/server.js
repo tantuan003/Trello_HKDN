@@ -37,7 +37,7 @@ connectDB();
 
 // Route thử
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname,"../public","Login.html"));
+  res.sendFile(path.join(__dirname,"../public","boards.html"));
 });
 
 // Socket.io logic

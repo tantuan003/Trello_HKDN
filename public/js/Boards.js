@@ -6,7 +6,7 @@ const cardGrid = document.querySelector(".card-grid"); // chỉ 1 grid
 const boardView = document.getElementById("boardView");
 const boardTitle = document.getElementById("boardTitle");
 const listsContainer = document.getElementById("listsContainer");
-let currentBoardId = null; 
+let currentBoardId = null;
 async function loadMyBoards() {
   try {
     const res = await fetch("http://localhost:8127/v1/board/myboards", {
@@ -97,123 +97,123 @@ async function loadMyBoards() {
 
 // Chèn file components/sidebar_header.html vào #app-shell
 async function inject(file, targetSelector) {
-    try {
-        const res = await fetch(file, { cache: 'no-store' });
-        if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-        const html = await res.text();
-        document.querySelector(targetSelector).innerHTML = html;
-    } catch (err) {
-        console.error('Load component failed:', file, err);
-    }
+  try {
+    const res = await fetch(file, { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+    const html = await res.text();
+    document.querySelector(targetSelector).innerHTML = html;
+  } catch (err) {
+    console.error('Load component failed:', file, err);
+  }
 }
 
 // Đánh dấu menu "Boards" sáng trong sidebar
 function activateBoardsMenu() {
-    const links = document.querySelectorAll('.nav .nav-item');
-    links.forEach(a => a.classList.remove('is-active'));
-    const boardsLink = [...links].find(a => /boards/i.test(a.textContent.trim()));
-    if (boardsLink) boardsLink.classList.add('is-active');
+  const links = document.querySelectorAll('.nav .nav-item');
+  links.forEach(a => a.classList.remove('is-active'));
+  const boardsLink = [...links].find(a => /boards/i.test(a.textContent.trim()));
+  if (boardsLink) boardsLink.classList.add('is-active');
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // boards.html ở /public → component ở ./components/...
-    await inject('./components/sidebar_header.html', '#app-shell');
-    activateBoardsMenu();
+  // boards.html ở /public → component ở ./components/...
+  await inject('./components/sidebar_header.html', '#app-shell');
+  activateBoardsMenu();
 });
 
 //mở – đóng – tạo board
 document.addEventListener("DOMContentLoaded", () => {
-    const createCardBtn = document.querySelector(".create-card");
-    const modal = document.getElementById("createBoardModal");
-    const cancelBtn = document.getElementById("cancelCreateBoard");
-    const createBtn = document.getElementById("createBoardBtn");
-    const titleInput = document.getElementById("boardTitleInput");
-    const colorOptions = document.querySelectorAll(".color-swatch");
-    const workspaceSelect = document.getElementById("workspaceSelect");
-    const visibility = document.getElementById("visibilitySelect").value;
-    let selectedColor = "gradient-1";
+  const createCardBtn = document.querySelector(".create-card");
+  const modal = document.getElementById("createBoardModal");
+  const cancelBtn = document.getElementById("cancelCreateBoard");
+  const createBtn = document.getElementById("createBoardBtn");
+  const titleInput = document.getElementById("boardTitleInput");
+  const colorOptions = document.querySelectorAll(".color-swatch");
+  const workspaceSelect = document.getElementById("workspaceSelect");
+  const visibility = document.getElementById("visibilitySelect").value;
+  let selectedColor = "gradient-1";
 
-    // ====== LOAD WORKSPACES ======
-    async function loadWorkspaces() {
-        try {
-            const res = await fetch("http://localhost:8127/v1/workspace", {
-                credentials: "include" // để gửi cookie
-            }); // endpoint lấy workspace
-            const data = await res.json();
+  // ====== LOAD WORKSPACES ======
+  async function loadWorkspaces() {
+    try {
+      const res = await fetch("http://localhost:8127/v1/workspace", {
+        credentials: "include" // để gửi cookie
+      }); // endpoint lấy workspace
+      const data = await res.json();
 
-            if (res.ok && Array.isArray(data)) {
-                workspaceSelect.innerHTML = "";
-                data.forEach(ws => {
-                    const opt = document.createElement("option");
-                    opt.value = ws._id;
-                    opt.textContent = ws.name;
-                    workspaceSelect.appendChild(opt);
-                });
-            } else {
-                workspaceSelect.innerHTML = `<option value="">No workspace found</option>`;
-            }
-
-        } catch (err) {
-            console.error("Lỗi khi tải workspace:", err);
-        }
-    }
-
-    // Hiển thị popup
-    createCardBtn.addEventListener("click", async () => {
-        modal.style.display = "flex";
-        await loadWorkspaces(); // load workspace mỗi khi mở popup
-        titleInput.focus();
-    });
-
-    // Chọn màu
-    colorOptions.forEach(opt => {
-        opt.addEventListener("click", () => {
-            colorOptions.forEach(o => o.classList.remove("selected"));
-            opt.classList.add("selected");
-            selectedColor = opt.dataset.color;
-            console.log("Màu đã chọn:", selectedColor); // kiểm tra
+      if (res.ok && Array.isArray(data)) {
+        workspaceSelect.innerHTML = "";
+        data.forEach(ws => {
+          const opt = document.createElement("option");
+          opt.value = ws._id;
+          opt.textContent = ws.name;
+          workspaceSelect.appendChild(opt);
         });
-    });
+      } else {
+        workspaceSelect.innerHTML = `<option value="">No workspace found</option>`;
+      }
 
-    // Đóng modal
-    cancelBtn.addEventListener("click", () => {
+    } catch (err) {
+      console.error("Lỗi khi tải workspace:", err);
+    }
+  }
+
+  // Hiển thị popup
+  createCardBtn.addEventListener("click", async () => {
+    modal.style.display = "flex";
+    await loadWorkspaces(); // load workspace mỗi khi mở popup
+    titleInput.focus();
+  });
+
+  // Chọn màu
+  colorOptions.forEach(opt => {
+    opt.addEventListener("click", () => {
+      colorOptions.forEach(o => o.classList.remove("selected"));
+      opt.classList.add("selected");
+      selectedColor = opt.dataset.color;
+      console.log("Màu đã chọn:", selectedColor); // kiểm tra
+    });
+  });
+
+  // Đóng modal
+  cancelBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+    titleInput.value = "";
+  });
+
+  // ====== CREATE BOARD ======
+  createBtn.addEventListener("click", async () => {
+    const name = titleInput.value.trim();
+    const workspaceId = workspaceSelect.value;
+    const visibility = document.getElementById("visibilitySelect").value;
+    if (!name) return alert("Vui lòng nhập tên board");
+    if (!workspaceId) return alert("Vui lòng chọn workspace");
+
+    try {
+      const res = await fetch("http://localhost:8127/v1/board/create", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          workspaceId,
+          visibility,
+          background: selectedColor
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("Tạo board thành công!");
         modal.style.display = "none";
         titleInput.value = "";
-    });
-
-    // ====== CREATE BOARD ======
-    createBtn.addEventListener("click", async () => {
-        const name = titleInput.value.trim();
-        const workspaceId = workspaceSelect.value;
-        const visibility = document.getElementById("visibilitySelect").value;
-        if (!name) return alert("Vui lòng nhập tên board");
-        if (!workspaceId) return alert("Vui lòng chọn workspace");
-
-        try {
-            const res = await fetch("http://localhost:8127/v1/board/create", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    name,
-                    workspaceId,
-                    visibility,
-                    background: selectedColor
-                }),
-            });
-
-            const data = await res.json();
-            if (res.ok) {
-                alert("Tạo board thành công!");
-                modal.style.display = "none";
-                titleInput.value = "";
-                loadMyBoards();
-            } else {
-                alert("Lỗi tạo board: " + data.message);
-            }
-        } catch (err) {
-            console.error("Create board error:", err);
-        }
-    });
+        loadMyBoards();
+      } else {
+        alert("Lỗi tạo board: " + data.message);
+      }
+    } catch (err) {
+      console.error("Create board error:", err);
+    }
+  });
 });
 
 // hiển thị list
@@ -239,7 +239,7 @@ cancelAddListBtn.addEventListener("click", () => {
 // ========================
 async function renderBoardWithLists(boardId) {
   const listsContainer = document.getElementById("listsContainer");
-  
+
   try {
     // Lấy dữ liệu board
     const res = await fetch(`http://localhost:8127/v1/board/${boardId}`);
@@ -251,52 +251,7 @@ async function renderBoardWithLists(boardId) {
 
     // Render list và card
     lists.forEach(list => {
-      const listEl = document.createElement("div");
-      listEl.className = "list";
-
-      const h3 = document.createElement("h3");
-      h3.textContent = list.name;
-      listEl.appendChild(h3);
-
-      const cardsContainer = document.createElement("div");
-      cardsContainer.className = "cards-container";
-
-      (Array.isArray(list.cards) ? list.cards : []).forEach(card => {
-        const cardEl = document.createElement("div");
-        cardEl.className = "card";
-        cardEl.textContent = card.name;
-        cardsContainer.appendChild(cardEl);
-      });
-
-      // Nút Add Card
-      const addCardBtn = document.createElement("button");
-      addCardBtn.className = "add-card-btn";
-      addCardBtn.textContent = "+ Add a card";
-      addCardBtn.addEventListener("click", async () => {
-        const cardName = prompt("Enter card title");
-        if (!cardName) return;
-
-        const cardEl = document.createElement("div");
-        cardEl.className = "card";
-        cardEl.textContent = cardName;
-        cardsContainer.appendChild(cardEl);
-
-        // Gọi API tạo card backend nếu muốn lưu
-        try {
-          await fetch(`http://localhost:8127/v1/board/create-card/${list._id}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ name: cardName ,description:""})
-          });
-        } catch (err) {
-          console.error("Error adding card:", err);
-        }
-      });
-
-      listEl.appendChild(cardsContainer);
-      listEl.appendChild(addCardBtn);
-
+      const listEl = createListElement(list);
       listsContainer.appendChild(listEl);
     });
 
@@ -304,6 +259,76 @@ async function renderBoardWithLists(boardId) {
     console.error("Error loading board:", err);
   }
 }
+
+//hàm thêm list html
+function createListElement(list) {
+  const listEl = document.createElement("div");
+  listEl.className = "list";
+  listEl.dataset.id = list._id.toString();
+
+  // Tên list
+  const h3 = document.createElement("h3");
+  h3.textContent = list.name;
+  listEl.appendChild(h3);
+
+  // Container chứa card
+  const cardsContainer = document.createElement("div");
+  cardsContainer.className = "cards-container";
+
+  // Render các card cũ nếu có
+  (Array.isArray(list.cards) ? list.cards : []).forEach(card => {
+    const cardEl = document.createElement("div");
+    cardEl.className = "card";
+    cardEl.textContent = card.name;
+    cardsContainer.appendChild(cardEl);
+  });
+
+  listEl.appendChild(cardsContainer);
+
+  // Nút Add Card
+  attachAddCard(listEl, list._id);
+
+  return listEl;
+}
+
+//hàm thêm nút card vào list tương ứng 
+function attachAddCard(listEl, listId) {
+  const cardsContainer = listEl.querySelector(".cards-container");
+
+  const addCardBtn = document.createElement("button");
+  addCardBtn.className = "add-card-btn";
+  addCardBtn.textContent = "+ Add a card";
+
+  addCardBtn.addEventListener("click", async () => {
+    const cardName = prompt("Enter card title");
+    if (!cardName) return;
+
+    try {
+      await fetch(`http://localhost:8127/v1/board/create-card/${listId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name: cardName, description: "" })
+      });
+    } catch (err) {
+      console.error("Error adding card:", err);
+    }
+  });
+
+  listEl.appendChild(addCardBtn);
+}
+
+//socket cho việc add card
+// Lắng nghe card mới realtime
+socket.on("newCard", (card) => {
+  const listId = card.list._id ? card.list._id : card.list; // nếu populate
+  const listEl = document.querySelector(`.list[data-id="${listId}"] .cards-container`);
+  if (!listEl) return;
+  const cardEl = document.createElement("div");
+  cardEl.className = "card";
+  cardEl.textContent = card.name;
+  listEl.appendChild(cardEl);
+});
 
 addListBtn.addEventListener("click", async () => {
   const title = newListTitle.value.trim();
@@ -323,7 +348,7 @@ addListBtn.addEventListener("click", async () => {
   }
 });
 socket.on("newList", (list) => {
-  renderSingleList(list);
+  addListToBoard(list);
 });
 
 
@@ -374,35 +399,11 @@ document.addEventListener("DOMContentLoaded", () => {
   document.addEventListener("click", (e) => {
     if (!inviteFormContainer.contains(e.target) && e.target !== inviteIcon) {
       inviteFormContainer.classList.add("hidden");
-       inviteIcon.style.display = "flex";
+      inviteIcon.style.display = "flex";
     }
   });
 });
-//socket
-function renderSingleList(list) {
-  const listsContainer = document.getElementById("listsContainer");
 
-  const listEl = document.createElement("div");
-  listEl.className = "list";
-  listEl.dataset.id = list._id;
-
-  const h3 = document.createElement("h3");
-  h3.textContent = list.name;
-  listEl.appendChild(h3);
-
-  const cardsContainer = document.createElement("div");
-  cardsContainer.className = "cards-container";
-
-  (Array.isArray(list.cards) ? list.cards : []).forEach(card => {
-    const cardEl = document.createElement("div");
-    cardEl.className = "card";
-    cardEl.textContent = card.name;
-    cardsContainer.appendChild(cardEl);
-  });
-
-  listEl.appendChild(cardsContainer);
-  listsContainer.appendChild(listEl);
-}
 function addListToBoard(list) {
   // list là object list từ server
   const listsContainer = document.getElementById("listsContainer");
@@ -417,14 +418,8 @@ function addListToBoard(list) {
   const cardsContainer = document.createElement("div");
   cardsContainer.className = "cards-container";
 
-  (list.cards || []).forEach(card => {
-    const cardEl = document.createElement("div");
-    cardEl.className = "card";
-    cardEl.textContent = card.name;
-    cardsContainer.appendChild(cardEl);
-  });
-
   listEl.appendChild(cardsContainer);
+  attachAddCard(listEl, list._id);
   listsContainer.appendChild(listEl);
 }
 
@@ -434,20 +429,8 @@ socket.off("newList");
 socket.on("newList", (list) => {
   console.log("📩 Received new list:", list);
 
-  // Gọi hàm riêng để thêm list mới vào giao diện
-  addListToBoard(list);
-});
-
-// Lắng nghe card mới realtime
-socket.on("newCard", (card) => {
-  console.log("Received new card:", card);
-  const listEl = document.querySelector(`.list[data-id="${card.list}"] .cards-container`);
-  if (listEl) {
-    const cardEl = document.createElement("div");
-    cardEl.className = "card";
-    cardEl.textContent = card.name;
-    listEl.appendChild(cardEl);
-  }
+  const listEl = createListElement(list); // dùng lại function
+  listsContainer.appendChild(listEl);
 });
 
 window.addEventListener("DOMContentLoaded", loadMyBoards);
