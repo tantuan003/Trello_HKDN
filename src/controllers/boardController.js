@@ -134,6 +134,8 @@ export const createCard = async (req, res) => {
 
     await newCard.save();
     await List.findByIdAndUpdate(list._id, { $push: { cards: newCard._id } });
+    const io = req.app.get("socketio");
+    io.to(list.board.toString()).emit("newCard", newCard); 
 
     res.status(201).json({ message: "Tạo card thành công!", card: newCard });
   } catch (error) {

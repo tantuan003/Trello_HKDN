@@ -31,7 +31,7 @@ loginButton.addEventListener('click', async (e) => {
         localStorage.setItem('token', result.token);
       }
       // Chuyển hướng sau đăng nhập
-      window.location.href = '/home.html';
+      window.location.href = '/boards.html';
     } else {
       alert(result.message || "Đăng nhập thất bại");
     }
