@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="./css/sidebar_header.css?v=1" />
   <!-- CSS riêng cho trang Boards -->
   <link rel="stylesheet" href="./css/boards.css?v=1" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 
 <body>
@@ -17,24 +18,11 @@
   <div class="sidebar_header" id="app-shell"></div>
 
   <!-- MAIN CONTENT của trang Boards -->
-  <main class="content content-boards">
-    <!-- Recently viewed -->
-    <section class="section-block">
-      <div class="section-head">
-        <div class="section-title">
-          <h3>Recently viewed</h3>
-        </div>
-      </div>
-      <div class="card-grid" id="boardContainer">
-        <div class="board-card" data-id="">
-          <div class="board-cover gradient-1"></div>
-          <div class="board-footer"><span class="board-title">My Trello board</span></div>
-        </div>
-      </div>
-      <div id="boardView" class="boardView" style="display:none;">
-        <h2 id="boardTitle"></h2>
-        <div id="inviteIcon" title="Invite user">
-          <img src="../uploads/add-member-icon.png" alt="Invite" />
+  <main class="content content-boards" id="main">
+     <div id="boardView" class="boardView" style="display:none;">
+        <div id="inviteUser" title="Invite user">
+          <h2 id="boardTitle"></h2>
+          <img src="../uploads/add-member-icon.png" id="invite-icon" alt="Invite" />
         </div>
 
         <!-- Form pop-up -->
@@ -59,6 +47,19 @@
               <button id="cancelAddListBtn">X</button>
             </div>
           </div>
+        </div>
+      </div>
+    <!-- Recently viewed -->
+    <section class="section-block">
+      <div class="section-head">
+        <div class="section-title">
+          <h3>Recently viewed</h3>
+        </div>
+      </div>
+      <div class="card-grid" id="boardContainer">
+        <div class="board-card" data-id="">
+          <div class="board-cover gradient-1"></div>
+          <div class="board-footer"><span class="board-title">My Trello board</span></div>
         </div>
       </div>
 
@@ -136,5 +137,7 @@
   </div>
 </body>
 <script type="module" src="js/Boards.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
 
 </html>

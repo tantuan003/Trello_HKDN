@@ -186,9 +186,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const name = titleInput.value.trim();
     const workspaceId = workspaceSelect.value;
     const visibility = document.getElementById("visibilitySelect").value;
-    if (!name) return alert("Vui lòng nhập tên board");
-    if (!workspaceId) return alert("Vui lòng chọn workspace");
-
+    if (!name || !workspaceId)
+      return Toastify({
+        text: "⚠️ Vui lòng nhập đầy đủ!",
+        duration: 2000,            // 3 giây
+        gravity: "top",            // top hoặc bottom
+        position: "right",         // left, center, right
+        backgroundColor: "#FF9800", // màu cam cảnh báo
+        close: true,               // có nút (x) để tắt
+        stopOnFocus: true          // dừng khi rê chuột vào
+      }).showToast();
     try {
       const res = await fetch("http://localhost:8127/v1/board/create", {
         method: "POST",
@@ -203,12 +210,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await res.json();
       if (res.ok) {
-        alert("Tạo board thành công!");
+        Toastify({
+          text: "✅ Tạo board thành công!",
+          duration: 2000,
+          gravity: "top",
+          position: "right",
+          close: true,
+          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+        }).showToast();
         modal.style.display = "none";
         titleInput.value = "";
         loadMyBoards();
       } else {
-        alert("Lỗi tạo board: " + data.message);
+        Toastify({
+          text: `❌ ${result.message || "Tạo board thất bại!"}`,
+          duration: 2000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#F44336",
+          close: true
+        }).showToast();
       }
     } catch (err) {
       console.error("Create board error:", err);
@@ -352,16 +373,27 @@ socket.on("newList", (list) => {
 });
 
 
-// mời user
+// Mời user
 const inviteForm = document.getElementById("inviteForm");
+
 inviteForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const boardId = currentBoardId;
-  console.log(boardId);
   const email = inviteForm.querySelector("input").value.trim();
-  console.log(email);
 
-  if (!email) return alert("Vui lòng nhập email!");
+  // Kiểm tra rỗng
+  if (!email) {
+    Toastify({
+      text: "⚠️ Vui lòng nhập email!",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF9800",
+      close: true,
+      stopOnFocus: true
+    }).showToast();
+    return;
+  }
 
   try {
     const res = await fetch(`http://localhost:8127/v1/board/${boardId}/invite`, {
@@ -374,19 +406,45 @@ inviteForm.addEventListener("submit", async (e) => {
     const data = await res.json();
 
     if (res.ok) {
-      alert(`Mời ${email} thành công!`); // thông báo thành công
-      inviteForm.reset(); // xóa giá trị input
+      Toastify({
+        text: "✅ Mời thành công!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        close: true,
+        stopOnFocus: true
+      }).showToast();
+
+      inviteForm.reset(); // Xóa giá trị input sau khi gửi
     } else {
-      alert(`Lỗi: ${data.message}`); // thông báo lỗi từ backend
+      Toastify({
+        text: `❌ ${data.message || "Mời thất bại!"}`,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#F44336", // đỏ báo lỗi
+        close: true,
+        stopOnFocus: true
+      }).showToast();
     }
   } catch (err) {
     console.error(err);
-    alert("Lỗi server, thử lại sau!");
+    Toastify({
+      text: "🚫 Lỗi server, vui lòng thử lại sau!",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#9C27B0", // tím báo lỗi hệ thống
+      close: true,
+      stopOnFocus: true
+    }).showToast();
   }
 });
+
 //bật tắt invite
 document.addEventListener("DOMContentLoaded", () => {
-  const inviteIcon = document.getElementById("inviteIcon");
+  const inviteIcon = document.getElementById("invite-icon");
   const inviteFormContainer = document.getElementById("inviteFormContainer");
 
   inviteIcon.addEventListener("click", (e) => {
@@ -398,8 +456,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Click ra ngoài sẽ ẩn form
   document.addEventListener("click", (e) => {
     if (!inviteFormContainer.contains(e.target) && e.target !== inviteIcon) {
-      inviteFormContainer.classList.add("hidden");
       inviteIcon.style.display = "flex";
+      inviteFormContainer.classList.add("hidden");
     }
   });
 });

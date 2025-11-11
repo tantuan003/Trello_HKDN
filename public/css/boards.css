@@ -29,6 +29,8 @@
 }
 /* Cấu trúc section */
 .section-block {
+  display: block;
+  width: 100%;
   margin-bottom: 28px;
 }
 .section-head {
@@ -252,26 +254,31 @@
 .gradient-2 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
 .gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
 
+#main{
+  width: 100%;
+  display: block;
+}
+
 .content-boards.fullwidth.gradient-3 {
-   position: absolute;
+  position: absolute;
   top: var(--header-h);
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 10;
   background: linear-gradient(135deg, #fa709a, #fee140);
-    border-radius: 20px;
+  border-radius: 15px;
 
 }
 .content-boards.fullwidth.gradient-2 {
-   position: absolute;
+  position: absolute;
   top: var(--header-h);
   left: 0;
   right: 0;
   bottom: 0;
   z-index: 10;
   background: linear-gradient(135deg, #43e97b, #38f9d7);
-    border-radius: 20px;
+  border-radius: 15px;
 
 }
 .content-boards.fullwidth.gradient-1 {
@@ -282,7 +289,7 @@
   bottom: 0;
   z-index: 10;
   background: linear-gradient(135deg, #4facfe, #00f2fe);
-  border-radius: 20px;
+  border-radius: 15px;
 }
 .modal-actions {
   display: flex;
@@ -323,6 +330,8 @@
 /* ===== CONTAINER CHỨA CÁC LIST ===== */
 /* Vùng chứa tất cả list + nút add */
 .boardView {
+  display: flex;
+  width: 100%;
   padding: 20px;
   overflow-x: auto;
   height: calc(100vh - 120px);
@@ -338,6 +347,7 @@
   overflow-x: auto;
   padding-bottom: 10px;
   scroll-behavior: smooth;
+  margin-top: 20px;
 }
 
 /* Thanh cuộn ngang */
@@ -545,7 +555,6 @@
 
 #inviteFormContainer {
   position: absolute;
-  top: 50px; /* chỉnh vị trí so với icon */
   right: 0;
   background: white;
   border: 1px solid #ccc;
@@ -554,16 +563,30 @@
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   z-index: 15;
 }
-#inviteIcon img{
-  position: absolute;
-  right: 0;
-  height: 25px;
-  width: 25px;
-  margin-right: 50px;
-  margin-bottom: 20px;
+#inviteUser {
+  width: 100%;
+  display: flex;              /* đặt các phần tử con cùng hàng */
+  align-items: center;        /* căn giữa theo chiều dọc (cùng độ cao) */
+  justify-content: space-between; /* đẩy 2 phần tử ra hai đầu (tuỳ bạn) */
+  gap: 10px;                  /* khoảng cách giữa các phần tử */
+  padding: 8px; 
+  border-radius: 20px;              /* thêm khoảng cách trong khung nếu cần */
+  background-color: #00000022;
+}
+
+#inviteUser h2 {
+  margin: 0;                  /* xoá margin mặc định của h2 */
+  font-size: 20px;
+}
+
+#inviteUser img {
+  width: 27px;
+  height: 27px;
+  object-fit: contain;        /* giữ nguyên tỉ lệ hình */
+  cursor: pointer;            /* trỏ chuột hình bàn tay khi hover */
 }
 #inviteForm input {
-  padding: 5px 10px;
+  padding: 5px 5px;
   margin-right: 5px;
   border-radius: 4px;
   border: 1px solid #ccc;
@@ -573,11 +596,11 @@
   padding: 5px 10px;
   border-radius: 4px;
   border: none;
-  background-color: #0079bf; 
-  color: white;
+  background-color: #06f455; 
+  color: rgb(255, 255, 255);
   cursor: pointer;
 }
 
 #inviteForm button:hover {
-  background-color: #026aa7;
+  background-color: #049526;
 }
