@@ -316,28 +316,91 @@ function createListElement(list) {
 function attachAddCard(listEl, listId) {
   const cardsContainer = listEl.querySelector(".cards-container");
 
+  // Nút "Add a card"
   const addCardBtn = document.createElement("button");
   addCardBtn.className = "add-card-btn";
   addCardBtn.textContent = "+ Add a card";
 
-  addCardBtn.addEventListener("click", async () => {
-    const cardName = prompt("Enter card title");
-    if (!cardName) return;
+  // Container input (ẩn ban đầu)
+  const inputContainer = document.createElement("div");
+  inputContainer.className = "add-card-input-container hidden";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Enter a card title...";
+  input.className = "add-card-input";
+
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Add";
+  saveBtn.className = "save-card-btn";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.className = "cancel-card-btn";
+
+  inputContainer.appendChild(input);
+  inputContainer.appendChild(saveBtn);
+  inputContainer.appendChild(cancelBtn);
+
+  // Gắn các phần tử vào list
+  listEl.appendChild(inputContainer);
+  listEl.appendChild(addCardBtn);
+
+  // --- Sự kiện ---
+  addCardBtn.addEventListener("click", () => {
+    addCardBtn.classList.add("hidden");
+    setTimeout(() => inputContainer.classList.add("show"), 10);  // bật transition
+    inputContainer.classList.remove("hidden");
+    input.focus();
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    inputContainer.classList.remove("show");  // đóng form mượt
+    setTimeout(() => {
+      inputContainer.classList.add("hidden");
+    }, 300); // thời gian khớp transition
+    addCardBtn.classList.remove("hidden");
+    input.value = "";
+  });
+
+  saveBtn.addEventListener("click", async () => {
+    const cardName = input.value.trim();
+    if (!cardName) return Toastify({
+      text: "⚠️ Vui lòng nhập tên thẻ!",
+      duration: 2000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF9800",
+      close: true
+    }).showToast();
+    saveBtn.disabled = true;
 
     try {
-      await fetch(`http://localhost:8127/v1/board/create-card/${listId}`, {
+      const res = await fetch(`http://localhost:8127/v1/board/create-card/${listId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name: cardName, description: "" })
+        body: JSON.stringify({ name: cardName, description: "" }),
       });
+
+      if (!res.ok) throw new Error("Không thể thêm thẻ");
+      inputContainer.classList.remove("show");  
+      setTimeout(() => inputContainer.classList.add("hidden"), 10);
+
+      // Reset UI
+      input.value = "";
+      inputContainer.classList.add("hidden");
+      addCardBtn.classList.remove("hidden");
+
     } catch (err) {
       console.error("Error adding card:", err);
+      alert("Lỗi khi thêm card!");
+    } finally {
+      saveBtn.disabled = false;
     }
   });
-
-  listEl.appendChild(addCardBtn);
 }
+
 
 //socket cho việc add card
 // Lắng nghe card mới realtime
