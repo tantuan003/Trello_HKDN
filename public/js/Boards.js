@@ -186,9 +186,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const name = titleInput.value.trim();
     const workspaceId = workspaceSelect.value;
     const visibility = document.getElementById("visibilitySelect").value;
-    if (!name) return alert("Vui lòng nhập tên board");
-    if (!workspaceId) return alert("Vui lòng chọn workspace");
-
+    if (!name || !workspaceId)
+      return Toastify({
+        text: "⚠️ Vui lòng nhập đầy đủ!",
+        duration: 2000,            // 3 giây
+        gravity: "top",            // top hoặc bottom
+        position: "right",         // left, center, right
+        backgroundColor: "#FF9800", // màu cam cảnh báo
+        close: true,               // có nút (x) để tắt
+        stopOnFocus: true          // dừng khi rê chuột vào
+      }).showToast();
     try {
       const res = await fetch("http://localhost:8127/v1/board/create", {
         method: "POST",
@@ -203,12 +210,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const data = await res.json();
       if (res.ok) {
-        alert("Tạo board thành công!");
+        Toastify({
+          text: "✅ Tạo board thành công!",
+          duration: 2000,
+          gravity: "top",
+          position: "right",
+          close: true,
+          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+        }).showToast();
         modal.style.display = "none";
         titleInput.value = "";
         loadMyBoards();
       } else {
-        alert("Lỗi tạo board: " + data.message);
+        Toastify({
+          text: `❌ ${result.message || "Tạo board thất bại!"}`,
+          duration: 2000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "#F44336",
+          close: true
+        }).showToast();
       }
     } catch (err) {
       console.error("Create board error:", err);
@@ -295,28 +316,91 @@ function createListElement(list) {
 function attachAddCard(listEl, listId) {
   const cardsContainer = listEl.querySelector(".cards-container");
 
+  // Nút "Add a card"
   const addCardBtn = document.createElement("button");
   addCardBtn.className = "add-card-btn";
   addCardBtn.textContent = "+ Add a card";
 
-  addCardBtn.addEventListener("click", async () => {
-    const cardName = prompt("Enter card title");
-    if (!cardName) return;
+  // Container input (ẩn ban đầu)
+  const inputContainer = document.createElement("div");
+  inputContainer.className = "add-card-input-container hidden";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.placeholder = "Enter a card title...";
+  input.className = "add-card-input";
+
+  const saveBtn = document.createElement("button");
+  saveBtn.textContent = "Add";
+  saveBtn.className = "save-card-btn";
+
+  const cancelBtn = document.createElement("button");
+  cancelBtn.textContent = "Cancel";
+  cancelBtn.className = "cancel-card-btn";
+
+  inputContainer.appendChild(input);
+  inputContainer.appendChild(saveBtn);
+  inputContainer.appendChild(cancelBtn);
+
+  // Gắn các phần tử vào list
+  listEl.appendChild(inputContainer);
+  listEl.appendChild(addCardBtn);
+
+  // --- Sự kiện ---
+  addCardBtn.addEventListener("click", () => {
+    addCardBtn.classList.add("hidden");
+    setTimeout(() => inputContainer.classList.add("show"), 10);  // bật transition
+    inputContainer.classList.remove("hidden");
+    input.focus();
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    inputContainer.classList.remove("show");  // đóng form mượt
+    setTimeout(() => {
+      inputContainer.classList.add("hidden");
+    }, 300); // thời gian khớp transition
+    addCardBtn.classList.remove("hidden");
+    input.value = "";
+  });
+
+  saveBtn.addEventListener("click", async () => {
+    const cardName = input.value.trim();
+    if (!cardName) return Toastify({
+      text: "⚠️ Vui lòng nhập tên thẻ!",
+      duration: 2000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF9800",
+      close: true
+    }).showToast();
+    saveBtn.disabled = true;
 
     try {
-      await fetch(`http://localhost:8127/v1/board/create-card/${listId}`, {
+      const res = await fetch(`http://localhost:8127/v1/board/create-card/${listId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ name: cardName, description: "" })
+        body: JSON.stringify({ name: cardName, description: "" }),
       });
+
+      if (!res.ok) throw new Error("Không thể thêm thẻ");
+      inputContainer.classList.remove("show");  
+      setTimeout(() => inputContainer.classList.add("hidden"), 10);
+
+      // Reset UI
+      input.value = "";
+      inputContainer.classList.add("hidden");
+      addCardBtn.classList.remove("hidden");
+
     } catch (err) {
       console.error("Error adding card:", err);
+      alert("Lỗi khi thêm card!");
+    } finally {
+      saveBtn.disabled = false;
     }
   });
-
-  listEl.appendChild(addCardBtn);
 }
+
 
 //socket cho việc add card
 // Lắng nghe card mới realtime
@@ -352,16 +436,27 @@ socket.on("newList", (list) => {
 });
 
 
-// mời user
+// Mời user
 const inviteForm = document.getElementById("inviteForm");
+
 inviteForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const boardId = currentBoardId;
-  console.log(boardId);
   const email = inviteForm.querySelector("input").value.trim();
-  console.log(email);
 
-  if (!email) return alert("Vui lòng nhập email!");
+  // Kiểm tra rỗng
+  if (!email) {
+    Toastify({
+      text: "⚠️ Vui lòng nhập email!",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF9800",
+      close: true,
+      stopOnFocus: true
+    }).showToast();
+    return;
+  }
 
   try {
     const res = await fetch(`http://localhost:8127/v1/board/${boardId}/invite`, {
@@ -374,19 +469,45 @@ inviteForm.addEventListener("submit", async (e) => {
     const data = await res.json();
 
     if (res.ok) {
-      alert(`Mời ${email} thành công!`); // thông báo thành công
-      inviteForm.reset(); // xóa giá trị input
+      Toastify({
+        text: "✅ Mời thành công!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        close: true,
+        stopOnFocus: true
+      }).showToast();
+
+      inviteForm.reset(); // Xóa giá trị input sau khi gửi
     } else {
-      alert(`Lỗi: ${data.message}`); // thông báo lỗi từ backend
+      Toastify({
+        text: `❌ ${data.message || "Mời thất bại!"}`,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#F44336", // đỏ báo lỗi
+        close: true,
+        stopOnFocus: true
+      }).showToast();
     }
   } catch (err) {
     console.error(err);
-    alert("Lỗi server, thử lại sau!");
+    Toastify({
+      text: "🚫 Lỗi server, vui lòng thử lại sau!",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#9C27B0", // tím báo lỗi hệ thống
+      close: true,
+      stopOnFocus: true
+    }).showToast();
   }
 });
+
 //bật tắt invite
 document.addEventListener("DOMContentLoaded", () => {
-  const inviteIcon = document.getElementById("inviteIcon");
+  const inviteIcon = document.getElementById("invite-icon");
   const inviteFormContainer = document.getElementById("inviteFormContainer");
 
   inviteIcon.addEventListener("click", (e) => {
@@ -398,8 +519,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Click ra ngoài sẽ ẩn form
   document.addEventListener("click", (e) => {
     if (!inviteFormContainer.contains(e.target) && e.target !== inviteIcon) {
-      inviteFormContainer.classList.add("hidden");
       inviteIcon.style.display = "flex";
+      inviteFormContainer.classList.add("hidden");
     }
   });
 });

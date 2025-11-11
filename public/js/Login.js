@@ -2,15 +2,21 @@ const loginForm = document.getElementById('loginForm');
 const loginButton = document.getElementById('login');
 
 loginButton.addEventListener('click', async (e) => {
-  e.preventDefault(); // Ngăn submit mặc định nếu dùng button type submit
+  e.preventDefault();
 
-  // Lấy dữ liệu từ input
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
 
-  // Kiểm tra dữ liệu rỗng
+  // Kiểm tra rỗng
   if (!email || !password) {
-    alert("Vui lòng nhập đầy đủ email và mật khẩu");
+    Toastify({
+      text: "⚠️ Vui lòng nhập đầy đủ email và mật khẩu!",
+      duration: 2000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#FF9800",
+      close: true
+    }).showToast();
     return;
   }
 
@@ -18,30 +24,55 @@ loginButton.addEventListener('click', async (e) => {
     const response = await fetch('http://localhost:8127/v1/User/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
+      credentials: 'include'
     });
 
     const result = await response.json();
-    
+
     if (response.ok) {
-      alert("Đăng nhập thành công!");
-      console.log(result);
-      // Lưu token nếu server trả về
+      Toastify({
+        text: "✅ Đăng nhập thành công!",
+        duration: 2000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)"
+      }).showToast();
+
       if (result.token) {
         localStorage.setItem('token', result.token);
       }
-      // Chuyển hướng sau đăng nhập
-      window.location.href = '/boards.html';
+
+      // Chuyển hướng sau khi hiển thị thông báo một chút
+      setTimeout(() => {
+        window.location.href = '/boards.html';
+      }, 1000);
     } else {
-      alert(result.message || "Đăng nhập thất bại");
+      Toastify({
+        text: `❌ ${result.message || "Đăng nhập thất bại!"}`,
+        duration: 2000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#F44336",
+        close: true
+      }).showToast();
     }
   } catch (err) {
     console.error(err);
-    alert("Lỗi kết nối server");
+    Toastify({
+      text: "🚫 Lỗi kết nối đến server!",
+      duration: 2000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "#9C27B0",
+      close: true
+    }).showToast();
   }
 });
+
 document.addEventListener("DOMContentLoaded", () => {
   if (typeof initYetiAnimation === "function") {
-    initYetiAnimation(); 
+    initYetiAnimation();
   }
 });
