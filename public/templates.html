@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Templates</title>
 
   <!-- CSS chung (header + sidebar) -->
@@ -10,6 +11,7 @@
   <!-- CSS riêng cho trang Templates -->
   <link rel="stylesheet" href="./css/templates.css?v=1" />
 </head>
+
 <body>
   <!-- Header + Sidebar sẽ được inject vào đây (giống boards.html) -->
   <div id="app-shell"></div>
@@ -36,51 +38,8 @@
     </section>
   </main>
 
-  <script>
-    // Inject component dùng lại cách như boards.html
-    async function inject(file, targetSelector) {
-      try {
-        const res = await fetch(file, { cache: 'no-store' });
-        if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-        const html = await res.text();
-        document.querySelector(targetSelector).innerHTML = html;
-      } catch (err) {
-        console.error('Load component failed:', file, err);
-      }
-    }
-
-    // Đánh dấu menu Templates active & mở submenu
-    function activateTemplatesMenu() {
-      const head = document.getElementById('templateMenu');
-      if (head) {
-        head.classList.add('is-active','active');
-        const section = head.closest('.nav-section');
-        section?.classList.add('open');
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      // templates.html ở /public → component ở ./components/...
-      await inject('./components/sidebar_header.html', '#app-shell');
-      activateTemplatesMenu();
-    });
-
-    // Toggle Workspace (dùng lại class trong sidebar_header.css)
-    document.addEventListener('click', function (e) {
-      const head = e.target.closest('.wsp-head');
-      if (!head) return;
-      const workspace = head.closest('.workspaces');
-      workspace.classList.toggle('is-collapsed');
-    });
-
-    // Tìm kiếm (ẩn/hiện card theo từ khoá)
-    document.addEventListener('input', (e) => {
-      if (e.target.id !== 'templateSearch') return;
-      const q = e.target.value.toLowerCase();
-      document.querySelectorAll('#templateGrid .template-card').forEach(card => {
-        card.style.display = card.textContent.toLowerCase().includes(q) ? '' : 'none';
-      });
-    });
-  </script>
+  <!-- JS riêng -->
+  <script src="js/Templates.js" type="module"></script>
 </body>
+
 </html>

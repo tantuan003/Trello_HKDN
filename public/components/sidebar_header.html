@@ -119,35 +119,5 @@
         </main>
       </div>
     </div>
-
-    <!-- JS: toggle Workspace -->
-    <script>
-      const wsp = document.getElementById('wsp');
-      const btn = document.getElementById('wspToggle');
-      btn?.addEventListener('click', () => {
-        const collapsed = wsp.classList.toggle('is-collapsed');
-        btn.setAttribute('aria-expanded', String(!collapsed));
-      });
-    </script>
-
-    <!-- JS: Templates behavior (chevron = toggle, text = navigate) -->
-    <script>
-      document.addEventListener('click', function (e) {
-        const head = e.target.closest('.nav-item.has-sub');
-        if (!head) return;
-
-        const section = head.closest('.nav-section');
-        const clickOnChevron = !!e.target.closest('.chev');
-
-        if (clickOnChevron) {
-          e.preventDefault();
-          section.classList.toggle('open');
-          head.classList.toggle('active');
-        } else {
-          const href = head.getAttribute('href') || 'templates.html';
-          window.location.href = href;
-        }
-      });
-    </script>
   </body>
   </html>
