@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 import userRoutes from "./routes/UserRoutes.js";
 import boardRoutes from "./routes/boardRoutes.js";
+import uploadRoutes from "./routes/uploadRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
@@ -28,7 +29,7 @@ app.use(cookieParser());
 app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);
 app.use("/v1/workspace", workspaceRoutes);
-
+app.use("/v1/upload", uploadRoutes);
 // ⚙️ Public nằm cùng cấp với src
 app.use(express.static(path.join(__dirname, "../public")));
 

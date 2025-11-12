@@ -119,16 +119,33 @@
         </main>
       </div>
     </div>
+    </body>
 
-    <!-- JS: toggle Workspace -->
-    <script>
-      const wsp = document.getElementById('wsp');
-      const btn = document.getElementById('wspToggle');
-      btn?.addEventListener('click', () => {
-        const collapsed = wsp.classList.toggle('is-collapsed');
-        btn.setAttribute('aria-expanded', String(!collapsed));
-      });
-    </script>
+    <script>// Lấy các element
+const wspSection = document.getElementById("wsp");
+const wspToggle = document.getElementById("wspToggle");
+const wspMenu = wspSection.querySelector(".wsp-menu");
+
+// Ban đầu có thể ẩn menu
+wspMenu.style.display = "none";  // hoặc block nếu muốn mở sẵn
+
+// Thêm sự kiện click
+wspToggle.addEventListener("click", () => {
+  const isExpanded = wspToggle.getAttribute("aria-expanded") === "true";
+
+  if (isExpanded) {
+    // Đang mở -> đóng
+    wspMenu.style.display = "none";
+    wspToggle.setAttribute("aria-expanded", "false");
+    wspToggle.querySelector(".chev").textContent = "▶"; // nếu muốn đổi icon
+  } else {
+    // Đang đóng -> mở
+    wspMenu.style.display = "block";
+    wspToggle.setAttribute("aria-expanded", "true");
+    wspToggle.querySelector(".chev").textContent = "▼"; // đổi icon
+  }
+});
+</script>
 
     <!-- JS: Templates behavior (chevron = toggle, text = navigate) -->
     <script>
@@ -149,5 +166,4 @@
         }
       });
     </script>
-  </body>
   </html>

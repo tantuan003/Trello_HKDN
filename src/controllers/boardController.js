@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import List from "../models/ListModel.js";
 import Card from "../models/CardModel.js";
 import User from "../models/UserModel.js";
+import multer from "multer";
+import path from "path";
 
 export const createBoard = async (req, res) => {
   try {
@@ -195,3 +197,33 @@ export const inviteUser = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+
+// tải background 
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join("public/uploads"));
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
+/**
+ * Controller xử lý upload background
+ */
+export const uploadBackground = [
+  upload.single("background"),
+  async (req, res) => {
+    try {
+      const imageUrl = `/uploads/${req.file.filename}`;
+      res.json({ imageUrl });
+    } catch (error) {
+      console.error("❌ Lỗi upload background:", error);
+      res.status(500).json({ message: "Upload thất bại", error });
+    }
+  },
+];
