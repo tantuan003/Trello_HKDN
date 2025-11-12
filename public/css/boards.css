@@ -114,8 +114,13 @@
 }
 .board-cover {
   height: 84px;
-  border-bottom: 1px solid #eef2f4;
-  position: relative;
+  width: 100%;
+  height: 120px;   /* hoặc auto nếu muốn tuỳ card */
+  border-radius: 6px;
+  overflow: hidden;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 .gradient-1 {
   background: linear-gradient(135deg, #7c3aed 0%, #ec4899 48%, #f59e0b 100%);
