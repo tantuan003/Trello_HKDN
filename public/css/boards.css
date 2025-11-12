@@ -1,8 +1,4 @@
 /* ===== Boards page ===== */
-
-/* Layout shell */
-#app-shell { display: flex; }
-
 .content-boards {
   flex: 1;
   background: #fff;
@@ -11,8 +7,18 @@
   overflow-y: auto;
   transition: all 0.3s ease;
 }
-
-/* Fullwidth overlay state */
+#app-shell {
+  display: flex;
+}
+.content-boards {
+  flex: 1; /* chiếm phần còn lại */
+  transition: all 0.3s ease;
+}
+/* Bỏ khoảng trống đầu tiên */
+.content-boards .section-block:first-child {
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+}
 .content-boards.fullwidth {
   width: 100%;
   position: absolute;
@@ -22,32 +28,41 @@
   bottom: 0;
   z-index: 10;
 }
-
-/* Section structure */
-.section-block { display: block; width: 100%; margin-bottom: 28px; }
-.content-boards .section-block:first-child { margin-top: 0 !important; padding-top: 0 !important; }
-
+/* Cấu trúc section */
+.section-block {
+  display: block;
+  width: 100%;
+  margin-bottom: 28px;
+}
 .section-head {
   display: flex;
   align-items: center;
   gap: 580px;
   margin-bottom: 12px;
 }
-
-.section-title { display: flex; align-items: center; gap: 8px; }
-.section-title h3 { margin: 0; font-size: 16px; }
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.section-title h3 {
+  margin: 0;
+  font-size: 16px;
+}
 
 .heading {
   margin: 0;
   font-size: 12px;
   letter-spacing: 0.12em;
   color: #6b7280;
-  font-weight: 800px;
+  font-weight: 800;
 }
 
-.actions-inline { display: flex; align-items: center; gap: 8px; }
-
-/* Chips */
+.actions-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 .chip {
   display: inline-flex;
   align-items: center;
@@ -60,19 +75,25 @@
   font-weight: 600;
   border: 1px solid #e5e7eb;
 }
-.chip .ic { width: 16px; text-align: center; opacity: 0.85; }
+.chip .ic {
+  width: 16px;
+  text-align: center;
+  opacity: 0.85;
+}
 
-/* Grid for boards */
+/* Grid cho các board */
 .card-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 14px;
 }
+.mt-2 {
+  margin-top: 12px;
+}
+.mt-3 {
+  margin-top: 16px;
+}
 
-.mt-2 { margin-top: 12px; }
-.mt-3 { margin-top: 16px; }
-
-/* Board card */
 .board-card {
   display: flex;
   flex-direction: column;
@@ -90,10 +111,17 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
   border-color: #e2e8f0;
 }
-
-.board-cover { height: 84px; border-bottom: 1px solid #eef2f4; position: relative; }
-.img-cover { background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); }
-
+.board-cover {
+  height: 84px;
+  border-bottom: 1px solid #eef2f4;
+  position: relative;
+}
+.gradient-1 {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 48%, #f59e0b 100%);
+}
+.img-cover {
+  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+}
 .badge {
   position: absolute;
   right: 10px;
@@ -104,27 +132,60 @@
   font-weight: 800;
   letter-spacing: 0.04em;
 }
-.badge-dark { background: #111827; color: #fff; }
-
-.board-footer { padding: 10px 12px; display: flex; align-items: center; }
-.board-title { font-weight: 600; }
-
-.create-card { cursor: pointer; border-style: dashed; background: #f4f5f7; }
-.create-card .create-body { display: grid; place-items: center; height: 100%; color: #6b7280; font-weight: 600; }
-
-/* Workspace row */
-.workspace-row { display: flex; align-items: center; gap: 10px; margin: 10px 0 4px; }
-.ws-title { display: flex; align-items: center; gap: 8px; }
-
-.ws-badge {
-  width: 22px; height: 22px; border-radius: 6px;
-  display: grid; place-items: center;
-  background: #0ea5a4; color: #fff; font-size: 12px; font-weight: 800;
+.badge-dark {
+  background: #111827;
+  color: #fff;
 }
-.ws-name { font-weight: 800; }
 
-/* Outline buttons (split per element type to avoid conflicts) */
-a.btn-outline {
+.board-footer {
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+}
+.board-title {
+  font-weight: 600;
+}
+
+.create-card {
+  cursor: pointer;
+  border-style: dashed;
+  background: #f4f5f7;
+}
+.create-card .create-body {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.workspace-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 4px;
+}
+.ws-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.ws-badge {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: #0ea5a4;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+}
+.ws-name {
+  font-weight: 800;
+}
+
+.btn-outline {
   display: inline-block;
   padding: 8px 14px;
   border: 1px solid #e5e7eb;
@@ -133,33 +194,21 @@ a.btn-outline {
   color: #111827;
   background: #fff;
 }
-a.btn-outline:hover { background: #f8fafc; }
-
-button.btn-outline {
-  background-color: transparent;
-  border: 1px solid #ccc;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
+.btn-outline:hover {
+  background: #f8fafc;
 }
-
-/* Primary button */
-.btn-primary {
-  background-color: #0079bf;
-  color: #fff;
-  padding: 6px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* Modal */
+/* Popup overlay */
 .modal-overlay {
-  position: fixed; inset: 0;
+  position: fixed;
+  inset: 0;
   background: rgba(0,0,0,0.4);
-  display: flex; justify-content: center; align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   z-index: 999;
 }
+
+/* Popup box */
 .modal {
   background: #fff;
   padding: 20px;
@@ -168,49 +217,128 @@ button.btn-outline {
   box-shadow: 0 5px 15px rgba(0,0,0,0.2);
   animation: fadeIn 0.2s ease-in-out;
 }
-.modal h3 { margin: 0 0 15px; }
-.modal input { width: 100%; padding: 8px; margin: 5px 0 15px 0; border-radius: 6px; border: 1px solid #ccc; }
-.modal select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; margin: 5px 0 15px 0; }
 
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+.modal h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.modal input {
+  width: 100%;
+  padding: 8px;
+  margin: 5px 0 15px 0;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
 
 /* Color options */
-.color-options { display: flex; gap: 8px; margin: 5px 0 15px 0; }
-.color-swatch { width: 30px; height: 30px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
-.color-swatch.selected { border-color: #000; }
+.color-options {
+  display: flex;
+  gap: 8px;
+  margin: 5px 0 15px 0;
+}
 
-/* Gradients (giữ bộ đang có hiệu lực để không đổi UI) */
+.color-swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+
+.color-swatch.selected {
+  border-color: #000;
+}
+
 .gradient-1 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
 .gradient-2 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
 .gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
 
-/* Fullwidth + background gradient states */
-.content-boards.fullwidth.gradient-1 {
-  position: absolute; top: var(--header-h); left: 0; right: 0; bottom: 0;
-  z-index: 10; background: linear-gradient(135deg, #4facfe, #00f2fe); border-radius: 15px;
+#main{
+  width: 80%;
+  display: block;
+}
+
+.content-boards.fullwidth.gradient-3 {
+  position: absolute;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, #fa709a, #fee140);
+  border-radius: 15px;
+
 }
 .content-boards.fullwidth.gradient-2 {
-  position: absolute; top: var(--header-h); left: 0; right: 0; bottom: 0;
-  z-index: 10; background: linear-gradient(135deg, #43e97b, #38f9d7); border-radius: 15px;
+  position: absolute;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  border-radius: 15px;
+
 }
-.content-boards.fullwidth.gradient-3 {
-  position: absolute; top: var(--header-h); left: 0; right: 0; bottom: 0;
-  z-index: 10; background: linear-gradient(135deg, #fa709a, #fee140); border-radius: 15px;
+.content-boards.fullwidth.gradient-1 {
+  position: absolute;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  border-radius: 15px;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
-/* ===== Lists / Cards (Board View) ===== */
+.btn-primary {
+  background-color: #0079bf;
+  color: white;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
-#main { width: 80%; display: block; }
+.btn-outline {
+  background-color: transparent;
+  border: 1px solid #ccc;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
 
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.modal select {
+  width: 100%;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  margin: 5px 0 15px 0;
+}
+ 
+/* css cho list */
+/* ===== CONTAINER CHỨA CÁC LIST ===== */
+/* Vùng chứa tất cả list + nút add */
 .boardView {
   display: flex;
-  width: 80%;
+  width: 100%;
   padding: 20px;
   overflow-x: auto;
   height: calc(100vh - 120px);
   box-sizing: border-box;
 }
 
+/* Container chứa list */
 .lists-container {
   display: flex;
   align-items: flex-start;
@@ -223,9 +351,14 @@ button.btn-outline {
   margin-top: 20px;
 }
 
-/* Horizontal scrollbar */
-.lists-container::-webkit-scrollbar { height: 8px; }
-.lists-container::-webkit-scrollbar-thumb { background-color: rgba(0,0,0,0.15); border-radius: 10px; }
+/* Thanh cuộn ngang */
+.lists-container::-webkit-scrollbar {
+  height: 8px;
+}
+.lists-container::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.15);
+  border-radius: 10px;
+}
 
 /* List */
 .list {
@@ -235,9 +368,10 @@ button.btn-outline {
   border-radius: 8px;
   padding: 12px;
   flex: 0 0 280px;
-  min-height: 100px;
+  min-height: 100px; /* đảm bảo đủ chỗ hiển thị */
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
+
 .list h3 {
   font-size: 1rem;
   font-weight: 600;
@@ -254,8 +388,13 @@ button.btn-outline {
   flex-direction: column;
   gap: 10px;
 }
-.cards-container::-webkit-scrollbar { width: 6px; }
-.cards-container::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 6px; }
+.cards-container::-webkit-scrollbar {
+  width: 6px;
+}
+.cards-container::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 6px;
+}
 
 /* Card */
 .card {
@@ -268,9 +407,13 @@ button.btn-outline {
   cursor: pointer;
   transition: all 0.2s ease;
 }
-.card:hover { background-color: #f1f3f6; transform: translateY(-1px); }
+.card:hover {
+  background-color: #f1f3f6;
+  transform: translateY(-1px);
+}
 
-/* Add List */
+/* --- Nút Add List --- */
+/* Nút Add List (container) */
 .add-list {
   background: rgba(255, 255, 255, 0.2);
   border: 1.5px dashed rgba(0, 0, 0, 0.15);
@@ -284,34 +427,46 @@ button.btn-outline {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   min-height: 44px;
 }
-.add-list:hover { background: rgba(255, 255, 255, 0.45); border-color: #0079bf; transform: translateY(-1px); }
 
+.add-list:hover {
+  background: rgba(255, 255, 255, 0.45);
+  border-color: #0079bf;
+  transform: translateY(-1px);
+}
+
+/* Nút hiển thị Add form */
 #showAddListBtn {
   background: none;
   border: none;
   color: #0079bf;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 500;   /* 👈 giảm bớt độ đậm */
   letter-spacing: 0.3px;
   cursor: pointer;
   transition: color 0.2s, transform 0.2s;
 }
-#showAddListBtn:hover { color: #026aa7; transform: scale(1.02); }
 
-/* Add List form */
+#showAddListBtn:hover {
+  color: #026aa7;
+  transform: scale(1.02);
+}
+
+/* Form thêm list */
+/* Form thêm list */
 #addListForm {
   display: flex;
   flex-direction: column;
-  width: 220px;
-  gap: 6px;
+  width: 220px;            /* Chiều rộng vừa phải */
+  gap: 6px;                /* Khoảng cách giữa input và nút */
   margin-top: 6px;
   padding: 8px;
-  background-color: #020409cd;
+  background-color: #020409cd; /* Nền nhạt, giống Trello */
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   animation: fadeIn 0.25s ease;
 }
 
+/* Input */
 #addListForm input {
   width: 100%;
   padding: 8px 10px;
@@ -321,13 +476,21 @@ button.btn-outline {
   font-size: 0.9rem;
   transition: all 0.1s ease;
 }
+
 #addListForm input:focus {
   border: 2px solid #00f2fe;
-  outline: none;
-  box-shadow: 0 0 5px #00f2fe;
+  outline: none; /* bỏ outline mặc định */
+  box-shadow: 0 0 5px #00f2fe; /* glow nhẹ đẹp mắt */
 }
 
-.list-btn { display: flex; gap: 6px; margin-top: 4px; }
+/* Container hai nút Add / Cancel */
+.list-btn {
+  display: flex;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+/* Nút Add / Cancel */
 .list-btn button {
   flex: 1;
   border: none;
@@ -338,63 +501,41 @@ button.btn-outline {
   font-size: 0.85rem;
   transition: all 0.2s ease;
 }
-#addListBtn { background-color: #2af553; color: #fff; }
-#addListBtn:hover { background-color: #15f241; transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-#cancelAddListBtn { background-color: #e1e2e6; color: #333; }
-#cancelAddListBtn:hover { background-color: #cfd0d4; }
 
-/* Add card input */
-.add-card-btn {
-  margin-top: 8px;
-  background: none;
-  border: none;
-  color: #0079bf;
-  cursor: pointer;
-  text-align: left;
-  padding: 6px;
-}
-.add-card-btn:hover { background-color: #363942e8; border-radius: 4px; }
-
-.add-card-input-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
-  z-index: 20;
-  top: 100%;
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-  opacity: 0;
-}
-.add-card-input-container.show { max-height: 200px; opacity: 1; }
-.add-card-input-container.hidden { display: none; }
-
-.add-card-input {
-  width: 100%;
-  height: 40px;
-  padding: 6px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-.add-card-input:focus {
-  border: 2px solid #00f2fe;
-  outline: none;
-  box-shadow: 0 0 5px #00f2fe;
+/* Nút Add */
+#addListBtn {
+  background-color: #2af553;
+  color: white;
 }
 
-.save-card-btn, .cancel-card-btn {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
+#addListBtn:hover {
+  background-color: #15f241;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
-.save-card-btn { background-color: #07a8f3; color: #fff; }
-.save-card-btn:hover { background-color: #047abd; }
-.cancel-card-btn { background-color: #ccc; }
-.cancel-card-btn:hover { background-color: #7a7878; }
 
-/* Invite user popover */
+/* Nút Cancel */
+#cancelAddListBtn {
+  background-color: #e1e2e6;
+  color: #333;
+}
+
+#cancelAddListBtn:hover {
+  background-color: #cfd0d4;
+}
+
+/* Hiệu ứng fade khi hiện form */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+/* Ẩn form ban đầu */
+.hidden {
+  display: none;
+}
+
 #inviteFormContainer {
   position: absolute;
   right: 0;
@@ -407,23 +548,29 @@ button.btn-outline {
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   z-index: 15;
 }
-
 #inviteUser {
   width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px;
+  display: flex;              /* đặt các phần tử con cùng hàng */
+  align-items: center;        /* căn giữa theo chiều dọc (cùng độ cao) */
+  justify-content: space-between; /* đẩy 2 phần tử ra hai đầu */
+  gap: 10px;                  /* khoảng cách giữa các phần tử */
+  padding: 8px; 
   border-radius: 10px;
   background: rgba(36, 35, 35, 0.262);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.036);
 }
-#inviteUser h2 { margin: 0; font-size: 20px; }
-#inviteUser img {
-  width: 27px; height: 27px; object-fit: contain; cursor: pointer;
+
+#inviteUser h2 {
+  margin: 0;                  /* xoá margin mặc định của h2 */
+  font-size: 20px;
 }
 
+#inviteUser img {
+  width: 27px;
+  height: 27px;
+  object-fit: contain;        /* giữ nguyên tỉ lệ hình */
+  cursor: pointer;            /* trỏ chuột hình bàn tay khi hover */
+}
 #inviteForm input {
   height: 35px;
   padding: 5px 5px;
@@ -432,29 +579,98 @@ button.btn-outline {
   border-radius: 6px;
   border: 1px solid #ccc;
   background-color: #000000dd;
-  box-sizing: border-box;
-  transition: border 0.1s ease, box-shadow 0.1s ease;
+  box-sizing: border-box; /* để border không làm tăng kích thước */
+  transition: border 0.1s ease, box-shadow 0.1s ease; /* mượt khi đổi border */
 }
+
+/* khi input được focus */
 #inviteForm input:focus {
   border: 2px solid #00f2fe;
-  outline: none;
-  box-shadow: 0 0 5px #00f2fe;
+  outline: none; /* bỏ outline mặc định */
+  box-shadow: 0 0 5px #00f2fe; /* glow nhẹ đẹp mắt */
 }
+
+
 #inviteForm button {
   padding: 5px 10px;
   border-radius: 4px;
   border: none;
-  background-color: #06f455;
-  color: #fff;
+  background-color: #06f455; 
+  color: rgb(255, 255, 255);
   cursor: pointer;
 }
-#inviteForm button:hover { background-color: #049526; }
 
-/* Utilities */
-.hidden { display: none; }
+#inviteForm button:hover {
+  background-color: #049526;
+}
+.add-card-btn {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: #0079bf;
+  cursor: pointer;
+  text-align: left;
+  padding: 6px;
+}
 
-/* Animations (giữ bản đang hiệu lực để không đổi cảm nhận hiện tại) */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to   { opacity: 1; transform: translateY(0); }
+.add-card-btn:hover {
+  background-color: #363942e8;
+  border-radius: 4px;
+}
+
+.add-card-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+  z-index: 20;
+  top: 100%;
+  max-height: 0;          /* ẩn ban đầu */
+  overflow: hidden;       /* ẩn phần tràn */
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+  opacity: 0;
+}
+.add-card-input-container.show {
+  max-height: 200px;      /* chiều cao đủ để form hiện */
+  opacity: 1;
+}
+
+.add-card-input-container.hidden {
+  display: none;
+}
+
+.add-card-input {
+  width: 100%;
+  height: 40px;
+  padding: 6px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+.add-card-input:focus{
+  border: 2px solid #00f2fe;
+  outline: none; /* bỏ outline mặc định */
+  box-shadow: 0 0 5px #00f2fe; /* glow nhẹ đẹp mắt */
+}
+
+.save-card-btn, .cancel-card-btn {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.save-card-btn {
+  background-color: #07a8f3;
+  color: white;
+}
+.save-card-btn:hover{
+  background-color: #047abd;
+}
+
+.cancel-card-btn {
+  background-color: #ccc;
+}
+.cancel-card-btn:hover{
+  background-color: #7a7878;
+
 }
