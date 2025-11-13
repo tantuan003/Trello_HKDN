@@ -1,4 +1,5 @@
 import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
+
 const socket = io("http://localhost:8127", { withCredentials: true });
 
 const boardCards = document.querySelectorAll(".board-card"); // NodeList
@@ -119,14 +120,20 @@ async function loadMyBoards() {
 // Chèn file components/sidebar_header.html vào #app-shell
 async function inject(file, targetSelector) {
   try {
-    const res = await fetch(file, { cache: 'no-store' });
-    if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+    const res = await fetch(file, { cache: "no-store" });
+    if (!res.ok) throw new Error(res.status + " " + res.statusText);
     const html = await res.text();
     document.querySelector(targetSelector).innerHTML = html;
+
+    if (file.includes("sidebar_header")) {
+      const mod = await import("./Sidebar_Header.js");
+      mod.initSidebarHeader();
+    }
   } catch (err) {
-    console.error('Load component failed:', file, err);
+    console.error("Load component failed:", file, err);
   }
 }
+
 
 // Đánh dấu menu "Boards" sáng trong sidebar
 function activateBoardsMenu() {
@@ -140,6 +147,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // boards.html ở /public → component ở ./components/...
   await inject('./components/sidebar_header.html', '#app-shell');
   activateBoardsMenu();
+  
 });
 
 //mở – đóng – tạo board

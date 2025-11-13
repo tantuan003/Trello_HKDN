@@ -37,8 +37,7 @@
 .section-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 580px;
   margin-bottom: 12px;
 }
 .section-title {
@@ -261,7 +260,7 @@
 .gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
 
 #main{
-  width: 100%;
+  width: 80%;
   display: block;
 }
 
