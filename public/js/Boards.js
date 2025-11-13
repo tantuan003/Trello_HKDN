@@ -8,6 +8,10 @@ const boardView = document.getElementById("boardView");
 const boardTitle = document.getElementById("boardTitle");
 const listsContainer = document.getElementById("listsContainer");
 let currentBoardId = null;
+let uploadedBg = "";
+let selectedColor = "";
+
+
 async function loadMyBoards() {
   try {
     const res = await fetch("http://localhost:8127/v1/board/myboards", {
@@ -17,29 +21,34 @@ async function loadMyBoards() {
     const boards = await res.json();
 
     const container = document.getElementById("boardContainer");
-    container.innerHTML = "";
 
     if (!Array.isArray(boards)) {
       console.error("Boards không phải mảng:", boards);
       return;
     }
+    container.innerHTML = "";
 
     // Render các board card
     boards.forEach(board => {
       const div = document.createElement("div");
       div.classList.add("board-card");
       div.dataset.id = board._id;
+
+      // ✅ Khai báo cover trước khi dùng
       const cover = document.createElement("div");
-      if (board.type === "template") {
-        cover.classList.add("board-cover", "img-cover");
-        const badge = document.createElement("span");
-        badge.classList.add("badge", "badge-dark");
-        badge.textContent = "TEMPLATE";
-        cover.appendChild(badge);
+      cover.classList.add("board-cover");
+
+      if (board.background.startsWith("/uploads/") || board.background.startsWith("/backgrounds/")) {
+        cover.style.backgroundImage = `url(${board.background})`;
+        cover.style.backgroundSize = "cover";
+        cover.style.backgroundPosition = "center";
+        cover.style.backgroundRepeat = "no-repeat";
       } else {
-        cover.classList.add("board-cover", board.background || "gradient-1");
+        cover.classList.add(board.background || "gradient-1");
+        cover.style.backgroundImage = ""; // reset nếu trước đó có ảnh
       }
 
+      // footer
       const footer = document.createElement("div");
       footer.classList.add("board-footer");
       const title = document.createElement("span");
@@ -84,7 +93,19 @@ async function loadMyBoards() {
 
         // Thêm class background
         const contentBoards = document.querySelector(".content-boards");
-        contentBoards.classList.add("fullwidth", board.background);
+        contentBoards.classList.add("fullwidth");
+
+        // Reset trước khi gán
+
+        if (board.background.startsWith("/uploads/") || board.background.startsWith("/backgrounds/")) {
+          // background là ảnh
+          contentBoards.style.backgroundImage = `url(${board.background})`;
+          contentBoards.style.backgroundSize = "cover";
+          contentBoards.style.backgroundPosition = "center";
+        } else {
+          // background là gradient/màu
+          contentBoards.classList.add(board.background || "gradient-1");
+        }
 
         // Set tiêu đề board
         document.getElementById("boardTitle").textContent = board.name;
@@ -139,8 +160,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const colorOptions = document.querySelectorAll(".color-swatch");
   const workspaceSelect = document.getElementById("workspaceSelect");
   const visibility = document.getElementById("visibilitySelect").value;
-  let selectedColor = "gradient-1";
-
   // ====== LOAD WORKSPACES ======
   async function loadWorkspaces() {
     try {
@@ -212,7 +231,7 @@ document.addEventListener("DOMContentLoaded", () => {
           name,
           workspaceId,
           visibility,
-          background: selectedColor
+          background: uploadedBg || selectedColor
         }),
       });
 
@@ -392,7 +411,7 @@ function attachAddCard(listEl, listId) {
       });
 
       if (!res.ok) throw new Error("Không thể thêm thẻ");
-      inputContainer.classList.remove("show");  
+      inputContainer.classList.remove("show");
       setTimeout(() => inputContainer.classList.add("hidden"), 10);
 
       // Reset UI
@@ -563,3 +582,25 @@ socket.on("newList", (list) => {
 });
 
 
+// tải background từ máy
+const bgUpload = document.getElementById("bgUpload");
+
+bgUpload.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("background", file);
+
+  const res = await fetch("http://localhost:8127/v1/upload/bg", {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+  uploadedBg = data.imageUrl; // đường dẫn ảnh trên server
+  console.log("đường dẫn ảnh là ", data.imageUrl);
+  selectedColor = "";
+});
+
+window.addEventListener("DOMContentLoaded", loadMyBoards);
