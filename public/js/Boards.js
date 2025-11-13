@@ -370,21 +370,35 @@ function attachAddCard(listEl, listId) {
   inputContainer.appendChild(cancelBtn);
 
   // Gắn các phần tử vào list
-  listEl.appendChild(inputContainer);
   listEl.appendChild(addCardBtn);
 
   // --- Sự kiện ---
   addCardBtn.addEventListener("click", () => {
-    addCardBtn.classList.add("hidden");
-    setTimeout(() => inputContainer.classList.add("show"), 10);  // bật transition
-    inputContainer.classList.remove("hidden");
-    input.focus();
-  });
+  addCardBtn.classList.add("hidden");
+
+  if (!cardsContainer.contains(inputContainer)) {
+    cardsContainer.appendChild(inputContainer);
+  }
+
+  inputContainer.classList.remove("hidden");
+  setTimeout(() => inputContainer.classList.add("show"), 10);
+  input.focus();
+
+  // 🔽 Cuộn đến đáy .cards-container
+  setTimeout(() => {
+    cardsContainer.scrollTo({
+      top: cardsContainer.scrollHeight,
+      behavior: "smooth"
+    });
+  }, 100); // delay nhẹ để form render xong
+});
+
 
   cancelBtn.addEventListener("click", () => {
     inputContainer.classList.remove("show");  // đóng form mượt
     setTimeout(() => {
       inputContainer.classList.add("hidden");
+      inputContainer.remove();
     }, 300); // thời gian khớp transition
     addCardBtn.classList.remove("hidden");
     input.value = "";

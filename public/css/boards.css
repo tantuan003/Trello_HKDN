@@ -1,6 +1,7 @@
 /* ===== Boards page ===== */
 .content-boards {
   flex: 1;
+  width: 100%;
   background: #fff;
   padding: 12px 28px 28px; /* giảm padding-top để không bị đẩy xuống */
   min-height: calc(100vh - var(--header-h));
@@ -10,22 +11,16 @@
 #app-shell {
   display: flex;
 }
-.content-boards {
-  flex: 1; /* chiếm phần còn lại */
-  transition: all 0.3s ease;
-}
 /* Bỏ khoảng trống đầu tiên */
 .content-boards .section-block:first-child {
   margin-top: 0 !important;
   padding-top: 0 !important;
 }
 .content-boards.fullwidth {
+  height: 100%;
   width: 100%;
   position: absolute;
-  top: var(--header-h);
   left: 0;
-  right: 0;
-  bottom: 0;
   z-index: 10;
 }
 /* Cấu trúc section */
@@ -112,14 +107,12 @@
   border-color: #e2e8f0;
 }
 .board-cover {
-  height: 84px;
+  height: 100%;
   width: 100%;
-  height: 120px;   /* hoặc auto nếu muốn tuỳ card */
   border-radius: 6px;
   overflow: hidden;
   background-repeat: no-repeat;
   background-size: cover;
-  background-position: center;
 }
 .gradient-1 {
   background: linear-gradient(135deg, #7c3aed 0%, #ec4899 48%, #f59e0b 100%);
@@ -260,9 +253,14 @@
 .gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
 
 #main{
-  width: 80%;
+  height: 80vh;
+  width: 100vw;
+  margin: 0;
   display: block;
+  background-position: center center;
+  background-size: contain;
 }
+
 
 .content-boards.fullwidth.gradient-3 {
   position: absolute;
@@ -338,7 +336,6 @@
   display: flex;
   width: 100%;
   padding: 20px;
-  overflow-x: auto;
   height: calc(100vh - 120px);
   box-sizing: border-box;
 }
@@ -346,14 +343,14 @@
 /* Container chứa list */
 .lists-container {
   display: flex;
+  height: 500px;
   align-items: flex-start;
   gap: 20px;
   flex-wrap: nowrap;
-  overflow-x: auto;
-  overflow-y: visible;
   padding-bottom: 10px;
   scroll-behavior: smooth;
   margin-top: 20px;
+  z-index: 10;
 }
 
 /* Thanh cuộn ngang */
@@ -373,16 +370,16 @@
   border-radius: 8px;
   padding: 12px;
   flex: 0 0 280px;
-  min-height: 100px; /* đảm bảo đủ chỗ hiển thị */
+  min-height: 100px;
+  max-height: 400px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
 }
 
 .list h3 {
+  height: 10px;
   font-size: 1rem;
   font-weight: 600;
   color: #ffffffd1;
-  margin-bottom: 10px;
-  text-transform: capitalize;
 }
 
 /* Cards container */
@@ -392,6 +389,7 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 5px 0;
 }
 .cards-container::-webkit-scrollbar {
   width: 6px;
@@ -403,23 +401,35 @@
 
 /* Card */
 .card {
-  background-color: #f7f8fa;
-  border-radius: 8px;
-  padding: 10px;
+  height: 40px;                /* cao tối thiểu, linh hoạt */
+  padding: 10px 12px;              /* padding đầy đủ */
+  background-color: #ffffff;       /* nền sáng */
+  border-radius: 8px;              /* bo góc mềm mại */
   font-size: 0.95rem;
   color: #222;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* shadow nhẹ */
   cursor: pointer;
+  display: flex;
+  align-items: center;             /* căn giữa chữ theo dọc */
   transition: all 0.2s ease;
 }
+
 .card:hover {
-  background-color: #f1f3f6;
-  transform: translateY(-1px);
+  background-color: #f0f4f8;       /* nền sáng hơn khi hover */
+  transform: translateY(-2px);     /* nhấn nổi nhẹ khi hover */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15); /* shadow sâu hơn */
 }
+
+.card:active {
+  transform: translateY(0);        /* trở về khi nhấn */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
 
 /* --- Nút Add List --- */
 /* Nút Add List (container) */
 .add-list {
+  position: absolute;
   background: rgba(255, 255, 255, 0.2);
   border: 1.5px dashed rgba(0, 0, 0, 0.15);
   border-radius: 8px;
@@ -627,17 +637,20 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-top: 10px;
-  z-index: 20;
-  top: 100%;
-  max-height: 0;          /* ẩn ban đầu */
-  overflow: hidden;       /* ẩn phần tràn */
+  background-color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   transition: max-height 0.3s ease, opacity 0.3s ease;
+  overflow: hidden;
   opacity: 0;
+  max-height: 200px;
 }
 .add-card-input-container.show {
+  min-height: 125px;
   max-height: 200px;      /* chiều cao đủ để form hiện */
   opacity: 1;
+  z-index: 30;
 }
 
 .add-card-input-container.hidden {
