@@ -79,8 +79,9 @@
 /* Grid cho các board */
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(4, 250px);
+  column-gap: 10px !important;
+  row-gap: 16px !important;
 }
 .mt-2 {
   margin-top: 12px;
@@ -108,7 +109,7 @@
 }
 .board-cover {
   height: 100%;
-  width: 100%;
+  width: auto;
   border-radius: 6px;
   overflow: hidden;
   background-repeat: no-repeat;
