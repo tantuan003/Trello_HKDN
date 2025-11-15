@@ -18,23 +18,43 @@ async function loadMyBoards() {
       method: "GET",
       credentials: "include"
     });
+
     const boards = await res.json();
 
-    const container = document.getElementById("boardContainer");
+    // 🔥 SỬA LỖI 1: dùng boards chứ không phải data
+    if (!res.ok) {
+      Toastify({
+        text: boards.message || "Lỗi xác thực!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#ff4d4d",
+      }).showToast();
 
+      return; // 🔥 DỪNG SỚM, kh không render UI
+    }
+
+    // 🔥 Nếu không phải mảng → token lỗi
     if (!Array.isArray(boards)) {
-      console.error("Boards không phải mảng:", boards);
+      Toastify({
+        text: boards.message || "Không thể tải danh sách board",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#ff4d4d",
+      }).showToast();
       return;
     }
+
+    const container = document.getElementById("boardContainer");
     container.innerHTML = "";
 
-    // Render các board card
+    // Render boards
     boards.forEach(board => {
       const div = document.createElement("div");
       div.classList.add("board-card");
       div.dataset.id = board._id;
 
-      // ✅ Khai báo cover trước khi dùng
       const cover = document.createElement("div");
       cover.classList.add("board-cover");
 
@@ -45,10 +65,8 @@ async function loadMyBoards() {
         cover.style.backgroundRepeat = "no-repeat";
       } else {
         cover.classList.add(board.background || "gradient-1");
-        cover.style.backgroundImage = ""; // reset nếu trước đó có ảnh
       }
 
-      // footer
       const footer = document.createElement("div");
       footer.classList.add("board-footer");
       const title = document.createElement("span");
@@ -61,61 +79,58 @@ async function loadMyBoards() {
       container.appendChild(div);
     });
 
-    // Gắn sự kiện click cho từng board
+    // Gắn sự kiện click board
     const boardCards = document.querySelectorAll(".board-card");
     boardCards.forEach(card => {
       card.addEventListener("click", async (e) => {
         e.preventDefault();
         const boardId = card.dataset.id;
+
         if (!boardId) return;
 
         currentBoardId = boardId;
         socket.emit("joinBoard", currentBoardId);
 
-        // Render board với lists và add card
         await renderBoardWithLists(currentBoardId);
 
-        // Lấy dữ liệu board để set các thông tin khác
-        const res = await fetch(`http://localhost:8127/v1/board/${boardId}`);
-        const data = await res.json();
+        // Lấy dữ liệu board
+        const res2 = await fetch(`http://localhost:8127/v1/board/${boardId}`);
+        const data = await res2.json();
         const board = data.board;
 
-        // Ẩn các section khác
         document.querySelector(".card-grid").style.display = "none";
         document.querySelector(".workspace-info").style.display = "none";
         document.querySelector(".section-head").style.display = "none";
         const sidebar = document.querySelector(".sidebar");
         if (sidebar) sidebar.style.display = "none";
 
-        // Hiển thị board view
         const boardView = document.getElementById("boardView");
         boardView.style.display = "block";
 
-        // Thêm class background
         const contentBoards = document.querySelector(".content-boards");
         contentBoards.classList.add("fullwidth");
 
-        // Reset trước khi gán
-
         if (board.background.startsWith("/uploads/") || board.background.startsWith("/backgrounds/")) {
-          // background là ảnh
           contentBoards.style.backgroundImage = `url(${board.background})`;
           contentBoards.style.backgroundSize = "cover";
           contentBoards.style.backgroundPosition = "center";
         } else {
-          // background là gradient/màu
           contentBoards.classList.add(board.background || "gradient-1");
         }
 
-        // Set tiêu đề board
         document.getElementById("boardTitle").textContent = board.name;
       });
     });
 
   } catch (err) {
     console.error("Lỗi load boards:", err);
+    Toastify({
+      text: "Không thể kết nối server",
+      backgroundColor: "#ff4d4d",
+    }).showToast();
   }
 }
+
 
 // Chèn file components/sidebar_header.html vào #app-shell
 async function inject(file, targetSelector) {

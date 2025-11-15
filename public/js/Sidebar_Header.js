@@ -53,3 +53,44 @@ export function initSidebarHeader() {
   initTemplatesMenuToggle();
   document.body.dataset.sidebarHeaderInit = "1";
 }
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  try {
+    const res = await fetch("http://localhost:8127/v1/User/logout", {
+      method: "POST",
+      credentials: "include"   // 🔥 QUAN TRỌNG để gửi cookie token
+    });
+
+    const data = await res.json();
+    console.log("Logout:", data);
+
+    if (res.ok) {
+      alert("Đăng xuất thành công!");
+      window.location.href = "/login.html";  // hoặc trang bạn muốn
+    }
+  } catch (err) {
+    console.error("Lỗi:", err);
+  }
+});
+
+async function checkLogin() {
+  const res = await fetch("http://localhost:8127/v1/User/checkToken", {
+    method: "GET",
+    credentials: "include"
+  });
+
+  const loginbtn = document.getElementById("loginBtn");
+  const logoutbtn = document.getElementById("logoutBtn");
+
+  if (res.ok) {
+    // Token hợp lệ
+    loginbtn.style.display = "none";
+    logoutbtn.style.display = "flex";
+  } else {
+    // Token lỗi / hết hạn
+    loginbtn.style.display = "flex";
+    logoutbtn.style.display = "none";
+  }
+}
+
+checkLogin();
+
