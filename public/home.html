@@ -89,7 +89,12 @@
   document.addEventListener('DOMContentLoaded', async () => {
     // boards.html ở /public → component ở ./components/...
     await inject('./components/sidebar_header.html', '#app-shell');
+    import("./js/Sidebar_Header.js").then(module => {
+    module.initSidebarHeader();  
+  });
     activateBoardsMenu();
   });
 </script>
+<script type="module" src="./js/Sidebar_Header.js"></script>
+
 </html>
