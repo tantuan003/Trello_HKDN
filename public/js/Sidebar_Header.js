@@ -1,4 +1,3 @@
-// js/sidebar_header.js
 const WSP_KEY = "wspMenuCollapsed";
 
 function initWorkspaceToggle() {
@@ -6,7 +5,6 @@ function initWorkspaceToggle() {
   const btn = document.getElementById("wspToggle");
   if (!wsp || !btn) return;
 
-  // Khởi tạo theo trạng thái đã lưu
   const saved = localStorage.getItem(WSP_KEY);
   const collapsed = saved === "1";
   wsp.classList.toggle("is-collapsed", collapsed);
@@ -23,7 +21,6 @@ function initTemplatesMenuToggle() {
   const nav = document.getElementById("sideNav");
   if (!nav) return;
 
-  // Uỷ quyền sự kiện để hoạt động cả khi HTML được inject sau
   nav.addEventListener("click", (e) => {
     const head = e.target.closest(".nav-item.has-sub");
     if (!head) return;
@@ -42,36 +39,6 @@ function initTemplatesMenuToggle() {
   });
 }
 
-/**
- * Gọi hàm này SAU KHI đã inject 'components/sidebar_header.html'
- * để gắn toàn bộ behavior cho component.
- */
-export function initSidebarHeader() {
-  // Chống init nhiều lần
-  if (document.body.dataset.sidebarHeaderInit === "1") return;
-  initWorkspaceToggle();
-  initTemplatesMenuToggle();
-  document.body.dataset.sidebarHeaderInit = "1";
-}
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  try {
-    const res = await fetch("http://localhost:8127/v1/User/logout", {
-      method: "POST",
-      credentials: "include"   // 🔥 QUAN TRỌNG để gửi cookie token
-    });
-
-    const data = await res.json();
-    console.log("Logout:", data);
-
-    if (res.ok) {
-      alert("Đăng xuất thành công!");
-      window.location.href = "/login.html";  // hoặc trang bạn muốn
-    }
-  } catch (err) {
-    console.error("Lỗi:", err);
-  }
-});
-
 async function checkLogin() {
   const res = await fetch("http://localhost:8127/v1/User/checkToken", {
     method: "GET",
@@ -80,17 +47,44 @@ async function checkLogin() {
 
   const loginbtn = document.getElementById("loginBtn");
   const logoutbtn = document.getElementById("logoutBtn");
+  if (!loginbtn || !logoutbtn) return;
 
   if (res.ok) {
-    // Token hợp lệ
     loginbtn.style.display = "none";
     logoutbtn.style.display = "flex";
   } else {
-    // Token lỗi / hết hạn
     loginbtn.style.display = "flex";
     logoutbtn.style.display = "none";
   }
 }
 
-checkLogin();
+export function initSidebarHeader() {
+  if (document.body.dataset.sidebarHeaderInit === "1") return;
 
+  initWorkspaceToggle();
+  initTemplatesMenuToggle();
+
+  const logoutBtn = document.getElementById("logoutBtn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        const res = await fetch("http://localhost:8127/v1/User/logout", {
+          method: "POST",
+          credentials: "include"
+        });
+        const data = await res.json();
+        console.log("Logout:", data);
+
+        if (res.ok) {
+          window.location.href = "/login.html";
+        }
+      } catch (err) {
+        console.error("Lỗi logout:", err);
+      }
+    });
+  }
+
+  checkLogin();
+
+  document.body.dataset.sidebarHeaderInit = "1";
+}

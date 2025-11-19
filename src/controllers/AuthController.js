@@ -34,7 +34,7 @@ export const loginUser = async (req, res) => {
     // Tạo token
     const token = jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-    // Gửi cookie httpOnly (an toàn hơn so với localStorage)
+    // Gửi cookie httpOnly 
     // Trong development bạn có thể set secure: false
     res.cookie(COOKIE_NAME, token, {
       httpOnly: true,

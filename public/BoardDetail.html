@@ -1,0 +1,51 @@
+    <!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Board Detail</title>
+  <link rel="stylesheet" href="./css/BoardDetail.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+<body>
+  <!-- Sidebar sẽ inject nếu cần -->
+
+  <!-- Board detail container -->
+  <main class="content-content-boards" id="main">
+    <div id="boardView" class="boardView">
+      <!-- Header board -->
+        <div id="inviteUser" title="Invite user">
+          <h2 id="boardTitle">Board Title</h2>
+          <img src="../uploads/add-member-icon.png" id="invite-icon" alt="Invite" />
+        </div>
+         <div id="inviteFormContainer" class="hidden">
+        <form id="inviteForm">
+          <input type="email" id="inviteEmail" placeholder="Enter user email" />
+          <button type="submit">Invite</button>
+        </form>
+      </div>
+      
+
+      <!-- Lists container -->
+      <div id="listsContainer" class="lists-container">
+        <!-- Lists sẽ được JS render ở đây -->
+      </div>
+
+      <!-- Add list form -->
+      <div class="add-list">
+        <button id="showAddListBtn">+ Add a list</button>
+        <div id="addListForm" style="display:none;">
+          <input type="text" id="newListTitle" placeholder="Enter list title">
+          <div class="list-btn">
+            <button id="addListBtn">Add List</button>
+            <button id="cancelAddListBtn">X</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module" src="js/BoardDetail.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+</body>
+</html>
