@@ -1,95 +1,40 @@
 <!DOCTYPE html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>Trang chủ</title>
-  <link rel="stylesheet" href="./css/sidebar_header.css?v=1" />
-  <link rel="stylesheet" href="./css/home.css" />
 
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home</title>
+
+  <!-- CSS chung (header + sidebar) -->
+  <link rel="stylesheet" href="./css/sidebar_header.css?v=1" />
+  <!-- CSS riêng cho trang Home (tuỳ bạn đặt tên) -->
+  <link rel="stylesheet" href="./css/home.css?v=1" />
 </head>
+
 <body>
   <!-- Header + Sidebar sẽ được inject vào đây -->
   <div id="app-shell"></div>
 
-  <!-- MAIN CONTENT của trang Boards -->
-  <main class="content content-boards">
-    <!-- Recently viewed -->
-    <section class="section-block">
-      <div class="section-head">
-        <div class="section-title"><h3>Đây là trang home</h3></div>
-      </div>
-      <div class="card-grid">
-        <a class="board-card" href="#">
-          <div class="board-cover gradient-1"></div>
-          <div class="board-footer"><span class="board-title">Hello</span></div>
-        </a>
-        <a class="board-card" href="#">
-          <div class="board-cover img-cover"><span class="badge badge-dark">TEMPLATE</span></div>
-          <div class="board-footer"><span class="board-title">Kanban Template</span></div>
-        </a>
-      </div>
-    </section>
+  <!-- NỘI DUNG CHÍNH -->
+  <main class="content content-home">
+    <section class="recently-viewed">
+      <header class="recent-header">
+        <svg class="recent-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" stroke-width="2" />
+          <path d="M12 7v5l3 2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>Recently viewed</span>
+      </header>
 
-    <!-- Your workspaces -->
-    <section class="section-block">
-      <div class="section-head">
-        <h3 class="heading">YOUR WORKSPACES</h3>
-        <div class="actions-inline">
-          <a class="chip" href="#"><span class="ic">🗂️</span>Boards</a>
-          <a class="chip" href="#"><span class="ic">👤</span>Members</a>
-          <a class="chip" href="#"><span class="ic">⚙️</span>Settings</a>
-        </div>
-      </div>
-
-      <div class="workspace-row">
-        <div class="ws-title">
-          <span class="ws-badge">T</span>
-          <span class="ws-name">Trello Workspace</span>
-        </div>
-      </div>
-
-      <div class="card-grid mt-2">
-        <a class="board-card" href="#">
-          <div class="board-cover gradient-1"></div>
-          <div class="board-footer"><span class="board-title">My Trello board</span></div>
-        </a>
-
-        <button class="board-card create-card" type="button">
-          <div class="create-body">Create new board</div>
-        </button>
-      </div>
-
-      <div class="mt-3">
-        <a class="btn-outline" href="#">View all closed boards</a>
+      <!-- List card các board xem gần đây -->
+      <div id="recentBoards" class="recent-board-list">
       </div>
     </section>
   </main>
+
+  <!-- JS riêng cho Home -->
+  <script type="module" src="./js/Home.js"></script>
 </body>
-<script>
-  // Chèn file components/sidebar_header.html vào #app-shell
-  async function inject(file, targetSelector) {
-    try {
-      const res = await fetch(file, { cache: 'no-store' });
-      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-      const html = await res.text();
-      document.querySelector(targetSelector).innerHTML = html;
-    } catch (err) {
-      console.error('Load component failed:', file, err);
-    }
-  }
 
-  // Đánh dấu menu "Boards" sáng trong sidebar
-  function activateBoardsMenu() {
-    const links = document.querySelectorAll('.nav .nav-item');
-    links.forEach(a => a.classList.remove('is-active'));
-    const boardsLink = [...links].find(a => /boards/i.test(a.textContent.trim()));
-    if (boardsLink) boardsLink.classList.add('is-active');
-  }
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    // boards.html ở /public → component ở ./components/...
-    await inject('./components/sidebar_header.html', '#app-shell');
-    activateBoardsMenu();
-  });
-</script>
 </html>

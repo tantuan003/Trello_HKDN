@@ -23,7 +23,7 @@ function initTemplatesMenuToggle() {
   const nav = document.getElementById("sideNav");
   if (!nav) return;
 
-  // Uỷ quyền sự kiện để hoạt động cả khi HTML được inject sau
+  // Uỷ quyền sự kiện
   nav.addEventListener("click", (e) => {
     const head = e.target.closest(".nav-item.has-sub");
     if (!head) return;
@@ -42,14 +42,43 @@ function initTemplatesMenuToggle() {
   });
 }
 
-/**
- * Gọi hàm này SAU KHI đã inject 'components/sidebar_header.html'
- * để gắn toàn bộ behavior cho component.
- */
+/* ---------------------------------------------------
+   AUTO ACTIVE MENU DỰA THEO URL
+   --------------------------------------------------- */
+function initActiveMenu() {
+  const path = window.location.pathname;
+  const page = path.split("/").pop(); // vd: boards.html
+
+  // Boards
+  if (page === "boards.html") {
+    document.getElementById("boardsMenu")?.classList.add("is-active");
+  }
+
+  // Templates + mở submenu
+  if (page === "templates.html") {
+    const head = document.getElementById("templateMenu");
+    if (head) {
+      head.classList.add("is-active", "active");
+      const section = head.closest(".nav-section");
+      section?.classList.add("open");
+    }
+  }
+
+  // Home
+  if (page === "home.html") {
+    document.getElementById("homeMenu")?.classList.add("is-active");
+  }
+}
+
+/* ---------------------------------------------------
+   Gọi sau khi inject HTML
+   --------------------------------------------------- */
 export function initSidebarHeader() {
-  // Chống init nhiều lần
   if (document.body.dataset.sidebarHeaderInit === "1") return;
+
   initWorkspaceToggle();
   initTemplatesMenuToggle();
+  initActiveMenu();     // 👈 thêm dòng này
+
   document.body.dataset.sidebarHeaderInit = "1";
 }
