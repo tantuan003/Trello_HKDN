@@ -6,10 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Boards</title>
 
-  <!-- CSS chung cho header + sidebar -->
-  <link rel="stylesheet" href="./css/sidebar_header.css?v=1" />
   <!-- CSS riêng cho trang Boards -->
-  <link rel="stylesheet" href="./css/boards.css?v=1" />
+  <link rel="stylesheet" href="./css/boards.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 
@@ -19,36 +17,39 @@
 
   <!-- MAIN CONTENT của trang Boards -->
   <main class="content content-boards" id="main">
-     <div id="boardView" class="boardView" style="display:none;">
-        <div id="inviteUser" title="Invite user">
-          <h2 id="boardTitle"></h2>
-          <img src="../uploads/add-member-icon.png" id="invite-icon" alt="Invite" />
-        </div>
+    <div id="boardView" class="boardView" style="display:none;">
+      <div class="board-head">
+      <img src="../uploads/backward-btn.png" id="backward-btn" alt="">
+      <div id="inviteUser" title="Invite user">
+        <h2 id="boardTitle"></h2>
+        <img src="../uploads/add-member-icon.png" id="invite-icon" alt="Invite" />
+      </div>
+    </div>
 
-        <!-- Form pop-up -->
-        <div id="inviteFormContainer" class="hidden">
-          <form id="inviteForm">
-            <input type="email" id="inviteEmail" placeholder="Enter user email" />
-            <button type="submit">Invite</button>
-          </form>
-        </div>
+      <!-- Form pop-up -->
+      <div id="inviteFormContainer" class="hidden">
+        <form id="inviteForm">
+          <input type="email" id="inviteEmail" placeholder="Enter user email" />
+          <button type="submit">Invite</button>
+        </form>
+      </div>
 
-        <!-- Container chứa tất cả list + nút add -->
-        <div id="listsContainer" class="lists-container">
-          <!-- List sẽ được JS render vào đây -->
-        </div>
-        <div class="add-list">
-          <button id="showAddListBtn">+ Add a list</button>
+      <!-- Container chứa tất cả list + nút add -->
+      <div id="listsContainer" class="lists-container">
+        <!-- List sẽ được JS render vào đây -->
+      </div>
+      <div class="add-list">
+        <button id="showAddListBtn">+ Add a list</button>
 
-          <div id="addListForm" style="display:none;">
-            <input type="text" id="newListTitle" placeholder="Enter list title">
-            <div class="list-btn">
-              <button id="addListBtn">Add List</button>
-              <button id="cancelAddListBtn">X</button>
-            </div>
+        <div id="addListForm" style="display:none;">
+          <input type="text" id="newListTitle" placeholder="Enter list title">
+          <div class="list-btn">
+            <button id="addListBtn">Add List</button>
+            <button id="cancelAddListBtn">X</button>
           </div>
         </div>
       </div>
+    </div>
     <!-- Recently viewed -->
     <section class="section-block">
       <div class="section-head">
@@ -58,7 +59,7 @@
       </div>
       <div class="card-grid" id="boardContainer">
         <div class="board-card" data-id="">
-          <div class="board-cover gradient-1"></div>
+          <div class="board-cover" ></div>
           <div class="board-footer"><span class="board-title">My Trello board</span></div>
         </div>
       </div>
@@ -128,6 +129,8 @@
           <span class="color-swatch gradient-3" data-color="gradient-3"></span>
         </div>
       </label>
+      <label for="bgUpload">Hoặc tải lên ảnh nền của bạn:</label>
+      <input type="file" id="bgUpload" accept="image/*" />
 
       <div class="modal-actions">
         <button id="createBoardBtn" class="btn-primary">Create</button>

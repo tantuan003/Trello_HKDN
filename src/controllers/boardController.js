@@ -4,6 +4,8 @@ import mongoose from "mongoose";
 import List from "../models/ListModel.js";
 import Card from "../models/CardModel.js";
 import User from "../models/UserModel.js";
+import multer from "multer";
+import path from "path";
 
 export const createBoard = async (req, res) => {
   try {
@@ -76,6 +78,10 @@ export const getBoardById = async (req, res) => {
         path: "lists",
         populate: { path: "cards" }  // nested populate cards trong list
       });
+    await Board.findByIdAndUpdate(boardId, {
+      lastViewedAt: new Date()
+    });
+
 
     if (!board) return res.status(404).json({ message: "Board không tồn tại" });
 
@@ -113,7 +119,7 @@ export const createCard = async (req, res) => {
     const { listId } = req.params;
     const { name, description, assignedTo, labels, dueDate } = req.body;
     const userId = req.user?.id;
-    console.log("userid là ",userId);
+    console.log("userid là ", userId);
 
     const list = await List.findById(listId);
     if (!list) return res.status(404).json({ message: "List không tồn tại." });
@@ -128,14 +134,14 @@ export const createCard = async (req, res) => {
       assignedTo: assignedTo || [],
       labels: labels || [],
       dueDate: dueDate || null,
-      createdBy:userId, // 🔑 bắt buộc phải gán
+      createdBy: userId, // 🔑 bắt buộc phải gán
       position
     });
 
     await newCard.save();
     await List.findByIdAndUpdate(list._id, { $push: { cards: newCard._id } });
     const io = req.app.get("socketio");
-    io.to(list.board.toString()).emit("newCard", newCard); 
+    io.to(list.board.toString()).emit("newCard", newCard);
 
     res.status(201).json({ message: "Tạo card thành công!", card: newCard });
   } catch (error) {
@@ -195,3 +201,79 @@ export const inviteUser = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+
+// tải background 
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, path.join("public/uploads"));
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({ storage });
+
+/**
+ * Controller xử lý upload background
+ */
+export const uploadBackground = [
+  upload.single("background"),
+  async (req, res) => {
+    try {
+      const imageUrl = `/uploads/${req.file.filename}`;
+      res.json({ imageUrl });
+    } catch (error) {
+      console.error("❌ Lỗi upload background:", error);
+      res.status(500).json({ message: "Upload thất bại", error });
+    }
+  },
+];
+
+// GET /api/boards/recent
+export const getBoardsrecent = async (req, res) => {
+ try {
+    // 🔐 đảm bảo có user từ token
+    if (!req.user || !req.user.id) {
+      console.log("Không tìm thấy user trong req.user:", req.user);
+      return res.status(401).json({
+        success: false,
+        message: "Không tìm thấy thông tin user từ token."
+      });
+    }
+
+    const userId = req.user.id;
+    console.log("UserId từ token:", userId);
+
+    const boards = await Board.find({
+      $or: [
+        { createdBy: userId },
+        { members: userId }
+      ]
+    })
+      .populate("workspace", "name")
+      .populate("createdBy", "username email")
+      .sort({
+        lastViewedAt: -1, // ⭐ sắp xếp theo xem gần nhất
+        createdAt: -1
+      });
+
+    // KHÔNG trả 404 nữa, cứ trả mảng rỗng cho dễ xử lý phía client
+    return res.status(200).json({
+      success: true,
+      data: boards
+    });
+  } catch (error) {
+    console.error("getBoardsByCurrentUser error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      // ⚠ chỉ để tạm debug, sau này xoá đi
+      error: error.message
+    });
+  }
+};
+

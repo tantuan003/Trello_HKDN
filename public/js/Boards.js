@@ -8,91 +8,77 @@ const boardView = document.getElementById("boardView");
 const boardTitle = document.getElementById("boardTitle");
 const listsContainer = document.getElementById("listsContainer");
 let currentBoardId = null;
+let uploadedBg = "";
+let selectedColor = "";
+
+
 async function loadMyBoards() {
   try {
     const res = await fetch("http://localhost:8127/v1/board/myboards", {
       method: "GET",
-      credentials: "include"
+      credentials: "include",
     });
+
     const boards = await res.json();
+
+    if (!res.ok || !Array.isArray(boards)) {
+      Toastify({
+        text: boards.message || "Không thể tải danh sách board",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#ff4d4d",
+      }).showToast();
+      return;
+    }
 
     const container = document.getElementById("boardContainer");
     container.innerHTML = "";
 
-    if (!Array.isArray(boards)) {
-      console.error("Boards không phải mảng:", boards);
-      return;
-    }
-
-    // Render các board card
     boards.forEach(board => {
       const div = document.createElement("div");
       div.classList.add("board-card");
       div.dataset.id = board._id;
+
       const cover = document.createElement("div");
-      if (board.type === "template") {
-        cover.classList.add("board-cover", "img-cover");
-        const badge = document.createElement("span");
-        badge.classList.add("badge", "badge-dark");
-        badge.textContent = "TEMPLATE";
-        cover.appendChild(badge);
+      cover.classList.add("board-cover");
+
+      if (
+        board.background?.startsWith("/uploads/") ||
+        board.background?.startsWith("/backgrounds/")
+      ) {
+        cover.style.backgroundImage = `url(${board.background})`;
+        cover.style.backgroundSize = "cover";
+        cover.style.backgroundPosition = "center";
       } else {
-        cover.classList.add("board-cover", board.background || "gradient-1");
+        cover.classList.add(board.background || "gradient-1");
       }
 
       const footer = document.createElement("div");
       footer.classList.add("board-footer");
+
       const title = document.createElement("span");
       title.classList.add("board-title");
       title.textContent = board.name;
-      footer.appendChild(title);
 
+      footer.appendChild(title);
       div.appendChild(cover);
       div.appendChild(footer);
+
+      // 👉 Chuyển sang trang Board Detail khi click
+      div.addEventListener("click", () => {
+        window.location.href = `./BoardDetail.html?id=${board._id}`;
+
+      });
+
       container.appendChild(div);
     });
-
-    // Gắn sự kiện click cho từng board
-    const boardCards = document.querySelectorAll(".board-card");
-    boardCards.forEach(card => {
-      card.addEventListener("click", async (e) => {
-        e.preventDefault();
-        const boardId = card.dataset.id;
-        if (!boardId) return;
-
-        currentBoardId = boardId;
-        socket.emit("joinBoard", currentBoardId);
-
-        // Render board với lists và add card
-        await renderBoardWithLists(currentBoardId);
-
-        // Lấy dữ liệu board để set các thông tin khác
-        const res = await fetch(`http://localhost:8127/v1/board/${boardId}`);
-        const data = await res.json();
-        const board = data.board;
-
-        // Ẩn các section khác
-        document.querySelector(".card-grid").style.display = "none";
-        document.querySelector(".workspace-info").style.display = "none";
-        document.querySelector(".section-head").style.display = "none";
-        const sidebar = document.querySelector(".sidebar");
-        if (sidebar) sidebar.style.display = "none";
-
-        // Hiển thị board view
-        const boardView = document.getElementById("boardView");
-        boardView.style.display = "block";
-
-        // Thêm class background
-        const contentBoards = document.querySelector(".content-boards");
-        contentBoards.classList.add("fullwidth", board.background);
-
-        // Set tiêu đề board
-        document.getElementById("boardTitle").textContent = board.name;
-      });
-    });
-
   } catch (err) {
     console.error("Lỗi load boards:", err);
+    Toastify({
+      text: "Không thể kết nối server",
+      backgroundColor: "#ff4d4d",
+    }).showToast();
   }
 }
 
@@ -126,7 +112,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // boards.html ở /public → component ở ./components/...
   await inject('./components/sidebar_header.html', '#app-shell');
   activateBoardsMenu();
-  
+
 });
 
 //mở – đóng – tạo board
@@ -139,8 +125,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const colorOptions = document.querySelectorAll(".color-swatch");
   const workspaceSelect = document.getElementById("workspaceSelect");
   const visibility = document.getElementById("visibilitySelect").value;
-  let selectedColor = "gradient-1";
-
   // ====== LOAD WORKSPACES ======
   async function loadWorkspaces() {
     try {
@@ -212,7 +196,7 @@ document.addEventListener("DOMContentLoaded", () => {
           name,
           workspaceId,
           visibility,
-          background: selectedColor
+          background: uploadedBg || selectedColor
         }),
       });
 
@@ -283,7 +267,6 @@ async function renderBoardWithLists(boardId) {
       const listEl = createListElement(list);
       listsContainer.appendChild(listEl);
     });
-
   } catch (err) {
     console.error("Error loading board:", err);
   }
@@ -351,21 +334,35 @@ function attachAddCard(listEl, listId) {
   inputContainer.appendChild(cancelBtn);
 
   // Gắn các phần tử vào list
-  listEl.appendChild(inputContainer);
   listEl.appendChild(addCardBtn);
 
   // --- Sự kiện ---
   addCardBtn.addEventListener("click", () => {
     addCardBtn.classList.add("hidden");
-    setTimeout(() => inputContainer.classList.add("show"), 10);  // bật transition
+
+    if (!cardsContainer.contains(inputContainer)) {
+      cardsContainer.appendChild(inputContainer);
+    }
+
     inputContainer.classList.remove("hidden");
+    setTimeout(() => inputContainer.classList.add("show"), 10);
     input.focus();
+
+    // 🔽 Cuộn đến đáy .cards-container
+    setTimeout(() => {
+      cardsContainer.scrollTo({
+        top: cardsContainer.scrollHeight,
+        behavior: "smooth"
+      });
+    }, 100); // delay nhẹ để form render xong
   });
+
 
   cancelBtn.addEventListener("click", () => {
     inputContainer.classList.remove("show");  // đóng form mượt
     setTimeout(() => {
       inputContainer.classList.add("hidden");
+      inputContainer.remove();
     }, 300); // thời gian khớp transition
     addCardBtn.classList.remove("hidden");
     input.value = "";
@@ -392,7 +389,7 @@ function attachAddCard(listEl, listId) {
       });
 
       if (!res.ok) throw new Error("Không thể thêm thẻ");
-      inputContainer.classList.remove("show");  
+      inputContainer.classList.remove("show");
       setTimeout(() => inputContainer.classList.add("hidden"), 10);
 
       // Reset UI
@@ -563,3 +560,25 @@ socket.on("newList", (list) => {
 });
 
 
+// tải background từ máy
+const bgUpload = document.getElementById("bgUpload");
+
+bgUpload.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const formData = new FormData();
+  formData.append("background", file);
+
+  const res = await fetch("http://localhost:8127/v1/upload/bg", {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await res.json();
+  uploadedBg = data.imageUrl; // đường dẫn ảnh trên server
+  console.log("đường dẫn ảnh là ", data.imageUrl);
+  selectedColor = "";
+});
+
+window.addEventListener("DOMContentLoaded", loadMyBoards);
