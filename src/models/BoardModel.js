@@ -12,6 +12,10 @@ const boardSchema = new mongoose.Schema({
   },
   lists: [{ type: mongoose.Schema.Types.ObjectId, ref: "List" }],
   members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  
+  // ⭐ thêm vào đây
+  lastViewedAt: { type: Date, default: null },
+
   createdAt: { type: Date, default: Date.now },
 });
 

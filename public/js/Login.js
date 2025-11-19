@@ -46,7 +46,7 @@ loginButton.addEventListener('click', async (e) => {
 
       // Chuyển hướng sau khi hiển thị thông báo một chút
       setTimeout(() => {
-        window.location.href = '/home.html';
+        window.location.href = '/boards.html';
       }, 1000);
     } else {
       Toastify({
