@@ -2,171 +2,39 @@
 <html lang="vi">
 
 <head>
-  <meta charset="UTF-8">
-  <title>Trang chủ</title>
-  <link rel="stylesheet" href="./css/sidebar_header.css?v=1" />
-  <link rel="stylesheet" href="./css/home.css" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Home</title>
 
+  <!-- CSS chung (header + sidebar) -->
+  <link rel="stylesheet" href="./css/sidebar_header.css?v=1" />
+  <!-- CSS riêng cho trang Home (tuỳ bạn đặt tên) -->
+  <link rel="stylesheet" href="./css/home.css?v=1" />
 </head>
 
 <body>
   <!-- Header + Sidebar sẽ được inject vào đây -->
   <div id="app-shell"></div>
 
-  <!-- MAIN CONTENT của trang Boards -->
-  <main class="content content-boards">
-    <!-- Recently viewed -->
-    <section class="section-block">
-      <div class="section-head">
-        <div class="section-title">
-          <h3>Recently viewed</h3>
-        </div>
-      </div>
+  <!-- NỘI DUNG CHÍNH -->
+  <main class="content content-home">
+    <section class="recently-viewed">
+      <header class="recent-header">
+        <svg class="recent-icon" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" stroke-width="2" />
+          <path d="M12 7v5l3 2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+        <span>Recently viewed</span>
+      </header>
 
-      <!-- JS sẽ render các board-card vào đây -->
-      <div id="recent-boards" class="card-grid">
-        <!-- Loading state -->
-        <p id="recent-loading">Đang tải danh sách board...</p>
-      </div>
-    </section>
-
-
-    <!-- Your workspaces -->
-    <section class="section-block">
-      <div class="section-head">
-        <h3 class="heading">YOUR WORKSPACES</h3>
-        <div class="actions-inline">
-          <a class="chip" href="#"><span class="ic">🗂️</span>Boards</a>
-          <a class="chip" href="#"><span class="ic">👤</span>Members</a>
-          <a class="chip" href="#"><span class="ic">⚙️</span>Settings</a>
-        </div>
-      </div>
-
-      <div class="workspace-row">
-        <div class="ws-title">
-          <span class="ws-badge">T</span>
-          <span class="ws-name">Trello Workspace</span>
-        </div>
-      </div>
-
-      <div class="card-grid mt-2">
-        <a class="board-card" href="#">
-          <div class="board-cover gradient-1"></div>
-          <div class="board-footer"><span class="board-title">My Trello board</span></div>
-        </a>
-
-        <button class="board-card create-card" type="button">
-          <div class="create-body">Create new board</div>
-        </button>
-      </div>
-
-      <div class="mt-3">
-        <a class="btn-outline" href="#">View all closed boards</a>
+      <!-- List card các board xem gần đây -->
+      <div id="recentBoards" class="recent-board-list">
       </div>
     </section>
   </main>
+
+  <!-- JS riêng cho Home -->
+  <script type="module" src="./js/Home.js"></script>
 </body>
-<script>
-  // Chèn file components/sidebar_header.html vào #app-shell
-  async function inject(file, targetSelector) {
-    try {
-      const res = await fetch(file, { cache: 'no-store' });
-      if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-      const html = await res.text();
-      document.querySelector(targetSelector).innerHTML = html;
-    } catch (err) {
-      console.error('Load component failed:', file, err);
-    }
-  }
-
-  // Đánh dấu menu "Boards" sáng trong sidebar
-  function activateBoardsMenu() {
-    const links = document.querySelectorAll('.nav .nav-item');
-    links.forEach(a => a.classList.remove('is-active'));
-    const boardsLink = [...links].find(a => /boards/i.test(a.textContent.trim()));
-    if (boardsLink) boardsLink.classList.add('is-active');
-  }
-
-  // 🧩 Tạo 1 board-card từ object board trả về từ API
-  function createBoardCard(board) {
-    const a = document.createElement('a');
-    a.className = 'board-card';
-    // tuỳ bạn route UI, ví dụ: /board.html?id=xxx hoặc /boards/xxx
-    a.href = `/boards/${board._id}`;
-
-    const cover = document.createElement('div');
-    cover.className = `board-cover ${board.background || 'gradient-1'}`;
-
-    const footer = document.createElement('div');
-    footer.className = 'board-footer';
-
-    const title = document.createElement('span');
-    title.className = 'board-title';
-    title.textContent = board.name;
-
-    footer.appendChild(title);
-    a.appendChild(cover);
-    a.appendChild(footer);
-
-    return a;
-  }
-
-  // 🧩 Gọi API lấy list board của user hiện tại (đã sort theo lastViewedAt)
- async function loadRecentBoards() {
-  const container = document.getElementById('recent-boards');
-  const loadingEl = document.getElementById('recent-loading');
-
-  try {
-    const res = await fetch('http://localhost:8127/v1/board/recent', {
-      credentials: 'include', // gửi token/cookie
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    });
-
-    const json = await res.json(); // đọc JSON object
-
-    if (!res.ok || json.success === false) {
-      console.error("API error:", json);
-      if (loadingEl) loadingEl.textContent = json.message || "Không thể tải danh sách board.";
-      return;
-    }
-
-    const boards = json.data || [];  // lấy data từ JSON
-
-    if (loadingEl) loadingEl.remove();
-
-    if (boards.length === 0) {
-      const empty = document.createElement('p');
-      empty.textContent = 'Bạn chưa có board nào.';
-      container.appendChild(empty);
-      return;
-    }
-
-    // Render theo thứ tự đã sort lastViewedAt
-    boards.forEach(board => {
-      const card = createBoardCard(board);
-      container.appendChild(card);
-    });
-
-  } catch (err) {
-    console.error("Lỗi fetch:", err);
-    if (loadingEl) loadingEl.textContent = 'Không thể tải danh sách board.';
-  }
-}
-
-  document.addEventListener('DOMContentLoaded', async () => {
-    await inject('./components/sidebar_header.html', '#app-shell');
-    import("./js/Sidebar_Header.js").then(module => {
-      module.initSidebarHeader();  
-    });
-    activateBoardsMenu();
-
-    // 👉 Load danh sách board theo “đã xem gần đây”
-    loadRecentBoards();
-  });
-</script>
-<script type="module" src="./js/Sidebar_Header.js"></script>
-
 
 </html>

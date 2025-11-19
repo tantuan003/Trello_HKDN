@@ -1,3 +1,4 @@
+// js/sidebar_header.js
 const WSP_KEY = "wspMenuCollapsed";
 
 function initWorkspaceToggle() {
@@ -5,6 +6,7 @@ function initWorkspaceToggle() {
   const btn = document.getElementById("wspToggle");
   if (!wsp || !btn) return;
 
+  // Khởi tạo theo trạng thái đã lưu
   const saved = localStorage.getItem(WSP_KEY);
   const collapsed = saved === "1";
   wsp.classList.toggle("is-collapsed", collapsed);
@@ -21,6 +23,7 @@ function initTemplatesMenuToggle() {
   const nav = document.getElementById("sideNav");
   if (!nav) return;
 
+  // Uỷ quyền sự kiện
   nav.addEventListener("click", (e) => {
     const head = e.target.closest(".nav-item.has-sub");
     if (!head) return;
@@ -39,52 +42,43 @@ function initTemplatesMenuToggle() {
   });
 }
 
-async function checkLogin() {
-  const res = await fetch("http://localhost:8127/v1/User/checkToken", {
-    method: "GET",
-    credentials: "include"
-  });
+/* ---------------------------------------------------
+   AUTO ACTIVE MENU DỰA THEO URL
+   --------------------------------------------------- */
+function initActiveMenu() {
+  const path = window.location.pathname;
+  const page = path.split("/").pop(); // vd: boards.html
 
-  const loginbtn = document.getElementById("loginBtn");
-  const logoutbtn = document.getElementById("logoutBtn");
-  if (!loginbtn || !logoutbtn) return;
+  // Boards
+  if (page === "boards.html") {
+    document.getElementById("boardsMenu")?.classList.add("is-active");
+  }
 
-  if (res.ok) {
-    loginbtn.style.display = "none";
-    logoutbtn.style.display = "flex";
-  } else {
-    loginbtn.style.display = "flex";
-    logoutbtn.style.display = "none";
+  // Templates + mở submenu
+  if (page === "templates.html") {
+    const head = document.getElementById("templateMenu");
+    if (head) {
+      head.classList.add("is-active", "active");
+      const section = head.closest(".nav-section");
+      section?.classList.add("open");
+    }
+  }
+
+  // Home
+  if (page === "home.html") {
+    document.getElementById("homeMenu")?.classList.add("is-active");
   }
 }
 
+/* ---------------------------------------------------
+   Gọi sau khi inject HTML
+   --------------------------------------------------- */
 export function initSidebarHeader() {
   if (document.body.dataset.sidebarHeaderInit === "1") return;
 
   initWorkspaceToggle();
   initTemplatesMenuToggle();
-
-  const logoutBtn = document.getElementById("logoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      try {
-        const res = await fetch("http://localhost:8127/v1/User/logout", {
-          method: "POST",
-          credentials: "include"
-        });
-        const data = await res.json();
-        console.log("Logout:", data);
-
-        if (res.ok) {
-          window.location.href = "/login.html";
-        }
-      } catch (err) {
-        console.error("Lỗi logout:", err);
-      }
-    });
-  }
-
-  checkLogin();
+  initActiveMenu();     // 👈 thêm dòng này
 
   document.body.dataset.sidebarHeaderInit = "1";
 }
