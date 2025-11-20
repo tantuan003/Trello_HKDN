@@ -1,0 +1,88 @@
+.nav-container {
+  width: 20%;
+  min-width: 240px;
+  height: 100vh;
+  background: #fff;
+  border-right: 1px solid #e2e4e6;
+  padding: 20px 0;
+  box-sizing: border-box;
+}
+
+.sidebar-section {
+  list-style: none;
+  margin: 0 0 30px 0;
+  padding: 0 20px;
+}
+
+.sidebar-header {
+  font-weight: 600;
+  font-size: 14px;
+  color: #5e6c84;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  user-select: none;
+}
+
+.menu-item {
+  font-size: 14px;
+  color: #172b4d;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.15s ease;
+  user-select: none;
+}
+
+.menu-item .mi-icon,
+.menu-item .ws-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  width: 20px;
+  height: 20px;
+  font-size: 16px;
+  color: #42526e;
+  background: transparent;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.ws-icon {
+  font-weight: 700;
+  background: #0c66e4;
+  color: white;
+  font-size: 14px;
+  width: 24px;
+  height: 24px;
+  text-align: center;
+  line-height: 24px;
+}
+
+.menu-item:hover {
+  background-color: #e2e4e6;
+}
+
+.menu-item.active {
+  background-color: #dfe1e6;
+  font-weight: 600;
+  color: #172b4d;
+}
+
+.workspace-title {
+  font-weight: 700;
+  font-size: 16px;
+  color: #172b4d;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+  user-select: none;
+}
+
+.workspace-title .ws-icon {
+  margin-right: 8px;
+}
