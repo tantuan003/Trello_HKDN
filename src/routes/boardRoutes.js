@@ -1,5 +1,5 @@
 import express from "express";
-import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent } from "../controllers/boardController.js";
+import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard } from "../controllers/boardController.js";
 const router = express.Router();
 import { verifyToken } from "../middlewares/verifyToken.js";
 // POST /v1/board
@@ -18,6 +18,8 @@ router.post("/create-card/:listId",verifyToken, createCard);
 
 // Lấy toàn bộ card theo list
 router.get("/get-card/:listId", getCardsByList);
+router.get("/get-card/cards/:id", getCardById);
+router.put("/update-card/cards/:id", updateCard);
 
 //mời user
 router.post("/:boardId/invite", verifyToken, inviteUser);

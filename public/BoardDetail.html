@@ -1,5 +1,6 @@
-    <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="vi">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="./css/BoardDetail.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
+
 <body>
   <!-- Sidebar sẽ inject nếu cần -->
 
@@ -14,22 +16,80 @@
   <main class="content-content-boards" id="main">
     <div id="boardView" class="boardView">
       <!-- Header board -->
-        <div id="inviteUser" title="Invite user">
-          <h2 id="boardTitle">Board Title</h2>
-          <img src="../uploads/add-member-icon.png" id="invite-icon" alt="Invite" />
-        </div>
-         <div id="inviteFormContainer" class="hidden">
+      <div id="inviteUser" title="Invite user">
+        <h2 id="boardTitle">Board Title</h2>
+        <img src="../uploads/add-member-icon.png" id="invite-icon" alt="Invite" />
+      </div>
+      <div id="inviteFormContainer" class="hidden">
         <form id="inviteForm">
           <input type="email" id="inviteEmail" placeholder="Enter user email" />
           <button type="submit">Invite</button>
         </form>
       </div>
-      
+
 
       <!-- Lists container -->
       <div id="listsContainer" class="lists-container">
         <!-- Lists sẽ được JS render ở đây -->
       </div>
+      <!-- Card Detail Modal -->
+      <div id="cardDetailModal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header" id="modal-header">
+            <h2 id="cardTitle">Card Name</h2>
+            <button id="closeModal">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            <!-- Mô tả -->
+            <div>
+              <h4>Description</h4>
+              <p id="cardDescription" contenteditable="true"></p>
+            </div>
+
+            <!-- List -->
+            <div>
+              <h4>List</h4>
+              <p id="cardList"></p>
+            </div>
+
+            <!-- Assigned To -->
+            <div>
+              <h4>Assigned To</h4>
+              <ul id="cardAssigned"></ul>
+            </div>
+
+            <!-- Labels -->
+            <div>
+              <h4>Labels</h4>
+              <div id="cardLabels"></div>
+            </div>
+
+            <!-- Due Date -->
+            <div>
+              <h4>Due Date</h4>
+              <input type="date" id="cardDueDate" />
+            </div>
+
+            <!-- Comments -->
+            <div>
+              <h4>Comments</h4>
+              <ul id="cardComments"></ul>
+            </div>
+
+            <!-- Attachments -->
+            <div>
+              <h4>Attachments</h4>
+              <ul id="cardAttachments"></ul>
+            </div>
+             <div class="save-card">
+            <button id="save-card-btn">Save</button>
+          </div>
+
+          </div>
+        </div>
+      </div>
+
 
       <!-- Add list form -->
       <div class="add-list">
@@ -48,4 +108,5 @@
   <script type="module" src="js/BoardDetail.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </body>
+
 </html>
