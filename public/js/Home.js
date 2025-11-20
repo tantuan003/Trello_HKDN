@@ -32,15 +32,25 @@ async function loadRecentlyViewedBoards() {
   if (!container) return;
 
   try {
-    // Ví dụ: gọi API trả về danh sách board xem gần đây
     const res = await fetch("http://localhost:8127/v1/board/recent", {
       credentials: "include",
     });
-    const boards = await res.json();
 
-    if (!Array.isArray(boards) || boards.length === 0) {
-      container.innerHTML = "<p class='no-recent'>No recently viewed boards yet.</p>";
+    const result = await res.json();
 
+    // ⚠ API bạn trả về dạng:
+    // { success: true, data: [...] }
+    if (!result.success || !Array.isArray(result.data)) {
+      container.innerHTML =
+        "<p class='no-recent'>No recently viewed boards yet.</p>";
+      return;
+    }
+
+    const boards = result.data;
+
+    if (boards.length === 0) {
+      container.innerHTML =
+        "<p class='no-recent'>No recently viewed boards yet.</p>";
       return;
     }
 
@@ -49,26 +59,32 @@ async function loadRecentlyViewedBoards() {
     boards.forEach((board) => {
       const card = document.createElement("article");
       card.className = "recent-board-card";
+
+      const workspaceName =
+        board.workspace?.name || "Untitled workspace";
+
       card.innerHTML = `
         <div class="recent-board-card__thumb"></div>
         <div class="recent-board-card__body">
           <div class="recent-board-card__name">${board.name}</div>
-          <div class="recent-board-card__workspace">${board.workspaceName || ""}</div>
+          <div class="recent-board-card__workspace">${workspaceName}</div>
         </div>
       `;
 
+      // ⭐ Điều hướng đúng tới trang chi tiết board
       card.addEventListener("click", () => {
-        // chuyển sang trang board chi tiết
-        window.location.href = `boards.html?id=${board.id}`;
+        window.location.href = `/boardDetail.html?id=${board._id}`;
       });
 
       container.appendChild(card);
     });
   } catch (err) {
     console.error("Load recently viewed boards failed:", err);
-    container.innerHTML = "<p>Lỗi khi tải danh sách board gần đây.</p>";
+    container.innerHTML =
+      "<p class='no-recent'>Lỗi khi tải danh sách board gần đây.</p>";
   }
 }
+
 
 document.addEventListener("DOMContentLoaded", async () => {
   await inject("./components/sidebar_header.html", "#app-shell");

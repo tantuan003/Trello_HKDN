@@ -1,6 +1,5 @@
-import { io } from "https://cdn.socket.io/4.7.2/socket.io.esm.min.js";
 
-const socket = io("http://localhost:8127", { withCredentials: true });
+import { socket } from "../js/socket.js";
 
 const boardCards = document.querySelectorAll(".board-card"); // NodeList
 const cardGrid = document.querySelector(".card-grid"); // chỉ 1 grid

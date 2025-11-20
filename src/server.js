@@ -20,8 +20,12 @@ const app = express();
 app.use(express.urlencoded({ extended: true })); // để nhận form dữ liệu
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*" } // Cho phép frontend truy cập
+  cors: {
+    origin: "http://localhost:8127",
+    credentials: true
+  }
 });
+
 app.set("socketio", io);
 app.use(express.json());
 app.use(cookieParser());
