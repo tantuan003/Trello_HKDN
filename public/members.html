@@ -5,6 +5,9 @@
     <meta charset="UTF-8">
     <title>Trello – Members</title>
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+
+    <!-- CSS FILES -->
     <link rel="stylesheet" href="css/layout_nav.css">
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/members.css">
@@ -22,7 +25,7 @@
 
             <div class="members-header">
                 <h2>Members</h2>
-                <button class="invite-btn">Invite</button>
+                <button class="invite-btn"><i class="fas fa-envelope"></i> Invite workspace members</button>
             </div>
 
             <div class="members-desc">
@@ -34,6 +37,17 @@
             </div>
 
         </main>
+
+        <!-- Invite Modal -->
+        <div id="inviteModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Invite Member</h3>
+                <input type="email" id="inviteEmail" placeholder="Nhập email người muốn mời" />
+                <button id="sendInvite">Invite</button>
+            </div>
+            
+        </div>
 
     </div>
 
