@@ -122,6 +122,12 @@ function createListElement(list) {
     const cardEl = document.createElement("div");
     cardEl.className = "card";
     cardEl.textContent = card.name;
+
+    // ⭐ Thêm sự kiện click mở cardDetail
+    cardEl.addEventListener("click", () => {
+      openCardDetail(card._id); // Hàm gọi API lấy chi tiết card
+    });
+
     cardsContainer.appendChild(cardEl);
   });
 
@@ -130,6 +136,7 @@ function createListElement(list) {
 
   return listEl;
 }
+
 
 // ===================================================================
 // Thêm card vào list
@@ -390,3 +397,145 @@ cancelAddListBtn.addEventListener("click", () => {
   showAddListBtn.style.display = "inline-block";
   newListTitle.value = "";
 });
+
+// card detail
+async function openCardDetail(cardId) {
+  try {
+    const res = await fetch(`http://localhost:8127/v1/board/get-card/cards/${cardId}`, {
+      credentials: "include"
+    });
+    const result = await res.json();
+
+    if (!result.success) {
+      alert(result.message || "Lỗi khi tải chi tiết card");
+      return;
+    }
+
+    const card = result.data;
+    showCardDetailModal(card); // Hiển thị modal hoặc trang card detail
+
+  } catch (err) {
+    console.error("openCardDetail error:", err);
+    alert("Lỗi khi tải chi tiết card");
+  }
+}
+function showCardDetailModal(card) {
+  const modal = document.getElementById("cardDetailModal");
+
+  document.getElementById("cardTitle").textContent = card.name;
+  document.getElementById("cardDescription").textContent = card.description || "";
+  document.getElementById("cardList").textContent = card.list?.name || "Unknown list";
+
+  // Assigned To
+  const assignedEl = document.getElementById("cardAssigned");
+  assignedEl.innerHTML = "";
+  (card.assignedTo || []).forEach(user => {
+    const li = document.createElement("li");
+    li.textContent = user.username || "Unknown";
+    assignedEl.appendChild(li);
+  });
+
+  // Labels
+  const labelsEl = document.getElementById("cardLabels");
+  labelsEl.innerHTML = "";
+  (card.labels || []).forEach(label => {
+    const span = document.createElement("span");
+    span.textContent = label;
+    labelsEl.appendChild(span);
+  });
+
+  // Due date
+  document.getElementById("cardDueDate").value = card.dueDate
+  ? new Date(card.dueDate).toISOString().split("T")[0]
+  : "";
+
+  // Comments
+  const commentsEl = document.getElementById("cardComments");
+  commentsEl.innerHTML = "";
+  (card.comments || []).forEach(comment => {
+    const li = document.createElement("li");
+    li.textContent = `${comment.user?.username || "Unknown"}: ${comment.text}`;
+    commentsEl.appendChild(li);
+  });
+
+  // Attachments
+  const attachmentsEl = document.getElementById("cardAttachments");
+  attachmentsEl.innerHTML = "";
+  (card.attachments || []).forEach(file => {
+    const li = document.createElement("li");
+    const a = document.createElement("a");
+    a.href = file;
+    a.target = "_blank";
+    a.textContent = file.split("/").pop(); // chỉ tên file
+    li.appendChild(a);
+    attachmentsEl.appendChild(li);
+  });
+
+  // Hiển thị modal
+  modal.style.display = "block";
+  document.getElementById("save-card-btn").onclick=()=>{
+    saveCardChanges(card._id);
+
+  };
+
+  // Nút đóng
+  document.getElementById("closeModal").onclick = () => {
+    modal.style.display = "none";
+  };
+
+  // Click ngoài modal đóng
+  window.onclick = (event) => {
+    if (event.target == modal) {
+      modal.style.display = "none";
+    }
+  };
+}
+function saveCardChanges(cardId) {
+  const updatedCard = {
+    name: document.getElementById("cardTitle").textContent,
+    description: document.getElementById("cardDescription").textContent,
+    dueDate:document.getElementById("cardDueDate").value,
+    labels: Array.from(document.querySelectorAll("#cardLabels span")).map(s => s.textContent)
+  };
+
+  fetch(`http://localhost:8127/v1/board/update-card/cards/${cardId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(updatedCard)
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      Toastify({
+        text: "lưu thành công!",
+        duration: 3000,          // 3 giây
+        gravity: "top",          // xuất hiện ở trên
+        position: "right",       // bên phải
+        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+        close: true
+      }).showToast();
+    } else {
+      Toastify({
+        text: data.message || "Lưu thất bại",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "linear-gradient(to right, #e52d27, #b31217)",
+        close: true
+      }).showToast();
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    Toastify({
+      text: "Error occurred while saving",
+      duration: 3000,
+      gravity: "top",
+      position: "right",
+      backgroundColor: "linear-gradient(to right, #e52d27, #b31217)",
+      close: true
+    }).showToast();
+  });
+}
+

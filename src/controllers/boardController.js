@@ -6,6 +6,7 @@ import Card from "../models/CardModel.js";
 import User from "../models/UserModel.js";
 import multer from "multer";
 import path from "path";
+import { io } from "../server.js";
 
 export const createBoard = async (req, res) => {
   try {
@@ -168,7 +169,25 @@ export const getCardsByList = async (req, res) => {
     res.status(500).json({ message: "Lỗi server khi lấy card." });
   }
 };
+export const getCardById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const card = await Card.findById(id)
+      .populate("list", "name")               // tên list
+      .populate("assignedTo", "username email") // user được giao
+      .populate("createdBy", "username email")  // người tạo
+      .populate("comments.user", "username email"); // bình luận
+
+    if (!card)
+      return res.status(404).json({ success: false, message: "Card không tồn tại" });
+
+    res.status(200).json({ success: true, data: card });
+  } catch (err) {
+    console.error("getCardById error:", err);
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
 
 // mời user
 export const inviteUser = async (req, res) => {
@@ -277,3 +296,47 @@ export const getBoardsrecent = async (req, res) => {
   }
 };
 
+// update card
+export const updateCard = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Các trường được phép update
+    const allowedFields = ["name", "description", "dueDate", "labels", "assignedTo", "attachments"];
+    const updateData = {};
+
+    // Lấy những trường tồn tại trong req.body
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        if (field === "dueDate") {
+          const date = new Date(req.body[field]);
+          if (!isNaN(date.valueOf())) {
+            updateData[field] = date;
+          }
+        } else {
+          updateData[field] = req.body[field];
+        }
+      }
+    });
+
+    // Update card
+    const card = await Card.findByIdAndUpdate(id, updateData, { new: true })
+      .populate("assignedTo", "username email")
+      .populate("createdBy", "username email")
+      .populate("list", "name")
+      .populate("comments.user", "username email");
+
+    if (!card)
+      return res.status(404).json({ success: false, message: "Card không tồn tại" });
+
+    // ⭐ Emit sự kiện realtime tới room listId
+    if (card.list && card.list._id) {
+      io.to(card.list._id.toString()).emit("cardUpdated", card);
+    }
+
+    res.status(200).json({ success: true, data: card });
+  } catch (err) {
+    console.error("updateCard error:", err);
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};

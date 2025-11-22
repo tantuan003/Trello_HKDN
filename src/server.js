@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.urlencoded({ extended: true })); // để nhận form dữ liệu
 const server = http.createServer(app);
-const io = new Server(server, {
+export const io = new Server(server, {
   cors: {
     origin: "http://localhost:8127",
     credentials: true
