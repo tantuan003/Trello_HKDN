@@ -6,6 +6,7 @@ import Card from "../models/CardModel.js";
 import User from "../models/UserModel.js";
 import multer from "multer";
 import path from "path";
+import { io } from "../server.js";
 
 export const createBoard = async (req, res) => {
   try {
@@ -78,6 +79,10 @@ export const getBoardById = async (req, res) => {
         path: "lists",
         populate: { path: "cards" }  // nested populate cards trong list
       });
+    await Board.findByIdAndUpdate(boardId, {
+      lastViewedAt: new Date()
+    });
+
 
     if (!board) return res.status(404).json({ message: "Board không tồn tại" });
 
@@ -115,7 +120,7 @@ export const createCard = async (req, res) => {
     const { listId } = req.params;
     const { name, description, assignedTo, labels, dueDate } = req.body;
     const userId = req.user?.id;
-    console.log("userid là ",userId);
+    console.log("userid là ", userId);
 
     const list = await List.findById(listId);
     if (!list) return res.status(404).json({ message: "List không tồn tại." });
@@ -130,14 +135,14 @@ export const createCard = async (req, res) => {
       assignedTo: assignedTo || [],
       labels: labels || [],
       dueDate: dueDate || null,
-      createdBy:userId, // 🔑 bắt buộc phải gán
+      createdBy: userId, // 🔑 bắt buộc phải gán
       position
     });
 
     await newCard.save();
     await List.findByIdAndUpdate(list._id, { $push: { cards: newCard._id } });
     const io = req.app.get("socketio");
-    io.to(list.board.toString()).emit("newCard", newCard); 
+    io.to(list.board.toString()).emit("newCard", newCard);
 
     res.status(201).json({ message: "Tạo card thành công!", card: newCard });
   } catch (error) {
@@ -164,7 +169,25 @@ export const getCardsByList = async (req, res) => {
     res.status(500).json({ message: "Lỗi server khi lấy card." });
   }
 };
+export const getCardById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const card = await Card.findById(id)
+      .populate("list", "name")               // tên list
+      .populate("assignedTo", "username email") // user được giao
+      .populate("createdBy", "username email")  // người tạo
+      .populate("comments.user", "username email"); // bình luận
+
+    if (!card)
+      return res.status(404).json({ success: false, message: "Card không tồn tại" });
+
+    res.status(200).json({ success: true, data: card });
+  } catch (err) {
+    console.error("getCardById error:", err);
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
 
 // mời user
 export const inviteUser = async (req, res) => {
@@ -227,3 +250,93 @@ export const uploadBackground = [
     }
   },
 ];
+
+// GET /api/boards/recent
+export const getBoardsrecent = async (req, res) => {
+ try {
+    // 🔐 đảm bảo có user từ token
+    if (!req.user || !req.user.id) {
+      console.log("Không tìm thấy user trong req.user:", req.user);
+      return res.status(401).json({
+        success: false,
+        message: "Không tìm thấy thông tin user từ token."
+      });
+    }
+
+    const userId = req.user.id;
+    console.log("UserId từ token:", userId);
+
+    const boards = await Board.find({
+      $or: [
+        { createdBy: userId },
+        { members: userId }
+      ]
+    })
+      .populate("workspace", "name")
+      .populate("createdBy", "username email")
+      .sort({
+        lastViewedAt: -1, // ⭐ sắp xếp theo xem gần nhất
+        createdAt: -1
+      });
+
+    // KHÔNG trả 404 nữa, cứ trả mảng rỗng cho dễ xử lý phía client
+    return res.status(200).json({
+      success: true,
+      data: boards
+    });
+  } catch (error) {
+    console.error("getBoardsByCurrentUser error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+      // ⚠ chỉ để tạm debug, sau này xoá đi
+      error: error.message
+    });
+  }
+};
+
+// update card
+export const updateCard = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Các trường được phép update
+    const allowedFields = ["name", "description", "dueDate", "labels", "assignedTo", "attachments"];
+    const updateData = {};
+
+    // Lấy những trường tồn tại trong req.body
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        if (field === "dueDate") {
+          const date = new Date(req.body[field]);
+          if (!isNaN(date.valueOf())) {
+            updateData[field] = date;
+          }
+        } else {
+          updateData[field] = req.body[field];
+        }
+      }
+    });
+
+    // Update card
+    const card = await Card.findByIdAndUpdate(id, updateData, { new: true })
+      .populate("assignedTo", "username email")
+      .populate("createdBy", "username email")
+      .populate("list", "name")
+      .populate("comments.user", "username email");
+
+    if (!card)
+      return res.status(404).json({ success: false, message: "Card không tồn tại" });
+
+    // ⭐ Emit sự kiện realtime tới room listId
+    if (card.list && card.list._id) {
+      io.to(card.list._id.toString()).emit("cardUpdated", card);
+    }
+
+    res.status(200).json({ success: true, data: card });
+  } catch (err) {
+    console.error("updateCard error:", err);
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};

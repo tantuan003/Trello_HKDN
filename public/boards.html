@@ -6,10 +6,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Boards</title>
 
-  <!-- CSS chung cho header + sidebar -->
-  <link rel="stylesheet" href="./css/sidebar_header.css?v=1" />
   <!-- CSS riêng cho trang Boards -->
-  <link rel="stylesheet" href="./css/boards.css?v=1" />
+  <link rel="stylesheet" href="./css/boards.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 </head>
 
@@ -20,10 +18,13 @@
   <!-- MAIN CONTENT của trang Boards -->
   <main class="content content-boards" id="main">
     <div id="boardView" class="boardView" style="display:none;">
+      <div class="board-head">
+      <img src="../uploads/backward-btn.png" id="backward-btn" alt="">
       <div id="inviteUser" title="Invite user">
         <h2 id="boardTitle"></h2>
         <img src="../uploads/add-member-icon.png" id="invite-icon" alt="Invite" />
       </div>
+    </div>
 
       <!-- Form pop-up -->
       <div id="inviteFormContainer" class="hidden">
@@ -57,12 +58,8 @@
         </div>
       </div>
       <div class="card-grid" id="boardContainer">
-        <div class="board-card" data-id="">
-          <div class="board-cover" ></div>
-          <div class="board-footer"><span class="board-title">My Trello board</span></div>
-        </div>
-      </div>
 
+      </div>
     </section>
 
     <!-- Your workspaces -->
@@ -83,6 +80,7 @@
             <span class="ws-name">Teamhub Workspace</span>
           </div>
         </div>
+
 
         <div class="card-grid mt-2">
           <a class="board-card" href="#">
@@ -126,6 +124,10 @@
           <span class="color-swatch gradient-1" data-color="gradient-1"></span>
           <span class="color-swatch gradient-2" data-color="gradient-2"></span>
           <span class="color-swatch gradient-3" data-color="gradient-3"></span>
+          <span class="color-swatch gradient-4" data-color="gradient-4"></span>
+          <span class="color-swatch gradient-5" data-color="gradient-5"></span>
+          <span class="color-swatch gradient-6" data-color="gradient-6"></span>
+          <span class="color-swatch gradient-7" data-color="gradient-7"></span>
         </div>
       </label>
       <label for="bgUpload">Hoặc tải lên ảnh nền của bạn:</label>

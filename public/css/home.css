@@ -1,182 +1,95 @@
-/* ===== Boards page ===== */
-.content-boards {
-  background: #fff;
-  padding: 12px 28px 28px; /* giảm padding-top để không bị đẩy xuống */
-  min-height: calc(100vh - var(--header-h));
-  overflow-y: auto;
+/* ——— Layout section ——— */
+.recent-section {
+  padding: 24px 32px;
 }
 
-/* Bỏ khoảng trống đầu tiên */
-.content-boards .section-block:first-child {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
-
-/* Cấu trúc section */
-.section-block {
-  margin-bottom: 28px;
-}
-.section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
-}
-.section-title {
+/* ——— Header: icon + text ——— */
+.recent-header {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-.section-title h3 {
-  margin: 0;
-  font-size: 16px;
-}
-
-.heading {
-  margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  color: #6b7280;
-  font-weight: 800;
-}
-
-.actions-inline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #eef2f6;
-  color: #1f2937;
-  text-decoration: none;
+  font-size: 15px;
   font-weight: 600;
-  border: 1px solid #e5e7eb;
-}
-.chip .ic {
-  width: 16px;
-  text-align: center;
-  opacity: 0.85;
+  color: #2d2d2d;
+  margin-bottom: 16px;
 }
 
-/* Grid cho các board */
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 14px;
-}
-.mt-2 {
-  margin-top: 12px;
-}
-.mt-3 {
-  margin-top: 16px;
+.recent-icon {
+  width: 18px;
+  height: 18px;
+  stroke: #ffffff;
 }
 
-.board-card {
+/* ——— Danh sách card ——— */
+.recent-list {
   display: flex;
   flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  min-height: 120px;
-}
-.board-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-  border-color: #e2e8f0;
-}
-.board-cover {
-  height: 84px;
-  border-bottom: 1px solid #eef2f4;
-  position: relative;
-}
-.gradient-1 {
-  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 48%, #f59e0b 100%);
-}
-.img-cover {
-  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
-}
-.badge {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-.badge-dark {
-  background: #111827;
-  color: #fff;
-}
-
-.board-footer {
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-}
-.board-title {
-  font-weight: 600;
-}
-
-.create-card {
-  cursor: pointer;
-  border-style: dashed;
-  background: #f4f5f7;
-}
-.create-card .create-body {
-  display: grid;
-  place-items: center;
-  height: 100%;
-  color: #6b7280;
-  font-weight: 600;
-}
-
-.workspace-row {
-  display: flex;
-  align-items: center;
   gap: 10px;
-  margin: 10px 0 4px;
-}
-.ws-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.ws-badge {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  display: grid;
-  place-items: center;
-  background: #0ea5a4;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-}
-.ws-name {
-  font-weight: 800;
 }
 
-.btn-outline {
-  display: inline-block;
-  padding: 8px 14px;
-  border: 1px solid #e5e7eb;
+/* ——— Card mỗi board ——— */
+.recent-board-card {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #e9e9e9;
+  cursor: pointer;
+
+  /* hiệu ứng đẹp */
+  transition: all 0.15s ease;
+}
+
+.recent-board-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+  border-color: #dcdcdc;
+}
+
+/* cho thumbnail để hiển thị ảnh/gradient đẹp */
+.recent-board-card__thumb {
+  width: 38px;
+  height: 38px;
   border-radius: 8px;
-  text-decoration: none;
-  color: #111827;
-  background: #fff;
+  flex-shrink: 0;
+
 }
-.btn-outline:hover {
-  background: #f8fafc;
+
+/* ——— Info ——— */
+.recent-board-card__body {
+  display: flex;
+  flex-direction: column;
+  margin-left: 12px;
 }
+
+.recent-board-card__name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #202020;
+}
+
+.recent-board-card__workspace {
+  font-size: 13px;
+  color: #6e6e6e;
+  margin-top: 1px;
+}
+/* ——— Khi không có board ——— */
+.no-recent {
+  margin-top: 120px;          /* đẩy xuống giữa trang */
+  text-align: center;
+  font-size: 20px;            /* to hơn */
+  font-weight: 500;
+  color: #666;
+  opacity: 0.8;
+}
+/* màu background dùng chung cho board */
+.gradient-1 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.gradient-2 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
+.gradient-4 { background: linear-gradient(135deg, #89f7fe, #66a6ff); }
+.gradient-5 { background: linear-gradient(135deg, #ff758c, #ff7eb3); }
+.gradient-6 { background: linear-gradient(135deg, #2af598, #009efd); }
+.gradient-7 { background: linear-gradient(135deg, #fbc2eb, #a18cd1); }
+
+

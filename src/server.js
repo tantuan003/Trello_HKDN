@@ -19,9 +19,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.urlencoded({ extended: true })); // để nhận form dữ liệu
 const server = http.createServer(app);
-const io = new Server(server, {
-  cors: { origin: "*" } // Cho phép frontend truy cập
+export const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:8127",
+    credentials: true
+  }
 });
+
 app.set("socketio", io);
 app.use(express.json());
 app.use(cookieParser());
@@ -38,7 +42,7 @@ connectDB();
 
 // Route thử
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname,"../public","boards.html"));
+  res.sendFile(path.join(__dirname,"../public","login.html"));
 });
 
 // Socket.io logic

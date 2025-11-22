@@ -1,278 +1,34 @@
-/* ===== Boards page ===== */
-.content-boards {
-  flex: 1;
+html, body {
   width: 100%;
-  background: #fff;
-  padding: 12px 28px 28px; /* giảm padding-top để không bị đẩy xuống */
-  min-height: calc(100vh - var(--header-h));
-  overflow-y: auto;
-  transition: all 0.3s ease;
-}
-#app-shell {
-  display: flex;
-}
-/* Bỏ khoảng trống đầu tiên */
-.content-boards .section-block:first-child {
-  margin-top: 0 !important;
-  padding-top: 0 !important;
-}
-.content-boards.fullwidth {
-  height: 100%;
-  width: 100%;
-  position: absolute;
-  left: 0;
-  z-index: 10;
-}
-/* Cấu trúc section */
-.section-block {
-  display: block;
-  width: 100%;
-  margin-bottom: 28px;
-}
-.section-head {
-  display: flex;
-  align-items: center;
-  gap: 580px;
-  margin-bottom: 12px;
-}
-.section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.section-title h3 {
+  min-height: 100vh;   /* luôn cao ít nhất bằng chiều cao màn hình */
   margin: 0;
-  font-size: 16px;
+  padding: 10px;
+  overflow-x: hidden;  /* tránh bị tràn ngang */
+  box-sizing: border-box;
+}
+.body-gradient-1{
+  background:linear-gradient(135deg, #4facfe, #00f2fe); ;
+}
+.body-gradient-2{
+  background:linear-gradient(135deg, #43e97b, #38f9d7); ;
+}
+.body-gradient-3{
+  background:linear-gradient(135deg, #fa709a, #fee140); ;
+}
+.body-gradient-4 {
+  background: linear-gradient(135deg, #89f7fe, #66a6ff);
+}
+.body-gradient-5 {
+  background: linear-gradient(135deg, #ff758c, #ff7eb3);
+}
+.body-gradient-6 {
+  background: linear-gradient(135deg, #2af598, #009efd);
+}
+.body-gradient-7 {
+  background: linear-gradient(135deg, #fbc2eb , #a18cd1);
 }
 
-.heading {
-  margin: 0;
-  font-size: 12px;
-  letter-spacing: 0.12em;
-  color: #6b7280;
-  font-weight: 800;
-  white-space: nowrap;
-}
-
-.actions-inline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border-radius: 8px;
-  background: #eef2f6;
-  color: #1f2937;
-  text-decoration: none;
-  font-weight: 600;
-  border: 1px solid #e5e7eb;
-}
-.chip .ic {
-  width: 16px;
-  text-align: center;
-  opacity: 0.85;
-}
-
-/* Grid cho các board */
-.card-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 250px);
-  column-gap: 10px !important;
-  row-gap: 16px !important;
-}
-.mt-2 {
-  margin-top: 12px;
-}
-.mt-3 {
-  margin-top: 16px;
-}
-
-.board-card {
-  display: flex;
-  flex-direction: column;
-  text-decoration: none;
-  color: inherit;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  overflow: hidden;
-  transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
-  min-height: 120px;
-}
-.board-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
-  border-color: #e2e8f0;
-}
-.board-cover {
-  height: 100%;
-  width: auto;
-  border-radius: 6px;
-  overflow: hidden;
-  background-repeat: no-repeat;
-  background-size: cover;
-}
-.gradient-1 {
-  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 48%, #f59e0b 100%);
-}
-.img-cover {
-  background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
-}
-.badge {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-}
-.badge-dark {
-  background: #111827;
-  color: #fff;
-}
-
-.board-footer {
-  padding: 10px 12px;
-  display: flex;
-  align-items: center;
-}
-.board-title {
-  font-weight: 600;
-}
-
-.create-card {
-  cursor: pointer;
-  border-style: dashed;
-  background: #f4f5f7;
-}
-.create-card .create-body {
-  display: grid;
-  place-items: center;
-  height: 100%;
-  color: #6b7280;
-  font-weight: 600;
-}
-
-.workspace-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 10px 0 4px;
-}
-.ws-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.ws-badge {
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  display: grid;
-  place-items: center;
-  background: #0ea5a4;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
-}
-.ws-name {
-  font-weight: 800;
-}
-
-.btn-outline {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  padding: 10px 18px;
-  border-radius: 10px;
-
-  background: #fafbfc;           /* nhẹ hơn #fff một chút */
-  border: 1px solid #e2e5e9;     /* xám nhạt, tinh tế */
-
-  font-size: 14px;
-  font-weight: 600;
-  color: #374151;
-  text-decoration: none;
-
-  cursor: pointer;
-  transition: all 0.18s ease;
-
-  /* nhẹ nhưng sang */
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
-}
-
-.btn-outline:hover {
-  background: #f0f2f5;          /* sáng lên một chút */
-  border-color: #d5d9df;
-  transform: translateY(-1px);  /* nâng rất nhẹ */
-  box-shadow: 0 3px 6px rgba(0,0,0,0.06);
-}
-
-.btn-outline:active {
-  transform: translateY(0);
-  background: #eceff3;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-/* Popup overlay */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 999;
-}
-
-/* Popup box */
-.modal {
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  width: 300px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-  animation: fadeIn 0.2s ease-in-out;
-}
-
-.modal h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
-}
-
-.modal input {
-  width: 100%;
-  padding: 8px;
-  margin: 5px 0 15px 0;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-/* Color options */
-.color-options {
-  display: flex;
-  gap: 8px;
-  margin: 5px 0 15px 0;
-}
-
-.color-swatch {
-  width: 30px;
-  height: 30px;
-  border-radius: 6px;
-  cursor: pointer;
-  border: 2px solid transparent;
-}
-
-.color-swatch.selected {
-  border-color: #000;
-}
-
+/* màu background */
 .gradient-1 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
 .gradient-2 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
 .gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
@@ -280,95 +36,12 @@
 .gradient-5 {background: linear-gradient(135deg, #ff758c , #ff7eb3);}
 .gradient-6 {background: linear-gradient(135deg, #2af598 , #009efd);}
 .gradient-7 {background: linear-gradient(135deg, #fbc2eb , #a18cd1);}
-#main{
-  height: 80vh;
-  width: 80vw;
-  margin: 0;
-  display: block;
-  background-position: center center;
-  background-size: contain;
-}
-
-
-.content-boards.fullwidth.gradient-3 {
-  position: absolute;
-  top: var(--header-h);
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
-  background: linear-gradient(135deg, #fa709a, #fee140);
-  border-radius: 15px;
-
-}
-.content-boards.fullwidth.gradient-2 {
-  position: absolute;
-  top: var(--header-h);
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
-  background: linear-gradient(135deg, #43e97b, #38f9d7);
-  border-radius: 15px;
-
-}
-.content-boards.fullwidth.gradient-1 {
-  position: absolute;
-  top: var(--header-h);
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 10;
-  background: linear-gradient(135deg, #4facfe, #00f2fe);
-  border-radius: 15px;
-}
-.modal-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.btn-primary {
-  background-color: #0079bf;
-  color: white;
-  padding: 6px 14px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.btn-outline {
-  background-color: transparent;
-  border: 1px solid #ccc;
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-.modal select {
+#app-shell {
   width: 100%;
-  padding: 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  margin: 5px 0 15px 0;
-}
- 
-/* css cho list */
-/* ===== CONTAINER CHỨA CÁC LIST ===== */
-/* Vùng chứa tất cả list + nút add */
-.boardView {
   display: flex;
-  width: 100%;
-  padding: 20px;
-  height: calc(100vh - 120px);
-  box-sizing: border-box;
+  flex-direction: column;
 }
 
-/* Container chứa list */
 .lists-container {
   display: flex;
   height: 500px;
@@ -377,17 +50,25 @@
   flex-wrap: nowrap;
   padding-bottom: 10px;
   scroll-behavior: smooth;
+  overflow-x: auto;
   margin-top: 20px;
   z-index: 10;
 }
-
-/* Thanh cuộn ngang */
 .lists-container::-webkit-scrollbar {
   height: 8px;
 }
 .lists-container::-webkit-scrollbar-thumb {
   background-color: rgba(0,0,0,0.15);
   border-radius: 10px;
+}
+
+.boardView {
+  width: 100%;
+}
+#main{
+  width: 100%;
+  margin: 0;
+  display: block;
 }
 
 /* List */
@@ -441,6 +122,7 @@
   align-items: center;             /* căn giữa chữ theo dọc */
   transition: all 0.2s ease;
 }
+
 
 .card:hover {
   background-color: #f0f4f8;       /* nền sáng hơn khi hover */
@@ -511,7 +193,6 @@
 
 /* Input */
 #addListForm input {
-  width: 100%;
   padding: 8px 10px;
   border: 1px solid #ccc;
   border-radius: 6px;
@@ -593,7 +274,8 @@
 }
 #inviteUser {
   width: 100%;
-  display: flex;              /* đặt các phần tử con cùng hàng */
+  display: flex;
+  box-sizing: border-box;              /* đặt các phần tử con cùng hàng */
   align-items: center;        /* căn giữa theo chiều dọc (cùng độ cao) */
   justify-content: space-between; /* đẩy 2 phần tử ra hai đầu */
   gap: 10px;                  /* khoảng cách giữa các phần tử */
@@ -676,7 +358,7 @@
 }
 .add-card-input-container.show {
   min-height: 125px;
-  max-height: 150px;      /* chiều cao đủ để form hiện */
+  max-height: 200px;      /* chiều cao đủ để form hiện */
   opacity: 1;
   z-index: 30;
 }
@@ -696,6 +378,10 @@
   border: 2px solid #00f2fe;
   outline: none; /* bỏ outline mặc định */
   box-shadow: 0 0 5px #00f2fe; /* glow nhẹ đẹp mắt */
+}
+.add-card-input-container input{
+  border-radius: 5px;
+  height: 40px;
 }
 
 .save-card-btn, .cancel-card-btn {
@@ -720,17 +406,119 @@
   background-color: #7a7878;
 
 }
+.create-card {
+  cursor: pointer;
+  border-style: dashed;
+  background: #f4f5f7;
+}
+.create-card .create-body {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: #6b7280;
+  font-weight: 600;
+}
+/* Modal background */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 1000;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  background-color: rgba(0, 0, 0, 0.5);
+}
 
-.card-grid.empty {
+/* Nội dung modal */
+.modal-content {
+  background-color: #fff;
+  margin: 3% auto;
+  width: 500px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+/* Header */
+.modal-header {
   display: flex;
-  justify-content: center;
+  width: 100%; /* 100% modal-content */
+  justify-content: space-between;
+  height: 50px;
+  align-items: center;
+  margin: 0; /* bỏ margin-bottom */
+  padding: 10px 10px; /* padding bên trong */
+  box-sizing: border-box;
+  background: #1a1c1cc7;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
-.no-recent {
-  margin-top: 80px;          /* đẩy xuống giữa vùng Recently viewed */
-  text-align: center;
-  font-size: 20px;            /* to hơn */
-  font-weight: 500;
-  color: #666;
-  opacity: 0.8;
+
+#closeModal {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #555;
 }
+
+/* Body */
+.modal-body div {
+  margin-bottom: 5px;
+  padding-left: 10px;
+}
+
+/* Editable fields */
+.modal-body p,
+.modal-body span {
+  padding-left: 10px;
+  padding-top: 10px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  min-height: 30px;
+  width: 450px;
+}
+
+.modal-body p[contenteditable],
+.modal-body span[contenteditable] {
+  background-color: #f9f9f9;
+  cursor: text;
+}
+
+.modal-body p[contenteditable]:focus,
+.modal-body span[contenteditable]:focus {
+  outline: none;
+  border-color: #007bff;
+  background-color: #fff;
+}
+
+/* Labels */
+#cardLabels span {
+  display: inline-block;
+  padding: 2px 6px;
+  margin-right: 4px;
+  margin-bottom: 4px;
+  background-color: #eee;
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#cardLabels span[contenteditable]:focus {
+  background-color: #fff;
+  border: 1px solid #007bff;
+}
+
+/* Lists */
+ul {
+  padding-left: 20px;
+}
+
+ul li {
+  margin-bottom: 4px;
+}
+
