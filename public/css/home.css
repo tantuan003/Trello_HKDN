@@ -47,7 +47,7 @@
   border-color: #dcdcdc;
 }
 
-/* ——— Thumbnail ——— */
+/* cho thumbnail để hiển thị ảnh/gradient đẹp */
 .recent-board-card__thumb {
   width: 38px;
   height: 38px;
@@ -83,3 +83,13 @@
   color: #666;
   opacity: 0.8;
 }
+/* màu background dùng chung cho board */
+.gradient-1 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.gradient-2 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
+.gradient-4 { background: linear-gradient(135deg, #89f7fe, #66a6ff); }
+.gradient-5 { background: linear-gradient(135deg, #ff758c, #ff7eb3); }
+.gradient-6 { background: linear-gradient(135deg, #2af598, #009efd); }
+.gradient-7 { background: linear-gradient(135deg, #fbc2eb, #a18cd1); }
+
+

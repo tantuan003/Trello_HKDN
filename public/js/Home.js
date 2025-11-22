@@ -38,8 +38,6 @@ async function loadRecentlyViewedBoards() {
 
     const result = await res.json();
 
-    // ⚠ API bạn trả về dạng:
-    // { success: true, data: [...] }
     if (!result.success || !Array.isArray(result.data)) {
       container.innerHTML =
         "<p class='no-recent'>No recently viewed boards yet.</p>";
@@ -60,24 +58,44 @@ async function loadRecentlyViewedBoards() {
       const card = document.createElement("article");
       card.className = "recent-board-card";
 
-      const workspaceName =
-        board.workspace?.name || "Untitled workspace";
+      const workspaceName = board.workspace?.name || "Untitled workspace";
 
       card.innerHTML = `
-        <div class="recent-board-card__thumb"></div>
-        <div class="recent-board-card__body">
-          <div class="recent-board-card__name">${board.name}</div>
-          <div class="recent-board-card__workspace">${workspaceName}</div>
-        </div>
-      `;
+    <div class="recent-board-card__thumb"></div>
+    <div class="recent-board-card__body">
+      <div class="recent-board-card__name">${board.name}</div>
+      <div class="recent-board-card__workspace">${workspaceName}</div>
+    </div>
+  `;
 
-      // ⭐ Điều hướng đúng tới trang chi tiết board
+      const thumb = card.querySelector(".recent-board-card__thumb");
+
+      // === ẢNH ===
+      if (
+        board.background?.startsWith("/uploads/") ||
+        board.background?.startsWith("/backgrounds/")
+      ) {
+        thumb.style.backgroundImage = `url(${board.background})`;
+        thumb.className = "recent-board-card__thumb"; // reset class
+      }
+      // === MÀU ===
+      else if (board.background) {
+        thumb.style.backgroundImage = ""; // xoá ảnh nếu còn
+        thumb.classList.add(board.background);
+      }
+      // === fallback ===
+      else {
+        thumb.style.backgroundImage = "";
+        thumb.classList.add("gradient-1");
+      }
+
       card.addEventListener("click", () => {
         window.location.href = `/boardDetail.html?id=${board._id}`;
       });
 
       container.appendChild(card);
     });
+
   } catch (err) {
     console.error("Load recently viewed boards failed:", err);
     container.innerHTML =
