@@ -115,19 +115,10 @@
         <section class="workspaces" id="wsp">
           <h4>Workspaces</h4>
 
-          <button class="wsp-head" type="button" id="wspToggle" aria-expanded="true">
-            <span class="wsp-badge">T</span>
-            <span class="wsp-name">Teamhub Workspace</span>
-            <span class="chev" aria-hidden="true"></span>
-          </button>
+          <div id="workspace-list"></div>
 
-          <ul class="wsp-menu">
-            <li><a href="boards.html"><span class="wsp-ic">📄</span>Boards</a></li>
-            <li><a href="members.html"><span class="wsp-ic">👥</span>Members</a></li>
-            <li><a href="#"><span class="wsp-ic">⚙️</span>Settings</a></li>
-          </ul>
         </section>
-      </aside>
+      </aside>  
 
       <!-- Content slot -->
       <main class="content">
@@ -135,6 +126,8 @@
       </main>
     </div>
   </div>
-</body>
 
+  <script type="module" src="../js/Sidebar_Header.js"></script>
+  
+</body>
 </html>

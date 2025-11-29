@@ -8,7 +8,7 @@ export const getUserWorkspaces = async (req, res) => {
 
     const workspaces = await Workspace.find({
       _id: { $in: user.workspaces }
-    });
+    }).select("_id name visibility");
 
     res.json(workspaces);
   } catch (err) {
@@ -22,13 +22,44 @@ export const getWorkspaceMembers = async (req, res) => {
     const workspaceId = req.params.workspaceId;
 
     const workspace = await Workspace.findById(workspaceId)
-      .populate("members");
+      .populate("owner", "username email")       
+      .populate("members", "username email role"); 
+
     if (!workspace) {
       return res.status(404).json({ message: "Workspace không tồn tại" });
     }
 
-    res.json(workspace.members);
+    const seen = new Set();
+    const allMembers = [];
+
+    // Owner
+    if (workspace.owner && !seen.has(workspace.owner._id.toString())) {
+      allMembers.push({
+        _id: workspace.owner._id,
+        username: workspace.owner.username,
+        email: workspace.owner.email,
+        role: "Owner"
+      });
+      seen.add(workspace.owner._id.toString());
+    }
+
+    // Members
+    workspace.members.forEach(m => {
+      if (!seen.has(m._id.toString())) {
+        allMembers.push({
+          _id: m._id,
+          username: m.username,
+          email: m.email,
+          role: m.role || "Member"
+        });
+        seen.add(m._id.toString());
+      }
+    });
+
+    res.json(allMembers);
+
   } catch (err) {
+    console.error("ERROR getWorkspaceMembers:", err);
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
@@ -70,5 +101,74 @@ export const inviteUserByEmail = async (req, res) => {
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
+
+// 4. Cập nhật tên workspace
+export const updateWorkspaceName = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { name } = req.body;
+    const { workspaceId } = req.params;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ success: false, message: "Name cannot be empty" });
+    }
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: "Workspace not found" });
+    }
+
+    // Kiểm tra quyền user
+    const members = Array.isArray(workspace.members) ? workspace.members : [];
+    const isMember = members.some(m => m && m.toString() === userId.toString());
+    const isOwner = workspace.ownerId && workspace.ownerId.toString() === userId.toString();
+
+    if (!isOwner && !isMember) {
+      return res.status(403).json({ success: false, message: "No permission to update this workspace" });
+    }
+
+    // Cập nhật tên workspace
+    workspace.name = name;
+    await workspace.save();
+
+    return res.json({ success: true, name });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// 5. Cập nhật trạng thái công khai/riêng tư của workspace
+export const updateWorkspaceVisibility = async (req, res) => {
+  try {
+    const userId = req.user._id;  // user được xác thực từ middleware verifyToken
+    const { workspaceId } = req.params;
+    const { visibility } = req.body;
+
+    if (!['private', 'public'].includes(visibility)) {
+      return res.status(400).json({ success: false, message: "Invalid visibility value" });
+    }
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: "Workspace not found" });
+    }
+
+    // Kiểm tra quyền: chỉ owner mới được đổi visibility
+    if (workspace.owner.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: "No permission to update visibility" });
+    }
+
+    workspace.visibility = visibility;
+    await workspace.save();
+
+    res.json({ success: true, visibility });
+  } catch (error) {
+    console.error("Error updateWorkspaceVisibility:", error);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 
 

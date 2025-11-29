@@ -1,10 +1,12 @@
+
+/* Main content */
 .main-content {
-    width: 80%;
-  padding: 30px;
-  overflow-y: auto;
-  height: 100vh;
-  box-sizing: border-box;
-  background: #fff;
+    flex: 1;          
+    padding: 25px;    
+    box-sizing: border-box;
+    min-height: 100vh;
+    background: #fff;
+    overflow-y: auto;
 }
 
 /* Header */
@@ -12,18 +14,21 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 20px;
 }
 
 .members-header h2 {
     margin: 0;
-    font-size: 24px;
+    font-size: 20px;
+    margin-top: 20px; 
 }
+
 
 /* Invite Button */
 .invite-btn {
     display: flex;
     align-items: center;
-    gap: 8px;          
+    gap: 8px;
     padding: 6px 12px;
     font-size: 14px;
     background-color: #0c66e4;
@@ -32,6 +37,7 @@
     border-radius: 4px;
     cursor: pointer;
     transition: background-color 0.2s ease;
+    margin-top: 20px;
 }
 
 .invite-btn:hover {
@@ -42,75 +48,22 @@
     font-size: 16px;
 }
 
-/* Modal overlay */
-.modal {
-  display: none; /* ẩn mặc định */
-  position: fixed;
-  z-index: 1000;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  overflow: auto;
-  background-color: rgba(0,0,0,0.5);
-}
-
-/* Modal nội dung */
-.modal-content {
-  background-color: #fefefe;
-  margin: 15% auto; /* căn giữa */
-  padding: 20px;
-  border-radius: 8px;
-  width: 300px;
-  text-align: center;
-  position: relative;
-}
-
-/* Close button */
-.modal .close {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  font-size: 20px;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-/* Input & button */
-#inviteEmail {
-  width: 90%;
-  padding: 8px;
-  margin: 12px 0;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-#sendInvite {
-  padding: 8px 16px;
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-#sendInvite:hover {
-  background-color: #45a049;
-}
-
-
+/* Description */
 .members-desc {
-    margin-top: 10px;
-    color: #5e6c84;
     font-size: 14px;
+    color: #5e6c84;
+    margin-bottom: 20px;
 }
 
-/* List Members */
+/* Members List */
 .member-row {
     display: flex;
     align-items: center;
-    padding: 14px 0;
+    padding: 20px;
     border-bottom: 1px solid #ddd;
+    border-radius: 8px;
+    box-sizing: border-box;
+    margin-bottom: 20px;
 }
 
 .avatar {
@@ -140,4 +93,57 @@
     margin-left: auto;
     font-weight: bold;
     color: #42526e;
+}
+
+/* Modal */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto;
+    padding: 20px;
+    border-radius: 8px;
+    width: 300px;
+    text-align: center;
+    position: relative;
+}
+
+.modal .close {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#inviteEmail {
+    width: 90%;
+    padding: 8px;
+    margin: 12px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+#sendInvite {
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#sendInvite:hover {
+    background-color: #45a049;
 }
