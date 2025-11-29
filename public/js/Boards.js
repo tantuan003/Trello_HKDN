@@ -173,7 +173,6 @@ async function inject(file, targetSelector) {
   }
 }
 
-
 // Đánh dấu menu "Boards" sáng trong sidebar
 function activateBoardsMenu() {
   const links = document.querySelectorAll('.nav .nav-item');
@@ -199,6 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const colorOptions = document.querySelectorAll(".color-swatch");
   const workspaceSelect = document.getElementById("workspaceSelect");
   const visibility = document.getElementById("visibilitySelect").value;
+  
   // ====== LOAD WORKSPACES ======
   async function loadWorkspaces() {
     try {

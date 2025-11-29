@@ -24,5 +24,15 @@ router.get("/checkToken", verifyToken, (req, res) => {
   res.json({ success: true, user: req.user });
 });
 
+router.get("/me", verifyToken, (req, res) => {
+  const user = req.user;
+
+  res.json({
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    workspaces: user.workspaces    // trả về danh sách workspaces của user
+  });
+});
 
 export default router;

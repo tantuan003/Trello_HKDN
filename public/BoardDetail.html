@@ -36,57 +36,88 @@
       <div id="cardDetailModal" class="modal" style="display: none;">
         <div class="modal-content">
           <div class="modal-header" id="modal-header">
-            <h2 id="cardTitle">Card Name</h2>
+            <h2 id="cardTitle" contenteditable="true">Card Name</h2>
             <button id="closeModal">&times;</button>
           </div>
 
           <div class="modal-body">
-            <!-- Mô tả -->
-            <div>
-              <h4>Description</h4>
-              <p id="cardDescription" contenteditable="true"></p>
+
+            <div class="modal-columns">
+              <!-- LEFT SIDE -->
+              <div class="left-section">
+                <div>
+                  <h4>Description</h4>
+                  <p id="cardDescription" contenteditable="true"></p>
+                </div>
+
+                <div class="assigned-member-box">
+                  <div class="assigned-header">
+                    <h4>Assigned Member</h4>
+                    <button id="AssignedMember-btn">+</button>
+                  </div>
+
+                  <ul id="cardAssigned"></ul>
+                </div>
+                <!-- Assign Member Popup -->
+                <div id="assignPopup" class="assign-popup" style="display:none;">
+                  <div class="assign-content">
+                    <input type="text" id="assignSearch" placeholder="Tìm kiếm thành viên..." />
+                    <ul id="assignList"></ul>
+                  </div>
+                </div>
+                <div class="labels-wrapper">
+                  <h4>Labels</h4>
+                  <div class="labels-container">
+                    <div id="cardLabels" class="labels"></div>
+                    <button id="addLabelBtn" class="add-label-btn">Thêm label</button>
+                  </div>
+                </div>
+
+                <div id="labelPopup" class="label-popup" style="display:none;">
+                  <div class="label-content">
+                    <h3>Chọn màu label</h3>
+                    <div id="labelColors" class="color-options">
+                      <!-- Các màu sẽ được render ở đây -->
+                    </div>
+                  </div>
+                </div>
+
+
+                <div>
+                  <h4>Due Date</h4>
+                  <input type="date" id="cardDueDate" />
+                </div>
+
+                <div>
+                  <h4>Attachments</h4>
+                  <ul id="cardAttachments"></ul>
+                  <input type="file" id="attachmentInput" multiple />
+                </div>
+
+                <div class="save-card">
+                  <button id="save-card-btn">Save</button>
+                </div>
+              </div>
+
+              <!-- RIGHT SIDE (COMMENTS) -->
+              <div class="right-section">
+                <h4>Comments</h4>
+
+                <!-- Comment list -->
+                <ul id="cardComments"></ul>
+
+                <!-- Comment input -->
+                <div class="comment-input-box">
+                  <div id="commentInput" class="comment-editor" contenteditable="true" placeholder="Thêm comment...">
+                  </div>
+                </div>
+                <button id="addCommentBtn">Send</button>
+              </div>
+
             </div>
 
-            <!-- List -->
-            <div>
-              <h4>List</h4>
-              <p id="cardList"></p>
-            </div>
-
-            <!-- Assigned To -->
-            <div>
-              <h4>Assigned To</h4>
-              <ul id="cardAssigned"></ul>
-            </div>
-
-            <!-- Labels -->
-            <div>
-              <h4>Labels</h4>
-              <div id="cardLabels"></div>
-            </div>
-
-            <!-- Due Date -->
-            <div>
-              <h4>Due Date</h4>
-              <input type="date" id="cardDueDate" />
-            </div>
-
-            <!-- Comments -->
-            <div>
-              <h4>Comments</h4>
-              <ul id="cardComments"></ul>
-            </div>
-
-            <!-- Attachments -->
-            <div>
-              <h4>Attachments</h4>
-              <ul id="cardAttachments"></ul>
-            </div>
-             <div class="save-card">
-            <button id="save-card-btn">Save</button>
           </div>
 
-          </div>
         </div>
       </div>
 

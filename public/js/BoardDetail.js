@@ -5,6 +5,9 @@ import { socket } from "../js/socket.js";
 // ===================================================================
 const urlParams = new URLSearchParams(window.location.search);
 let boardId = urlParams.get("id");
+let members = "";
+const attachmentInput = document.getElementById("attachmentInput");
+let currentAttachments = []; // khai báo ở đầu file
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
 if (!boardId) {
@@ -37,6 +40,7 @@ async function renderBoardWithLists() {
   try {
     const res = await fetch(`http://localhost:8127/v1/board/${currentBoardId}`);
     const data = await res.json();
+    members = data.board.members;
     socket.emit("joinBoard", currentBoardId);
 
     if (!data.board) return;
@@ -53,8 +57,8 @@ async function renderBoardWithLists() {
       shell.style.width = "100%";
     }
     const boardTitle = document.getElementById("boardTitle");
-    if(boardTitle){
-      boardTitle.textContent=data.board.name
+    if (boardTitle) {
+      boardTitle.textContent = data.board.name
     }
 
 
@@ -214,7 +218,7 @@ function attachAddCard(listEl, listId) {
       });
 
       if (!res.ok) throw new Error("Không thể thêm thẻ");
-      
+
 
       input.value = "";
       inputContainer.remove();
@@ -262,7 +266,7 @@ addListBtn.addEventListener("click", async () => {
     console.error(err);
     alert("Failed to add list");
   }
-  
+
 });
 
 // ===================================================================
@@ -397,6 +401,31 @@ cancelAddListBtn.addEventListener("click", () => {
   showAddListBtn.style.display = "inline-block";
   newListTitle.value = "";
 });
+function openAttachment(fileDataURL, fileName = "file") {
+  // Chia base64 và type
+  const [meta, base64Data] = fileDataURL.split(",");
+  const mime = meta.match(/:(.*?);/)[1];
+
+  // Chuyển base64 -> byte array
+  const byteCharacters = atob(base64Data);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+
+  // Tạo Blob
+  const blob = new Blob([byteArray], { type: mime });
+
+  // Tạo URL tạm thời
+  const blobUrl = URL.createObjectURL(blob);
+
+  // Mở trong tab mới
+  window.open(blobUrl, "_blank");
+
+  // Tạm thời, URL sẽ tự giải phóng khi tab đóng (hoặc bạn có thể URL.revokeObjectURL(blobUrl) sau)
+}
+
 
 // card detail
 async function openCardDetail(cardId) {
@@ -421,33 +450,45 @@ async function openCardDetail(cardId) {
 }
 function showCardDetailModal(card) {
   const modal = document.getElementById("cardDetailModal");
+  const cardAssignedEl = document.getElementById("cardAssigned");
+  cardAssignedEl.innerHTML = ""; // reset trước khi render
+  (card.assignedTo || []).forEach(member => {
+    const li = document.createElement("li");
+    li.textContent = member.username;
+    li.dataset.id = member._id; // quan trọng để saveCardChanges lấy id
+    cardAssignedEl.appendChild(li);
+    document.getElementById("addLabelBtn").addEventListener("click", openLabelPopup);
+  });
+
 
   document.getElementById("cardTitle").textContent = card.name;
   document.getElementById("cardDescription").textContent = card.description || "";
-  document.getElementById("cardList").textContent = card.list?.name || "Unknown list";
-
   // Assigned To
-  const assignedEl = document.getElementById("cardAssigned");
-  assignedEl.innerHTML = "";
-  (card.assignedTo || []).forEach(user => {
-    const li = document.createElement("li");
-    li.textContent = user.username || "Unknown";
-    assignedEl.appendChild(li);
+  const assignBtn = document.getElementById("AssignedMember-btn");
+  assignBtn.addEventListener("click", () => {
+    assignPopup.style.display = "flex";
+    loadAssignList(members);
   });
 
   // Labels
   const labelsEl = document.getElementById("cardLabels");
   labelsEl.innerHTML = "";
-  (card.labels || []).forEach(label => {
+
+  // card.labels lưu dạng mảng màu: ["red", "green", "blue"]
+  (card.labels || []).forEach(color => {
     const span = document.createElement("span");
-    span.textContent = label;
+    span.className = "label";           // CSS để định dạng
+    span.style.background = color;      // màu hiển thị
+    span.dataset.color = color;         // lưu data-color để lấy khi save
+    span.textContent = "";              // nếu muốn, để trống
     labelsEl.appendChild(span);
   });
 
+
   // Due date
   document.getElementById("cardDueDate").value = card.dueDate
-  ? new Date(card.dueDate).toISOString().split("T")[0]
-  : "";
+    ? new Date(card.dueDate).toISOString().split("T")[0]
+    : "";
 
   // Comments
   const commentsEl = document.getElementById("cardComments");
@@ -459,25 +500,53 @@ function showCardDetailModal(card) {
   });
 
   // Attachments
+   const attachmentsEl = document.getElementById("cardAttachments");
+
+  // Hàm hiển thị attachments hiện có
+   function renderAttachments(card) {
   const attachmentsEl = document.getElementById("cardAttachments");
   attachmentsEl.innerHTML = "";
-  (card.attachments || []).forEach(file => {
+
+  (card.attachments || []).forEach((fileDataURL, index) => {
     const li = document.createElement("li");
-    const a = document.createElement("a");
-    a.href = file;
-    a.target = "_blank";
-    a.textContent = file.split("/").pop(); // chỉ tên file
-    li.appendChild(a);
+
+    // Nếu là ảnh, hiển thị preview
+    if (fileDataURL.startsWith("data:image")) {
+      const img = document.createElement("img");
+      img.src = fileDataURL;
+      img.style.maxWidth = "150px";   // điều chỉnh size preview
+      img.style.display = "block";
+      img.style.marginBottom = "5px";
+      li.appendChild(img);
+    }
+
+    // Nút mở file
+    const openBtn = document.createElement("button");
+    openBtn.textContent = "Mở file";
+    openBtn.onclick = () => window.open(fileDataURL, "_blank");
+    li.appendChild(openBtn);
+
+    // Nút xóa
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "x";
+    removeBtn.style.marginLeft = "5px";
+    removeBtn.onclick = () => {
+      card.attachments.splice(index, 1);
+      renderAttachments(card);
+    };
+    li.appendChild(removeBtn);
+
     attachmentsEl.appendChild(li);
   });
+}
+  renderAttachments(card);
 
   // Hiển thị modal
   modal.style.display = "block";
-  document.getElementById("save-card-btn").onclick=()=>{
+  document.getElementById("save-card-btn").onclick = () => {
     saveCardChanges(card._id);
 
   };
-
   // Nút đóng
   document.getElementById("closeModal").onclick = () => {
     modal.style.display = "none";
@@ -490,12 +559,36 @@ function showCardDetailModal(card) {
     }
   };
 }
-function saveCardChanges(cardId) {
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+attachmentInput.addEventListener("change", () => {
+  const files = Array.from(attachmentInput.files);
+  files.forEach(file => currentAttachments.push(file));
+  renderAttachments();
+});
+ async function saveCardChanges(cardId) {
+  const cardAssignedEl = document.getElementById("cardAssigned");
+  const assignedMembers = Array.from(cardAssignedEl.querySelectorAll("li"))
+    .map(li => li.dataset.id);
+  const labels = Array.from(document.querySelectorAll("#cardLabels span"))
+    .map(span => span.dataset.color);
+  const attachmentsBase64 = await Promise.all(
+    currentAttachments.map(file => fileToBase64(file))
+  );
+
   const updatedCard = {
     name: document.getElementById("cardTitle").textContent,
     description: document.getElementById("cardDescription").textContent,
-    dueDate:document.getElementById("cardDueDate").value,
-    labels: Array.from(document.querySelectorAll("#cardLabels span")).map(s => s.textContent)
+    dueDate: document.getElementById("cardDueDate").value,
+    assignedTo: assignedMembers,
+    labels: labels,
+    attachments: attachmentsBase64
   };
 
   fetch(`http://localhost:8127/v1/board/update-card/cards/${cardId}`, {
@@ -504,38 +597,139 @@ function saveCardChanges(cardId) {
     credentials: "include",
     body: JSON.stringify(updatedCard)
   })
-  .then(res => res.json())
-  .then(data => {
-    if (data.success) {
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        Toastify({
+          text: "lưu thành công!",
+          duration: 3000,          // 3 giây
+          gravity: "top",          // xuất hiện ở trên
+          position: "right",       // bên phải
+          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
+          close: true
+        }).showToast();
+      } else {
+        Toastify({
+          text: data.message || "Lưu thất bại",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          backgroundColor: "linear-gradient(to right, #e52d27, #b31217)",
+          close: true
+        }).showToast();
+      }
+    })
+    .catch(err => {
+      console.error(err);
       Toastify({
-        text: "lưu thành công!",
-        duration: 3000,          // 3 giây
-        gravity: "top",          // xuất hiện ở trên
-        position: "right",       // bên phải
-        backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
-        close: true
-      }).showToast();
-    } else {
-      Toastify({
-        text: data.message || "Lưu thất bại",
+        text: "Error occurred while saving",
         duration: 3000,
         gravity: "top",
         position: "right",
         backgroundColor: "linear-gradient(to right, #e52d27, #b31217)",
         close: true
       }).showToast();
-    }
-  })
-  .catch(err => {
-    console.error(err);
-    Toastify({
-      text: "Error occurred while saving",
-      duration: 3000,
-      gravity: "top",
-      position: "right",
-      backgroundColor: "linear-gradient(to right, #e52d27, #b31217)",
-      close: true
-    }).showToast();
+    });
+}
+
+function loadAssignList(filter = "") {
+  const assignListEl = document.getElementById("assignList");
+  assignListEl.innerHTML = "";
+
+  members
+    .filter(member => member.username.toLowerCase().includes(filter.toLowerCase()))
+    .forEach(member => {
+      const li = document.createElement("li");
+      li.dataset.id = member._id; // <- thêm id vào đây
+
+      const avatar = document.createElement("div");
+      avatar.className = "member-avatar";
+
+      const name = document.createElement("span");
+      name.className = "member-name";
+      name.textContent = member.username;
+
+      li.appendChild(avatar);
+      li.appendChild(name);
+
+      li.addEventListener("click", () => {
+        assignMemberToCard(member._id);
+      });
+
+      assignListEl.appendChild(li);
+    });
+}
+
+// Hiển thị popup
+document.getElementById("AssignedMember-btn").addEventListener("click", () => {
+  const popup = document.getElementById("assignPopup");
+  popup.style.display = popup.style.display === "none" ? "block" : "none";
+  loadAssignList(); // load tất cả member lần đầu
+});
+
+// Tìm kiếm
+document.getElementById("assignSearch").addEventListener("input", (e) => {
+  loadAssignList(e.target.value);
+});
+let assignedMembers = []; // lưu member._id đã assign
+
+function assignMemberToCard(memberId) {
+  // toggle member
+  if (assignedMembers.includes(memberId)) {
+    assignedMembers = assignedMembers.filter(id => id !== memberId);
+  } else {
+    assignedMembers.push(memberId);
+  }
+
+  // Cập nhật hiển thị
+  renderAssignedMembers();
+}
+function renderAssignedMembers() {
+  const cardAssignedEl = document.getElementById("cardAssigned");
+  assignedMembers.forEach(id => {
+    const member = members.find(m => m._id === id);
+    if (!member) return;
+
+    const li = document.createElement("li");
+    li.textContent = member.username;
+    li.dataset.id = member._id;
+    cardAssignedEl.appendChild(li);
   });
 }
+
+
+
+//thêm màu cho lable
+const colors = ["red", "blue", "green", "orange", "purple", "gray"]; // có thể thêm màu
+
+function openLabelPopup() {
+  const popup = document.getElementById("labelPopup");
+  const colorsContainer = document.getElementById("labelColors");
+  colorsContainer.innerHTML = "";
+
+  colors.forEach(color => {
+    const div = document.createElement("div");
+    div.style.backgroundColor = color;
+
+    div.addEventListener("click", () => {
+      addLabelToCard(color);
+      popup.style.display = "none";
+    });
+
+    colorsContainer.appendChild(div);
+  });
+
+  popup.style.display = "flex";
+}
+
+function addLabelToCard(color) {
+  const labelsEl = document.getElementById("cardLabels");
+  const span = document.createElement("span");
+  span.style.backgroundColor = color;
+  span.dataset.color = color;
+  labelsEl.appendChild(span);
+}
+
+//attackment
+
 
