@@ -479,7 +479,6 @@ html, body {
   padding-top: 10px;
   border: 1px solid transparent;
   border-radius: 4px;
-  min-height: 30px;
   width: 450px;
 }
 
@@ -520,5 +519,167 @@ ul {
 
 ul li {
   margin-bottom: 4px;
+}
+
+.modal-content {
+  width: 900px;
+  max-height: 90vh;
+  overflow: hidden;
+}
+
+.modal-columns {
+  display: flex;
+  gap: 20px;
+  height: calc(80vh - 100px); /* trừ header */
+}
+
+.left-section {
+  flex: 2;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+.right-section {
+  flex: 1;
+  border-left: 1px solid #ddd;
+  padding-left: 15px;
+  overflow-y: auto;
+}
+
+.comment-input-box {
+  display: flex;
+  padding-right: 15px;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.comment-editor {
+  flex: 1;
+  min-height: 20px;
+  max-height: 120px;
+  border: 1px solid #ccc;
+  padding: 8px;
+  border-radius: 6px;
+  overflow-y: auto;
+}
+
+.comment-editor:empty:before {
+  content: attr(placeholder);
+  color: #aaa;
+}
+.assigned-member-box {
+  margin-bottom: 20px;
+}
+
+#cardAssigned {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 10px 0;
+  padding-left: 0;
+}
+.assigned-header {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* khoảng cách giữa chữ và nút + */
+}
+
+#cardAssigned li {
+  list-style: none;
+  background-color: #0079bf;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+}
+
+#AssignedMember-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background-color: #e0e0e0;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+  transition: 0.2s;
+}
+
+#AssignedMember-btn:hover {
+  background-color: #d1d1d1;
+  transform: scale(1.05);
+}
+#assignSearch {
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+.label-popup {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.label-content {
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+}
+
+.color-options {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.color-options div {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 1px solid #ccc;
+}
+.labels-wrapper {
+  margin: 10px 0;
+}
+
+.labels-container {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* khoảng cách giữa nhãn và nút */
+  flex-wrap: wrap; /* xuống dòng nếu nhiều nhãn */
+}
+
+.labels {
+  display: flex;
+  gap: 5px; /* khoảng cách giữa các nhãn */
+}
+
+.labels span {
+  display: inline-block;
+  padding: 2px 4px;
+  width: 25px;
+  max-height: 2px;
+  border-radius: 4px;
+  color: white;
+  font-size: 5px;
+}
+
+.add-label-btn {
+  padding: 4px 8px;
+  font-size: 14px;
+  cursor: pointer;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: white;
 }
 

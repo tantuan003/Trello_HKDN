@@ -73,16 +73,16 @@ export const getBoardById = async (req, res) => {
   try {
     const { boardId } = req.params;
 
-    // Populate lists và cards
+    // Populate lists + cards + members
     const board = await Board.findById(boardId)
       .populate({
         path: "lists",
-        populate: { path: "cards" }  // nested populate cards trong list
-      });
-    await Board.findByIdAndUpdate(boardId, {
-      lastViewedAt: new Date()
-    });
+        populate: { path: "cards" },  // nested populate cards trong list
+      })
+      .populate("members", "username"); // populate member info
 
+    // Cập nhật lastViewedAt
+    await Board.findByIdAndUpdate(boardId, { lastViewedAt: new Date() });
 
     if (!board) return res.status(404).json({ message: "Board không tồn tại" });
 
@@ -92,6 +92,7 @@ export const getBoardById = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
+
 
 export const createList = async (req, res) => {
   try {
@@ -321,7 +322,7 @@ export const updateCard = async (req, res) => {
 
     // Update card
     const card = await Card.findByIdAndUpdate(id, updateData, { new: true })
-      .populate("assignedTo", "username email")
+      .populate("assignedTo", "username _id")
       .populate("createdBy", "username email")
       .populate("list", "name")
       .populate("comments.user", "username email");
