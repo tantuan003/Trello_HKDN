@@ -7,6 +7,8 @@ const urlParams = new URLSearchParams(window.location.search);
 let boardId = urlParams.get("id");
 let members = "";
 const attachmentInput = document.getElementById("attachmentInput");
+let currentCardId = null;
+let currentCard = []
 let currentAttachments = []; // khai báo ở đầu file
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
@@ -273,24 +275,6 @@ addListBtn.addEventListener("click", async () => {
 // REALTIME LIST
 // ===================================================================
 
-function addListToBoard(list) {
-  // list là object list từ server
-  const listsContainer = document.getElementById("listsContainer");
-
-  const listEl = document.createElement("div");
-  listEl.className = "list";
-
-  const h3 = document.createElement("h3");
-  h3.textContent = list.name;
-  listEl.appendChild(h3);
-
-  const cardsContainer = document.createElement("div");
-  cardsContainer.className = "cards-container";
-
-  listEl.appendChild(cardsContainer);
-  attachAddCard(listEl, list._id);
-  listsContainer.appendChild(listEl);
-}
 socket.on("newList", (list) => {
   console.log("📩 Received new list:", list);
 
@@ -401,52 +385,19 @@ cancelAddListBtn.addEventListener("click", () => {
   showAddListBtn.style.display = "inline-block";
   newListTitle.value = "";
 });
-function openAttachment(fileDataURL, fileName = "file") {
-  // Chia base64 và type
-  const [meta, base64Data] = fileDataURL.split(",");
-  const mime = meta.match(/:(.*?);/)[1];
-
-  // Chuyển base64 -> byte array
-  const byteCharacters = atob(base64Data);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-
-  // Tạo Blob
-  const blob = new Blob([byteArray], { type: mime });
-
-  // Tạo URL tạm thời
-  const blobUrl = URL.createObjectURL(blob);
-
-  // Mở trong tab mới
-  window.open(blobUrl, "_blank");
-
-  // Tạm thời, URL sẽ tự giải phóng khi tab đóng (hoặc bạn có thể URL.revokeObjectURL(blobUrl) sau)
-}
-
 
 // card detail
 async function openCardDetail(cardId) {
-  try {
-    const res = await fetch(`http://localhost:8127/v1/board/get-card/cards/${cardId}`, {
-      credentials: "include"
-    });
-    const result = await res.json();
+ currentCardId = cardId; // lưu id card hiện tại
+  const res = await fetch(`http://localhost:8127/v1/board/get-card/cards/${cardId}`, {
+    credentials: "include"
+  });
+  const result = await res.json();
+  if (!result.success) return alert(result.message || "Lỗi khi tải chi tiết card");
 
-    if (!result.success) {
-      alert(result.message || "Lỗi khi tải chi tiết card");
-      return;
-    }
-
-    const card = result.data;
-    showCardDetailModal(card); // Hiển thị modal hoặc trang card detail
-
-  } catch (err) {
-    console.error("openCardDetail error:", err);
-    alert("Lỗi khi tải chi tiết card");
-  }
+  currentCard = result.data;
+  socket.emit("card:join", currentCard._id);
+  showCardDetailModal(currentCard);
 }
 function showCardDetailModal(card) {
   const modal = document.getElementById("cardDetailModal");
@@ -462,7 +413,42 @@ function showCardDetailModal(card) {
 
 
   document.getElementById("cardTitle").textContent = card.name;
-  document.getElementById("cardDescription").textContent = card.description || "";
+  const cardTitleEl = document.getElementById("cardTitle");
+  cardTitleEl.addEventListener("input", () => {
+  const newName = cardTitleEl.textContent.trim();
+
+  // Cập nhật local
+  currentCard.name = newName;
+  // Gửi server để lưu và phát realtime
+  socket.emit("card:updateName", { cardId: currentCard._id, name: newName });
+});
+socket.off("card:nameUpdated"); // tắt lắng nghe cũ để tránh duplicate
+  socket.on("card:nameUpdated", ({ name }) => {
+    currentCard.name = name;
+    cardTitleEl.textContent = name;
+  });
+
+  //description
+const cardDescriptionEl = document.getElementById("cardDescription");
+cardDescriptionEl.contentEditable = true; // nhớ bật editable
+cardDescriptionEl.textContent = card.description || "";
+
+// Gửi realtime khi thay đổi
+cardDescriptionEl.addEventListener("input", () => {
+  const newDescription = cardDescriptionEl.textContent.trim();
+  currentCard.description = newDescription;
+  socket.emit("card:updateDescription", { cardId: currentCard._id, description: newDescription });
+});
+
+// Nhận realtime từ server
+socket.off("card:descriptionUpdated"); // tắt lắng nghe cũ trước
+socket.on("card:descriptionUpdated", ({ description }) => {
+  currentCard.description = description;
+  if (document.activeElement !== cardDescriptionEl) { // tránh ghi đè khi đang gõ
+    cardDescriptionEl.textContent = description;
+  }
+});
+
   // Assigned To
   const assignBtn = document.getElementById("AssignedMember-btn");
   assignBtn.addEventListener("click", () => {
@@ -498,47 +484,8 @@ function showCardDetailModal(card) {
     li.textContent = `${comment.user?.username || "Unknown"}: ${comment.text}`;
     commentsEl.appendChild(li);
   });
+  //attackment
 
-  // Attachments
-   const attachmentsEl = document.getElementById("cardAttachments");
-
-  // Hàm hiển thị attachments hiện có
-   function renderAttachments(card) {
-  const attachmentsEl = document.getElementById("cardAttachments");
-  attachmentsEl.innerHTML = "";
-
-  (card.attachments || []).forEach((fileDataURL, index) => {
-    const li = document.createElement("li");
-
-    // Nếu là ảnh, hiển thị preview
-    if (fileDataURL.startsWith("data:image")) {
-      const img = document.createElement("img");
-      img.src = fileDataURL;
-      img.style.maxWidth = "150px";   // điều chỉnh size preview
-      img.style.display = "block";
-      img.style.marginBottom = "5px";
-      li.appendChild(img);
-    }
-
-    // Nút mở file
-    const openBtn = document.createElement("button");
-    openBtn.textContent = "Mở file";
-    openBtn.onclick = () => window.open(fileDataURL, "_blank");
-    li.appendChild(openBtn);
-
-    // Nút xóa
-    const removeBtn = document.createElement("button");
-    removeBtn.textContent = "x";
-    removeBtn.style.marginLeft = "5px";
-    removeBtn.onclick = () => {
-      card.attachments.splice(index, 1);
-      renderAttachments(card);
-    };
-    li.appendChild(removeBtn);
-
-    attachmentsEl.appendChild(li);
-  });
-}
   renderAttachments(card);
 
   // Hiển thị modal
@@ -567,69 +514,101 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
-attachmentInput.addEventListener("change", () => {
-  const files = Array.from(attachmentInput.files);
-  files.forEach(file => currentAttachments.push(file));
-  renderAttachments();
-});
- async function saveCardChanges(cardId) {
-  const cardAssignedEl = document.getElementById("cardAssigned");
-  const assignedMembers = Array.from(cardAssignedEl.querySelectorAll("li"))
-    .map(li => li.dataset.id);
-  const labels = Array.from(document.querySelectorAll("#cardLabels span"))
-    .map(span => span.dataset.color);
-  const attachmentsBase64 = await Promise.all(
-    currentAttachments.map(file => fileToBase64(file))
-  );
+// Hàm hiển thị attachments hiện có
+function renderAttachments(card) {
+  const attachmentsEl = document.getElementById("cardAttachments");
+  attachmentsEl.innerHTML = "";
 
-  const updatedCard = {
-    name: document.getElementById("cardTitle").textContent,
-    description: document.getElementById("cardDescription").textContent,
-    dueDate: document.getElementById("cardDueDate").value,
-    assignedTo: assignedMembers,
-    labels: labels,
-    attachments: attachmentsBase64
-  };
+  (card.attachments || []).forEach((fileObj, index) => {
+    const { name, data } = fileObj;
+    const li = document.createElement("li");
 
-  fetch(`http://localhost:8127/v1/board/update-card/cards/${cardId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify(updatedCard)
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        Toastify({
-          text: "lưu thành công!",
-          duration: 3000,          // 3 giây
-          gravity: "top",          // xuất hiện ở trên
-          position: "right",       // bên phải
-          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
-          close: true
-        }).showToast();
+    // Preview ảnh
+    if (data.startsWith("data:image")) {
+      const img = document.createElement("img");
+      img.src = data;
+      img.style.maxWidth = "150px";
+      img.style.display = "block";
+      img.style.marginBottom = "5px";
+      img.onclick = e => e.stopPropagation();
+      li.appendChild(img);
+    } else {
+      // Hiển thị tên file
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = name;
+      nameSpan.style.marginRight = "10px";
+      li.appendChild(nameSpan);
+    }
+
+    // Nút mở/download
+    const openBtn = document.createElement("button");
+    openBtn.textContent = "Mở / Download";
+    openBtn.onclick = e => {
+      e.stopPropagation();
+      const [header, base64] = data.split(",");
+      const mime = header.match(/data:(.*?);base64/)[1];
+      const binary = atob(base64);
+      const buffer = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) buffer[i] = binary.charCodeAt(i);
+
+      const blob = new Blob([buffer], { type: mime });
+      const blobURL = URL.createObjectURL(blob);
+
+      if (mime.startsWith("text")) {
+        window.open(blobURL, "_blank");
       } else {
-        Toastify({
-          text: data.message || "Lưu thất bại",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "linear-gradient(to right, #e52d27, #b31217)",
-          close: true
-        }).showToast();
+        const a = document.createElement("a");
+        a.href = blobURL;
+        a.download = name;
+        a.click();
       }
-    })
-    .catch(err => {
-      console.error(err);
-      Toastify({
-        text: "Error occurred while saving",
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "linear-gradient(to right, #e52d27, #b31217)",
-        close: true
-      }).showToast();
-    });
+
+      setTimeout(() => URL.revokeObjectURL(blobURL), 1000);
+    };
+    li.appendChild(openBtn);
+
+    // Nút xóa
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "x";
+    removeBtn.style.marginLeft = "5px";
+    removeBtn.onclick = e => {
+      e.stopPropagation();
+      removeAttachment(index);
+    };
+    li.appendChild(removeBtn);
+
+    attachmentsEl.appendChild(li);
+  });
+}
+
+//thêm file attachments
+attachmentInput.addEventListener("change", async () => {
+  const files = Array.from(attachmentInput.files);
+
+  for (let file of files) {
+    // tránh trùng lặp
+    if (!currentCard.attachments?.some(f => f.name === file.name && f.size === file.size)) {
+      const fileObj = { name: file.name, data: await fileToBase64(file) };
+
+      if (!currentCard.attachments) currentCard.attachments = [];
+      currentCard.attachments.push(fileObj);
+
+      // emit lên server
+      socket.emit("card:updateAttachments", { cardId: currentCardId, file: fileObj });
+    }
+  }
+
+  attachmentInput.value = "";
+  renderAttachments(currentCard);
+});
+
+function removeAttachment(index) {
+  const file = currentCard.attachments[index];
+  currentCard.attachments.splice(index, 1);
+  renderAttachments(currentCard);
+
+  // Gửi sự kiện xóa file
+  socket.emit("card:removeAttachment", { cardId: currentCard._id, fileName: file.name });
 }
 
 function loadAssignList(filter = "") {
@@ -729,7 +708,17 @@ function addLabelToCard(color) {
   span.dataset.color = color;
   labelsEl.appendChild(span);
 }
+//socket attackment
+socket.on("card:attachmentsUpdated", ({ file }) => {
+  if (!Array.isArray(currentCard.attachments)) currentCard.attachments = [];
+  currentCard.attachments.push(file);
 
-//attackment
+  // Render lại
+  renderAttachments(currentCard);
+});
 
+socket.on("card:attachmentRemoved", ({ fileName }) => {
+  currentCard.attachments = currentCard.attachments.filter(f => f.name !== fileName);
+  renderAttachments(currentCard);
+});
 

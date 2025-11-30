@@ -16,7 +16,12 @@ const cardSchema = new mongoose.Schema({
       createdAt: { type: Date, default: Date.now }
     }
   ],
-  attachments: [{ type: String }]
+   attachments: [
+    {
+      name: String,
+      data: String
+    }
+  ]
 }, { timestamps: true });
 
 export default mongoose.model("Card", cardSchema);

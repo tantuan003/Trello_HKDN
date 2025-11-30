@@ -683,3 +683,8 @@ ul li {
   background-color: white;
 }
 
+#cardAttachments img{
+  width: 100px;
+  height: 100px;
+
+}
