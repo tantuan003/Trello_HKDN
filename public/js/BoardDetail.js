@@ -388,7 +388,7 @@ cancelAddListBtn.addEventListener("click", () => {
 
 // card detail
 async function openCardDetail(cardId) {
- currentCardId = cardId; // lưu id card hiện tại
+  currentCardId = cardId; // lưu id card hiện tại
   const res = await fetch(`http://localhost:8127/v1/board/get-card/cards/${cardId}`, {
     credentials: "include"
   });
@@ -401,75 +401,61 @@ async function openCardDetail(cardId) {
 }
 function showCardDetailModal(card) {
   const modal = document.getElementById("cardDetailModal");
+
+  // Assigned members
   const cardAssignedEl = document.getElementById("cardAssigned");
-  cardAssignedEl.innerHTML = ""; // reset trước khi render
+  cardAssignedEl.innerHTML = "";
   (card.assignedTo || []).forEach(member => {
     const li = document.createElement("li");
     li.textContent = member.username;
-    li.dataset.id = member._id; // quan trọng để saveCardChanges lấy id
+    li.dataset.id = member._id;
     cardAssignedEl.appendChild(li);
-    document.getElementById("addLabelBtn").addEventListener("click", openLabelPopup);
   });
 
+  // Labels - gắn 1 lần duy nhất
+  const labelsEl = document.getElementById("cardLabels");
+  labelsEl.innerHTML = "";
 
-  document.getElementById("cardTitle").textContent = card.name;
+  // render tất cả label đã có
+  (card.labels || []).forEach(color => {
+    addLabelToCard(color);
+  });
+
+  const addLabelBtn = document.getElementById("addLabelBtn");
+  addLabelBtn.removeEventListener("click", addLabelBtn._listener);
+  addLabelBtn._listener = () => openLabelPopup(currentCard._id);
+  addLabelBtn.addEventListener("click", addLabelBtn._listener);
+  renderLabelsFromCard(card)
+
+  // Title
   const cardTitleEl = document.getElementById("cardTitle");
+  cardTitleEl.textContent = card.name;
   cardTitleEl.addEventListener("input", () => {
-  const newName = cardTitleEl.textContent.trim();
-
-  // Cập nhật local
-  currentCard.name = newName;
-  // Gửi server để lưu và phát realtime
-  socket.emit("card:updateName", { cardId: currentCard._id, name: newName });
-});
-socket.off("card:nameUpdated"); // tắt lắng nghe cũ để tránh duplicate
+    const newName = cardTitleEl.textContent.trim();
+    currentCard.name = newName;
+    socket.emit("card:updateName", { cardId: card._id, name: newName });
+  });
+  socket.off("card:nameUpdated");
   socket.on("card:nameUpdated", ({ name }) => {
     currentCard.name = name;
     cardTitleEl.textContent = name;
   });
 
-  //description
-const cardDescriptionEl = document.getElementById("cardDescription");
-cardDescriptionEl.contentEditable = true; // nhớ bật editable
-cardDescriptionEl.textContent = card.description || "";
-
-// Gửi realtime khi thay đổi
-cardDescriptionEl.addEventListener("input", () => {
-  const newDescription = cardDescriptionEl.textContent.trim();
-  currentCard.description = newDescription;
-  socket.emit("card:updateDescription", { cardId: currentCard._id, description: newDescription });
-});
-
-// Nhận realtime từ server
-socket.off("card:descriptionUpdated"); // tắt lắng nghe cũ trước
-socket.on("card:descriptionUpdated", ({ description }) => {
-  currentCard.description = description;
-  if (document.activeElement !== cardDescriptionEl) { // tránh ghi đè khi đang gõ
-    cardDescriptionEl.textContent = description;
-  }
-});
-
-  // Assigned To
-  const assignBtn = document.getElementById("AssignedMember-btn");
-  assignBtn.addEventListener("click", () => {
-    assignPopup.style.display = "flex";
-    loadAssignList(members);
+  // Description
+  const cardDescriptionEl = document.getElementById("cardDescription");
+  cardDescriptionEl.contentEditable = true;
+  cardDescriptionEl.textContent = card.description || "";
+  cardDescriptionEl.addEventListener("input", () => {
+    const newDescription = cardDescriptionEl.textContent.trim();
+    currentCard.description = newDescription;
+    socket.emit("card:updateDescription", { cardId: card._id, description: newDescription });
   });
-
-  // Labels
-  const labelsEl = document.getElementById("cardLabels");
-  labelsEl.innerHTML = "";
-
-  // card.labels lưu dạng mảng màu: ["red", "green", "blue"]
-  (card.labels || []).forEach(color => {
-    const span = document.createElement("span");
-    span.className = "label";           // CSS để định dạng
-    span.style.background = color;      // màu hiển thị
-    span.dataset.color = color;         // lưu data-color để lấy khi save
-    span.textContent = "";              // nếu muốn, để trống
-    labelsEl.appendChild(span);
+  socket.off("card:descriptionUpdated");
+  socket.on("card:descriptionUpdated", ({ description }) => {
+    if (document.activeElement !== cardDescriptionEl) {
+      cardDescriptionEl.textContent = description;
+    }
   });
-
 
   // Due date
   document.getElementById("cardDueDate").value = card.dueDate
@@ -484,28 +470,18 @@ socket.on("card:descriptionUpdated", ({ description }) => {
     li.textContent = `${comment.user?.username || "Unknown"}: ${comment.text}`;
     commentsEl.appendChild(li);
   });
-  //attackment
 
+  // Attachments
   renderAttachments(card);
 
   // Hiển thị modal
-  modal.style.display = "block";
-  document.getElementById("save-card-btn").onclick = () => {
-    saveCardChanges(card._id);
-
-  };
-  // Nút đóng
-  document.getElementById("closeModal").onclick = () => {
-    modal.style.display = "none";
-  };
-
-  // Click ngoài modal đóng
+  modal.style.display = "flex";
+  document.getElementById("closeModal").onclick = () => modal.style.display = "none";
   window.onclick = (event) => {
-    if (event.target == modal) {
-      modal.style.display = "none";
-    }
+    if (event.target === modal) modal.style.display = "none";
   };
 }
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -677,37 +653,96 @@ function renderAssignedMembers() {
 }
 
 
+// Mảng màu
+const colors = ["#61bd4f", "#f2d600", "#ff9f1a", "#eb5a46", "#c377e0"];
 
-//thêm màu cho lable
-const colors = ["red", "blue", "green", "orange", "purple", "gray"]; // có thể thêm màu
+// Thêm label vào DOM
+function addLabelToCard(color) {
+  const labelsEl = document.getElementById("cardLabels");
+  if (Array.from(labelsEl.children).some(span => span.dataset.color === color)) return;
 
-function openLabelPopup() {
+  const span = document.createElement("span");
+  span.classList.add("card-label");
+  span.style.display = "inline-block";
+  span.style.backgroundColor = color;
+  span.style.width = "30px";
+  span.style.height = "30px";
+  span.style.gap= "10px"
+  span.dataset.color = color;
+  labelsEl.appendChild(span);
+
+}
+
+// Popup chọn màu
+function openLabelPopup(cardId) {
   const popup = document.getElementById("labelPopup");
   const colorsContainer = document.getElementById("labelColors");
   colorsContainer.innerHTML = "";
 
-  colors.forEach(color => {
-    const div = document.createElement("div");
-    div.style.backgroundColor = color;
+  const currentLabels = currentCard.labels || [];
 
-    div.addEventListener("click", () => {
-      addLabelToCard(color);
-      popup.style.display = "none";
+  colors.forEach(color => {
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("color-item");
+    wrapper.style.backgroundColor = color;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.classList.add("color-checkbox");
+    checkbox.checked = currentLabels.includes(color);
+
+    // Click checkbox để chọn/bỏ
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        addLabelToCard(color);
+        socket.emit("card:addLabel", { cardId: currentCard._id, color });
+      } else {
+        removeLabelFromCard(color);
+        socket.emit("card:removeLabel", { cardId: currentCard._id, color });
+      }
     });
 
-    colorsContainer.appendChild(div);
+    wrapper.appendChild(checkbox);
+    colorsContainer.appendChild(wrapper);
   });
 
   popup.style.display = "flex";
 }
-
-function addLabelToCard(color) {
+function removeLabelFromCard(color) {
   const labelsEl = document.getElementById("cardLabels");
-  const span = document.createElement("span");
-  span.style.backgroundColor = color;
-  span.dataset.color = color;
-  labelsEl.appendChild(span);
+
+  Array.from(labelsEl.children).forEach(span => {
+    if (span.dataset.color === color) {
+      span.remove();
+    }
+  });
+
+  // remove trong client copy
+  currentCard.labels = currentCard.labels.filter(c => c !== color);
 }
+socket.on("card:labelRemoved", ({ color }) => {
+  removeLabelFromCard(color);
+});
+
+
+// Nút tắt popup
+document.getElementById("closeLabelPopup").onclick = () => {
+  document.getElementById("labelPopup").style.display = "none";
+};
+// Nhận realtime
+socket.off("card:labelAdded");
+socket.on("card:labelAdded", ({ cardId: updatedCardId, color }) => {
+  if (!currentCard || updatedCardId !== currentCard._id) return;
+  addLabelToCard(color);
+});
+
+// Khi mở modal, render label từ DB
+function renderLabelsFromCard(card) {
+  const labelsEl = document.getElementById("cardLabels");
+  labelsEl.innerHTML = "";
+  (card.labels || []).forEach(color => addLabelToCard(color));
+}
+
 //socket attackment
 socket.on("card:attachmentsUpdated", ({ file }) => {
   if (!Array.isArray(currentCard.attachments)) currentCard.attachments = [];

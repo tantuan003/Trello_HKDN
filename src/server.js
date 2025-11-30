@@ -103,6 +103,41 @@ io.on("connection", (socket) => {
       console.error("Error updating card name:", err);
     }
   });
+  //thêm label
+// Khi client emit thêm label
+socket.on("card:addLabel", async ({ cardId, color }) => {
+  try {
+    const card = await Card.findById(cardId);
+    if (!card) return;
+
+    if (!Array.isArray(card.labels)) card.labels = [];
+    if (!card.labels.includes(color)) {
+      card.labels.push(color);
+      await card.save();
+    }
+
+    // ⚠️ Gửi cho tất cả client trong room, bao gồm client hiện tại
+    io.to(cardId).emit("card:labelAdded", { cardId, color });
+  } catch (err) {
+    console.error("Error updating card label:", err);
+  }
+});
+socket.on("card:removeLabel", async ({ cardId, color }) => {
+  try {
+    const card = await Card.findById(cardId);
+    if (!card) return;
+
+    card.labels = card.labels.filter(c => c !== color);
+    await card.save();
+
+    socket.to(cardId).emit("card:labelRemoved", { cardId, color });
+  } catch (err) {
+    console.error("Error removing label:", err);
+  }
+});
+
+
+
 
 
   // Thêm attachment
