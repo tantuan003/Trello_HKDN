@@ -1,5 +1,5 @@
-
 import { socket } from "../js/socket.js";
+
 // ===================================================================
 // Lấy boardId từ URL
 // ===================================================================
@@ -7,6 +7,8 @@ const urlParams = new URLSearchParams(window.location.search);
 let boardId = urlParams.get("id");
 let members = "";
 const attachmentInput = document.getElementById("attachmentInput");
+let currentCardId = null;
+let currentCard = []
 let currentAttachments = []; // khai báo ở đầu file
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
@@ -60,9 +62,6 @@ async function renderBoardWithLists() {
     if (boardTitle) {
       boardTitle.textContent = data.board.name
     }
-
-
-
     // ⬇️ Áp dụng background vào trang
     applyBoardBackground(background);
 
@@ -273,24 +272,6 @@ addListBtn.addEventListener("click", async () => {
 // REALTIME LIST
 // ===================================================================
 
-function addListToBoard(list) {
-  // list là object list từ server
-  const listsContainer = document.getElementById("listsContainer");
-
-  const listEl = document.createElement("div");
-  listEl.className = "list";
-
-  const h3 = document.createElement("h3");
-  h3.textContent = list.name;
-  listEl.appendChild(h3);
-
-  const cardsContainer = document.createElement("div");
-  cardsContainer.className = "cards-container";
-
-  listEl.appendChild(cardsContainer);
-  attachAddCard(listEl, list._id);
-  listsContainer.appendChild(listEl);
-}
 socket.on("newList", (list) => {
   console.log("📩 Received new list:", list);
 
@@ -401,164 +382,117 @@ cancelAddListBtn.addEventListener("click", () => {
   showAddListBtn.style.display = "inline-block";
   newListTitle.value = "";
 });
-function openAttachment(fileDataURL, fileName = "file") {
-  // Chia base64 và type
-  const [meta, base64Data] = fileDataURL.split(",");
-  const mime = meta.match(/:(.*?);/)[1];
-
-  // Chuyển base64 -> byte array
-  const byteCharacters = atob(base64Data);
-  const byteNumbers = new Array(byteCharacters.length);
-  for (let i = 0; i < byteCharacters.length; i++) {
-    byteNumbers[i] = byteCharacters.charCodeAt(i);
-  }
-  const byteArray = new Uint8Array(byteNumbers);
-
-  // Tạo Blob
-  const blob = new Blob([byteArray], { type: mime });
-
-  // Tạo URL tạm thời
-  const blobUrl = URL.createObjectURL(blob);
-
-  // Mở trong tab mới
-  window.open(blobUrl, "_blank");
-
-  // Tạm thời, URL sẽ tự giải phóng khi tab đóng (hoặc bạn có thể URL.revokeObjectURL(blobUrl) sau)
-}
-
 
 // card detail
 async function openCardDetail(cardId) {
-  try {
-    const res = await fetch(`http://localhost:8127/v1/board/get-card/cards/${cardId}`, {
-      credentials: "include"
-    });
-    const result = await res.json();
+  currentCardId = cardId; // lưu id card hiện tại
+  const res = await fetch(`http://localhost:8127/v1/board/get-card/cards/${cardId}`, {
+    credentials: "include"
+  });
+  const result = await res.json();
+  if (!result.success) return alert(result.message || "Lỗi khi tải chi tiết card");
 
-    if (!result.success) {
-      alert(result.message || "Lỗi khi tải chi tiết card");
-      return;
-    }
-
-    const card = result.data;
-    showCardDetailModal(card); // Hiển thị modal hoặc trang card detail
-
-  } catch (err) {
-    console.error("openCardDetail error:", err);
-    alert("Lỗi khi tải chi tiết card");
-  }
+  currentCard = result.data;
+  socket.emit("card:join", currentCard._id);
+  showCardDetailModal(currentCard);
 }
 function showCardDetailModal(card) {
   const modal = document.getElementById("cardDetailModal");
-  const cardAssignedEl = document.getElementById("cardAssigned");
-  cardAssignedEl.innerHTML = ""; // reset trước khi render
-  (card.assignedTo || []).forEach(member => {
-    const li = document.createElement("li");
-    li.textContent = member.username;
-    li.dataset.id = member._id; // quan trọng để saveCardChanges lấy id
-    cardAssignedEl.appendChild(li);
-    document.getElementById("addLabelBtn").addEventListener("click", openLabelPopup);
-  });
 
+  // Assigned members
+assignedMembers = (card.assignedTo || []).map(m => m._id);
 
-  document.getElementById("cardTitle").textContent = card.name;
-  document.getElementById("cardDescription").textContent = card.description || "";
-  // Assigned To
-  const assignBtn = document.getElementById("AssignedMember-btn");
-  assignBtn.addEventListener("click", () => {
-    assignPopup.style.display = "flex";
-    loadAssignList(members);
-  });
+// Render assigned member đầy đủ
+renderAssignedMembers();
 
-  // Labels
+  // Labels - gắn 1 lần duy nhất
   const labelsEl = document.getElementById("cardLabels");
   labelsEl.innerHTML = "";
 
-  // card.labels lưu dạng mảng màu: ["red", "green", "blue"]
+  // render tất cả label đã có
   (card.labels || []).forEach(color => {
-    const span = document.createElement("span");
-    span.className = "label";           // CSS để định dạng
-    span.style.background = color;      // màu hiển thị
-    span.dataset.color = color;         // lưu data-color để lấy khi save
-    span.textContent = "";              // nếu muốn, để trống
-    labelsEl.appendChild(span);
+    addLabelToCard(color);
   });
 
+  const addLabelBtn = document.getElementById("addLabelBtn");
+  addLabelBtn.removeEventListener("click", addLabelBtn._listener);
+  addLabelBtn._listener = () => openLabelPopup(currentCard._id);
+  addLabelBtn.addEventListener("click", addLabelBtn._listener);
+  renderLabelsFromCard(card)
+
+  // Title
+  const cardTitleEl = document.getElementById("cardTitle");
+  cardTitleEl.textContent = card.name;
+  cardTitleEl.addEventListener("input", () => {
+    const newName = cardTitleEl.textContent.trim();
+    currentCard.name = newName;
+    socket.emit("card:updateName", { cardId: card._id, name: newName });
+  });
+  socket.off("card:nameUpdated");
+  socket.on("card:nameUpdated", ({ name }) => {
+    currentCard.name = name;
+    cardTitleEl.textContent = name;
+  });
+
+  // Description
+  const cardDescriptionEl = document.getElementById("cardDescription");
+  cardDescriptionEl.contentEditable = true;
+  cardDescriptionEl.textContent = card.description || "";
+  cardDescriptionEl.addEventListener("input", () => {
+    const newDescription = cardDescriptionEl.textContent.trim();
+    currentCard.description = newDescription;
+    socket.emit("card:updateDescription", { cardId: card._id, description: newDescription });
+  });
+  socket.off("card:descriptionUpdated");
+  socket.on("card:descriptionUpdated", ({ description }) => {
+    if (document.activeElement !== cardDescriptionEl) {
+      cardDescriptionEl.textContent = description;
+    }
+  });
 
   // Due date
-  document.getElementById("cardDueDate").value = card.dueDate
-    ? new Date(card.dueDate).toISOString().split("T")[0]
-    : "";
+   const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+  const statusEl = document.getElementById("dueDateStatus");
 
+  if (card.dueDate) {
+    const due = new Date(card.dueDate);
+
+    const yyyy = due.getFullYear();
+    const mm = String(due.getMonth()+1).padStart(2,'0');
+    const dd = String(due.getDate()).padStart(2,'0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    const hh = String(due.getHours()).padStart(2,'0');
+    const min = String(due.getMinutes()).padStart(2,'0');
+    timeInput.value = `${hh}:${min}`;
+
+    statusEl.textContent = formatDateDMY(due) + " đến hạn";
+  } else {
+    dateInput.value = "";
+    timeInput.value = "";
+    statusEl.textContent = "";
+  }
+
+  updateDueStatus();
+
+  // Lắng nghe khi người dùng chỉnh
+  dateInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
+  timeInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
   // Comments
-  const commentsEl = document.getElementById("cardComments");
-  commentsEl.innerHTML = "";
-  (card.comments || []).forEach(comment => {
-    const li = document.createElement("li");
-    li.textContent = `${comment.user?.username || "Unknown"}: ${comment.text}`;
-    commentsEl.appendChild(li);
-  });
+  renderComments(card.comments || []);
 
   // Attachments
-   const attachmentsEl = document.getElementById("cardAttachments");
-
-  // Hàm hiển thị attachments hiện có
-   function renderAttachments(card) {
-  const attachmentsEl = document.getElementById("cardAttachments");
-  attachmentsEl.innerHTML = "";
-
-  (card.attachments || []).forEach((fileDataURL, index) => {
-    const li = document.createElement("li");
-
-    // Nếu là ảnh, hiển thị preview
-    if (fileDataURL.startsWith("data:image")) {
-      const img = document.createElement("img");
-      img.src = fileDataURL;
-      img.style.maxWidth = "150px";   // điều chỉnh size preview
-      img.style.display = "block";
-      img.style.marginBottom = "5px";
-      li.appendChild(img);
-    }
-
-    // Nút mở file
-    const openBtn = document.createElement("button");
-    openBtn.textContent = "Mở file";
-    openBtn.onclick = () => window.open(fileDataURL, "_blank");
-    li.appendChild(openBtn);
-
-    // Nút xóa
-    const removeBtn = document.createElement("button");
-    removeBtn.textContent = "x";
-    removeBtn.style.marginLeft = "5px";
-    removeBtn.onclick = () => {
-      card.attachments.splice(index, 1);
-      renderAttachments(card);
-    };
-    li.appendChild(removeBtn);
-
-    attachmentsEl.appendChild(li);
-  });
-}
   renderAttachments(card);
 
   // Hiển thị modal
-  modal.style.display = "block";
-  document.getElementById("save-card-btn").onclick = () => {
-    saveCardChanges(card._id);
-
-  };
-  // Nút đóng
-  document.getElementById("closeModal").onclick = () => {
-    modal.style.display = "none";
-  };
-
-  // Click ngoài modal đóng
+  modal.style.display = "flex";
+  document.getElementById("closeModal").onclick = () => modal.style.display = "none";
   window.onclick = (event) => {
-    if (event.target == modal) {
-      modal.style.display = "none";
-    }
+    if (event.target === modal) modal.style.display = "none";
   };
 }
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -567,69 +501,101 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
-attachmentInput.addEventListener("change", () => {
-  const files = Array.from(attachmentInput.files);
-  files.forEach(file => currentAttachments.push(file));
-  renderAttachments();
-});
- async function saveCardChanges(cardId) {
-  const cardAssignedEl = document.getElementById("cardAssigned");
-  const assignedMembers = Array.from(cardAssignedEl.querySelectorAll("li"))
-    .map(li => li.dataset.id);
-  const labels = Array.from(document.querySelectorAll("#cardLabels span"))
-    .map(span => span.dataset.color);
-  const attachmentsBase64 = await Promise.all(
-    currentAttachments.map(file => fileToBase64(file))
-  );
+// Hàm hiển thị attachments hiện có
+function renderAttachments(card) {
+  const attachmentsEl = document.getElementById("cardAttachments");
+  attachmentsEl.innerHTML = "";
 
-  const updatedCard = {
-    name: document.getElementById("cardTitle").textContent,
-    description: document.getElementById("cardDescription").textContent,
-    dueDate: document.getElementById("cardDueDate").value,
-    assignedTo: assignedMembers,
-    labels: labels,
-    attachments: attachmentsBase64
-  };
+  (card.attachments || []).forEach((fileObj, index) => {
+    const { name, data } = fileObj;
+    const li = document.createElement("li");
 
-  fetch(`http://localhost:8127/v1/board/update-card/cards/${cardId}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    credentials: "include",
-    body: JSON.stringify(updatedCard)
-  })
-    .then(res => res.json())
-    .then(data => {
-      if (data.success) {
-        Toastify({
-          text: "lưu thành công!",
-          duration: 3000,          // 3 giây
-          gravity: "top",          // xuất hiện ở trên
-          position: "right",       // bên phải
-          backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
-          close: true
-        }).showToast();
+    // Preview ảnh
+    if (data.startsWith("data:image")) {
+      const img = document.createElement("img");
+      img.src = data;
+      img.style.maxWidth = "150px";
+      img.style.display = "block";
+      img.style.marginBottom = "5px";
+      img.onclick = e => e.stopPropagation();
+      li.appendChild(img);
+    } else {
+      // Hiển thị tên file
+      const nameSpan = document.createElement("span");
+      nameSpan.textContent = name;
+      nameSpan.style.marginRight = "10px";
+      li.appendChild(nameSpan);
+    }
+
+    // Nút mở/download
+    const openBtn = document.createElement("button");
+    openBtn.textContent = "Mở / Download";
+    openBtn.onclick = e => {
+      e.stopPropagation();
+      const [header, base64] = data.split(",");
+      const mime = header.match(/data:(.*?);base64/)[1];
+      const binary = atob(base64);
+      const buffer = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) buffer[i] = binary.charCodeAt(i);
+
+      const blob = new Blob([buffer], { type: mime });
+      const blobURL = URL.createObjectURL(blob);
+
+      if (mime.startsWith("text")) {
+        window.open(blobURL, "_blank");
       } else {
-        Toastify({
-          text: data.message || "Lưu thất bại",
-          duration: 3000,
-          gravity: "top",
-          position: "right",
-          backgroundColor: "linear-gradient(to right, #e52d27, #b31217)",
-          close: true
-        }).showToast();
+        const a = document.createElement("a");
+        a.href = blobURL;
+        a.download = name;
+        a.click();
       }
-    })
-    .catch(err => {
-      console.error(err);
-      Toastify({
-        text: "Error occurred while saving",
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "linear-gradient(to right, #e52d27, #b31217)",
-        close: true
-      }).showToast();
-    });
+
+      setTimeout(() => URL.revokeObjectURL(blobURL), 1000);
+    };
+    li.appendChild(openBtn);
+
+    // Nút xóa
+    const removeBtn = document.createElement("button");
+    removeBtn.textContent = "x";
+    removeBtn.style.marginLeft = "5px";
+    removeBtn.onclick = e => {
+      e.stopPropagation();
+      removeAttachment(index);
+    };
+    li.appendChild(removeBtn);
+
+    attachmentsEl.appendChild(li);
+  });
+}
+
+//thêm file attachments
+attachmentInput.addEventListener("change", async () => {
+  const files = Array.from(attachmentInput.files);
+
+  for (let file of files) {
+    // tránh trùng lặp
+    if (!currentCard.attachments?.some(f => f.name === file.name && f.size === file.size)) {
+      const fileObj = { name: file.name, data: await fileToBase64(file) };
+
+      if (!currentCard.attachments) currentCard.attachments = [];
+      currentCard.attachments.push(fileObj);
+
+      // emit lên server
+      socket.emit("card:updateAttachments", { cardId: currentCardId, file: fileObj });
+    }
+  }
+
+  attachmentInput.value = "";
+  renderAttachments(currentCard);
+});
+
+function removeAttachment(index) {
+  const file = currentCard.attachments[index];
+  currentCard.attachments.splice(index, 1);
+  renderAttachments(currentCard);
+
+  // Gửi sự kiện xóa file
+  socket.emit("card:removeAttachment", { cardId: currentCard._id, fileName: file.name });
 }
 
 function loadAssignList(filter = "") {
@@ -640,11 +606,15 @@ function loadAssignList(filter = "") {
     .filter(member => member.username.toLowerCase().includes(filter.toLowerCase()))
     .forEach(member => {
       const li = document.createElement("li");
-      li.dataset.id = member._id; // <- thêm id vào đây
+      li.dataset.id = member._id;
+      li.className = "assign-member-item";
 
+      // Avatar tròn
       const avatar = document.createElement("div");
       avatar.className = "member-avatar";
+      avatar.textContent = member.username[0].toUpperCase();
 
+      // Tên member
       const name = document.createElement("span");
       name.className = "member-name";
       name.textContent = member.username;
@@ -652,6 +622,12 @@ function loadAssignList(filter = "") {
       li.appendChild(avatar);
       li.appendChild(name);
 
+      // Nếu member đã assign → đánh dấu
+      if (assignedMembers.includes(member._id)) {
+        li.classList.add("assigned");
+      }
+
+      // Click assign member
       li.addEventListener("click", () => {
         assignMemberToCard(member._id);
       });
@@ -660,12 +636,29 @@ function loadAssignList(filter = "") {
     });
 }
 
+
 // Hiển thị popup
 document.getElementById("AssignedMember-btn").addEventListener("click", () => {
   const popup = document.getElementById("assignPopup");
-  popup.style.display = popup.style.display === "none" ? "block" : "none";
-  loadAssignList(); // load tất cả member lần đầu
+
+  popup.style.display = 
+    (popup.style.display === "none" || popup.style.display === "") 
+      ? "flex" 
+      : "none";
+
+ loadAssignList(); // load member
 });
+
+document.getElementById("assign-close").addEventListener("click", () => {
+  document.getElementById("assignPopup").style.display = "none";
+});
+
+window.addEventListener("click", (e) => {
+  const popup = document.getElementById("assignPopup");
+  if (e.target === popup) popup.style.display = "none";
+});
+
+
 
 // Tìm kiếm
 document.getElementById("assignSearch").addEventListener("input", (e) => {
@@ -673,63 +666,278 @@ document.getElementById("assignSearch").addEventListener("input", (e) => {
 });
 let assignedMembers = []; // lưu member._id đã assign
 
-function assignMemberToCard(memberId) {
-  // toggle member
-  if (assignedMembers.includes(memberId)) {
-    assignedMembers = assignedMembers.filter(id => id !== memberId);
-  } else {
-    assignedMembers.push(memberId);
-  }
-
-  // Cập nhật hiển thị
-  renderAssignedMembers();
+function assignMemberToCard(userId) {
+  socket.emit("card:assignMember", {
+    cardId: currentCard._id,
+    userId
+  });
 }
+
 function renderAssignedMembers() {
   const cardAssignedEl = document.getElementById("cardAssigned");
+  cardAssignedEl.innerHTML = ""; // xóa cũ
+
   assignedMembers.forEach(id => {
     const member = members.find(m => m._id === id);
     if (!member) return;
 
     const li = document.createElement("li");
-    li.textContent = member.username;
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = member.username[0].toUpperCase();
+
+    const name = document.createElement("span");
+    name.className = "member-name";
+    name.textContent = member.username;
+
+    // Nút xóa
+    const removeBtn = document.createElement("span");
+    removeBtn.className = "remove-member";
+    removeBtn.textContent = "×";
+    removeBtn.title = "Remove member";
+    removeBtn.addEventListener("click", () => {
+      removeMemberFromCard(member._id);
+    });
+
+    li.appendChild(avatar);
+    li.appendChild(name);
+    li.appendChild(removeBtn);
     li.dataset.id = member._id;
+
     cardAssignedEl.appendChild(li);
+  });
+}
+function removeMemberFromCard(userId) {
+  socket.emit("card:removeMember", {
+    cardId: currentCard._id,
+    userId
   });
 }
 
 
 
-//thêm màu cho lable
-const colors = ["red", "blue", "green", "orange", "purple", "gray"]; // có thể thêm màu
 
-function openLabelPopup() {
+// Mảng màu
+const colors = ["#61bd4f", "#f2d600", "#ff9f1a", "#eb5a46", "#c377e0"];
+
+// Thêm label vào DOM
+function addLabelToCard(color) {
+  const labelsEl = document.getElementById("cardLabels");
+  if (Array.from(labelsEl.children).some(span => span.dataset.color === color)) return;
+
+  const span = document.createElement("span");
+  span.classList.add("card-label");
+  span.style.display = "inline-block";
+  span.style.backgroundColor = color;
+  span.style.width = "30px";
+  span.style.height = "30px";
+  span.style.gap= "10px"
+  span.dataset.color = color;
+  labelsEl.appendChild(span);
+
+}
+
+// Popup chọn màu
+function openLabelPopup(cardId) {
   const popup = document.getElementById("labelPopup");
   const colorsContainer = document.getElementById("labelColors");
   colorsContainer.innerHTML = "";
 
-  colors.forEach(color => {
-    const div = document.createElement("div");
-    div.style.backgroundColor = color;
+  const currentLabels = currentCard.labels || [];
 
-    div.addEventListener("click", () => {
-      addLabelToCard(color);
-      popup.style.display = "none";
+  colors.forEach(color => {
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("color-item");
+    wrapper.style.backgroundColor = color;
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.classList.add("color-checkbox");
+    checkbox.checked = currentLabels.includes(color);
+
+    // Click checkbox để chọn/bỏ
+    checkbox.addEventListener("change", () => {
+      if (checkbox.checked) {
+        addLabelToCard(color);
+        socket.emit("card:addLabel", { cardId: currentCard._id, color });
+      } else {
+        removeLabelFromCard(color);
+        socket.emit("card:removeLabel", { cardId: currentCard._id, color });
+      }
     });
 
-    colorsContainer.appendChild(div);
+    wrapper.appendChild(checkbox);
+    colorsContainer.appendChild(wrapper);
   });
 
   popup.style.display = "flex";
 }
-
-function addLabelToCard(color) {
+function removeLabelFromCard(color) {
   const labelsEl = document.getElementById("cardLabels");
-  const span = document.createElement("span");
-  span.style.backgroundColor = color;
-  span.dataset.color = color;
-  labelsEl.appendChild(span);
+
+  Array.from(labelsEl.children).forEach(span => {
+    if (span.dataset.color === color) {
+      span.remove();
+    }
+  });
+
+  // remove trong client copy
+  currentCard.labels = currentCard.labels.filter(c => c !== color);
+}
+socket.on("card:labelRemoved", ({ color }) => {
+  removeLabelFromCard(color);
+});
+
+
+// Nút tắt popup
+document.getElementById("closeLabelPopup").onclick = () => {
+  document.getElementById("labelPopup").style.display = "none";
+};
+// Nhận realtime
+socket.off("card:labelAdded");
+socket.on("card:labelAdded", ({ cardId: updatedCardId, color }) => {
+  if (!currentCard || updatedCardId !== currentCard._id) return;
+  addLabelToCard(color);
+});
+
+// Khi mở modal, render label từ DB
+function renderLabelsFromCard(card) {
+  const labelsEl = document.getElementById("cardLabels");
+  labelsEl.innerHTML = "";
+  (card.labels || []).forEach(color => addLabelToCard(color));
 }
 
-//attackment
+//socket attackment
+socket.on("card:attachmentsUpdated", ({ file }) => {
+  if (!Array.isArray(currentCard.attachments)) currentCard.attachments = [];
+  currentCard.attachments.push(file);
 
+  // Render lại
+  renderAttachments(currentCard);
+});
 
+socket.on("card:attachmentRemoved", ({ fileName }) => {
+  currentCard.attachments = currentCard.attachments.filter(f => f.name !== fileName);
+  renderAttachments(currentCard);
+});
+
+// socket assign member
+socket.off("card:memberAssigned");
+socket.on("card:memberAssigned", ({ cardId, assignedTo }) => {
+  if (!currentCard || currentCard._id !== cardId) return;
+
+  // Cập nhật danh sách assigned
+  assignedMembers = assignedTo.map(m => m._id);
+
+  renderAssignedMembers();
+});
+
+// due date
+// Cập nhật giá trị khi mở card
+// Format hiển thị DD/MM/YYYY HH:MM
+function formatDateDMY(date) {
+  const d = String(date.getDate()).padStart(2,'0');
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const y = date.getFullYear();
+  const h = String(date.getHours()).padStart(2,'0');
+  const min = String(date.getMinutes()).padStart(2,'0');
+  return `${d}/${m}/${y} ${h}:${min}`;
+}
+
+// Lấy giá trị từ input date + time
+function getDueDateTime() {
+  const dateInput = document.getElementById("cardDueDate").value;
+  const timeInput = document.getElementById("cardDueTime").value || "00:00";
+
+  if (!dateInput) return null;
+
+  const [yyyy, mm, dd] = dateInput.split("-").map(Number);
+  const [hh, min] = timeInput.split(":").map(Number);
+
+  const due = new Date(yyyy, mm-1, dd, hh, min);
+  return due;
+}
+
+// Cập nhật trạng thái hiển thị
+function updateDueStatus() {
+  const due = getDueDateTime();
+  const statusEl = document.getElementById("dueDateStatus");
+
+  if (!due) {
+    statusEl.textContent = "";
+    statusEl.className = "due-status";
+    return;
+  }
+
+  const diff = due - new Date();
+
+  statusEl.textContent = formatDateDMY(due) + " đến hạn";
+
+  if (diff < 0) statusEl.className = "due-status overdue";
+  else if (diff < 24*60*60*1000) statusEl.className = "due-status warning";
+  else statusEl.className = "due-status normal";
+}
+
+// Gửi lên server + realtime
+function saveDueDate() {
+  const due = getDueDateTime();
+  if (!due) return;
+
+  currentCard.dueDate = due;
+
+  socket.emit("card:updateDueDate", {
+    cardId: currentCard._id,
+    dueDate: due
+  });
+}
+
+// Lắng nghe realtime
+socket.on("card:dueDateUpdated", ({ dueDate }) => {
+  const due = new Date(dueDate);
+  const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+
+  // Hiển thị input theo local
+  const yyyy = due.getFullYear();
+  const mm = String(due.getMonth()+1).padStart(2,'0');
+  const dd = String(due.getDate()).padStart(2,'0');
+  dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+  const hh = String(due.getHours()).padStart(2,'0');
+  const min = String(due.getMinutes()).padStart(2,'0');
+  timeInput.value = `${hh}:${min}`;
+
+  updateDueStatus();
+});
+
+//comment
+// Khi mở card, render comment
+function renderComments(comments = []) {
+  const commentsEl = document.getElementById("cardComments");
+  commentsEl.innerHTML = "";
+
+  comments.forEach(comment => {
+    const li = document.createElement("li");
+    li.className = "comment-item";
+    li.textContent = `${comment.user?.username || "Unknown"}: ${comment.text}`;
+    commentsEl.appendChild(li);
+  });
+}
+
+// Gửi comment mới
+document.getElementById("addCommentBtn").addEventListener("click", () => {
+  const text = document.getElementById("commentInput").innerText.trim();
+  const cardId = currentCardId; // lấy từ URL hoặc context
+  if (!text) return;
+
+  socket.emit("card:addComment", { cardId, text });
+});
+
+// nhận comment mới từ server
+socket.on("card:commentAdded", ({ cardId, comment }) => {
+  const ul = document.getElementById("cardComments");
+  const li = document.createElement("li");
+  li.textContent = `${comment.user.username}: ${comment.text}`;
+  ul.appendChild(li);
+});
