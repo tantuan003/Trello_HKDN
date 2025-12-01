@@ -159,23 +159,39 @@ io.on("connection", (socket) => {
     }
   });
   socket.on("card:removeMember", async ({ cardId, userId }) => {
-  try {
-    const card = await Card.findById(cardId).populate("assignedTo");
-    if (!card) return;
+    try {
+      const card = await Card.findById(cardId).populate("assignedTo");
+      if (!card) return;
 
-    card.assignedTo = card.assignedTo.filter(m => m._id.toString() !== userId);
-    await card.save();
+      card.assignedTo = card.assignedTo.filter(m => m._id.toString() !== userId);
+      await card.save();
 
-    const populated = await Card.findById(cardId).populate("assignedTo");
+      const populated = await Card.findById(cardId).populate("assignedTo");
 
-    io.to(cardId).emit("card:memberAssigned", {
-      cardId,
-      assignedTo: populated.assignedTo
-    });
-  } catch (err) {
-    console.error("Error removing member:", err);
-  }
-});
+      io.to(cardId).emit("card:memberAssigned", {
+        cardId,
+        assignedTo: populated.assignedTo
+      });
+    } catch (err) {
+      console.error("Error removing member:", err);
+    }
+  });
+
+  //due date
+  socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
+    try {
+      const card = await Card.findById(cardId);
+      if (!card) return;
+
+      card.dueDate = dueDate;
+      await card.save();
+
+      // Gửi realtime cho tất cả client trong card
+      io.to(cardId).emit("card:dueDateUpdated", { dueDate: card.dueDate });
+    } catch (err) {
+      console.error("Error updating due date:", err);
+    }
+  });
 
 
 

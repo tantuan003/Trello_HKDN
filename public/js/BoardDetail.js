@@ -453,10 +453,34 @@ renderAssignedMembers();
   });
 
   // Due date
-  document.getElementById("cardDueDate").value = card.dueDate
-    ? new Date(card.dueDate).toISOString().split("T")[0]
-    : "";
+   const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+  const statusEl = document.getElementById("dueDateStatus");
 
+  if (card.dueDate) {
+    const due = new Date(card.dueDate);
+
+    const yyyy = due.getFullYear();
+    const mm = String(due.getMonth()+1).padStart(2,'0');
+    const dd = String(due.getDate()).padStart(2,'0');
+    dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+    const hh = String(due.getHours()).padStart(2,'0');
+    const min = String(due.getMinutes()).padStart(2,'0');
+    timeInput.value = `${hh}:${min}`;
+
+    statusEl.textContent = formatDateDMY(due) + " đến hạn";
+  } else {
+    dateInput.value = "";
+    timeInput.value = "";
+    statusEl.textContent = "";
+  }
+
+  updateDueStatus();
+
+  // Lắng nghe khi người dùng chỉnh
+  dateInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
+  timeInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
   // Comments
   const commentsEl = document.getElementById("cardComments");
   commentsEl.innerHTML = "";
@@ -815,5 +839,83 @@ socket.on("card:memberAssigned", ({ cardId, assignedTo }) => {
   assignedMembers = assignedTo.map(m => m._id);
 
   renderAssignedMembers();
+});
+
+// due date
+// Cập nhật giá trị khi mở card
+// Format hiển thị DD/MM/YYYY HH:MM
+function formatDateDMY(date) {
+  const d = String(date.getDate()).padStart(2,'0');
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const y = date.getFullYear();
+  const h = String(date.getHours()).padStart(2,'0');
+  const min = String(date.getMinutes()).padStart(2,'0');
+  return `${d}/${m}/${y} ${h}:${min}`;
+}
+
+// Lấy giá trị từ input date + time
+function getDueDateTime() {
+  const dateInput = document.getElementById("cardDueDate").value;
+  const timeInput = document.getElementById("cardDueTime").value || "00:00";
+
+  if (!dateInput) return null;
+
+  const [yyyy, mm, dd] = dateInput.split("-").map(Number);
+  const [hh, min] = timeInput.split(":").map(Number);
+
+  const due = new Date(yyyy, mm-1, dd, hh, min);
+  return due;
+}
+
+// Cập nhật trạng thái hiển thị
+function updateDueStatus() {
+  const due = getDueDateTime();
+  const statusEl = document.getElementById("dueDateStatus");
+
+  if (!due) {
+    statusEl.textContent = "";
+    statusEl.className = "due-status";
+    return;
+  }
+
+  const diff = due - new Date();
+
+  statusEl.textContent = formatDateDMY(due) + " đến hạn";
+
+  if (diff < 0) statusEl.className = "due-status overdue";
+  else if (diff < 24*60*60*1000) statusEl.className = "due-status warning";
+  else statusEl.className = "due-status normal";
+}
+
+// Gửi lên server + realtime
+function saveDueDate() {
+  const due = getDueDateTime();
+  if (!due) return;
+
+  currentCard.dueDate = due;
+
+  socket.emit("card:updateDueDate", {
+    cardId: currentCard._id,
+    dueDate: due
+  });
+}
+
+// Lắng nghe realtime
+socket.on("card:dueDateUpdated", ({ dueDate }) => {
+  const due = new Date(dueDate);
+  const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+
+  // Hiển thị input theo local
+  const yyyy = due.getFullYear();
+  const mm = String(due.getMonth()+1).padStart(2,'0');
+  const dd = String(due.getDate()).padStart(2,'0');
+  dateInput.value = `${yyyy}-${mm}-${dd}`;
+
+  const hh = String(due.getHours()).padStart(2,'0');
+  const min = String(due.getMinutes()).padStart(2,'0');
+  timeInput.value = `${hh}:${min}`;
+
+  updateDueStatus();
 });
 

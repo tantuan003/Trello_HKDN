@@ -61,7 +61,7 @@
                 <!-- Assign Member Popup -->
                 <div id="assignPopup" class="assign-popup" style="display:none;">
                   <div class="assign-content">
-                    <span class="assign-close" id="assign-close">X</span>
+                    <span class="assign-close" id="assign-close">×</span>
 
                     <input type="text" id="assignSearch" placeholder="Tìm kiếm thành viên..." />
                     <ul id="assignList"></ul>
@@ -86,13 +86,13 @@
                     <div id="labelColors" class="color-options"></div>
                   </div>
                 </div>
-
-
-
-
-                <div>
-                  <h4>Due Date</h4>
-                  <input type="date" id="cardDueDate" />
+                <div class="due-date-container">
+                  <label for="cardDueDate">Due Date</label>
+                  <div class="due-date-inputs">
+                    <input type="date" id="cardDueDate" placeholder="DD/MM/YYYY" />
+                    <input type="time" id="cardDueTime" />
+                    <span id="dueDateStatus" class="due-status"></span>
+                  </div>
                 </div>
 
                 <div>
