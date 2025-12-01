@@ -753,12 +753,6 @@ html, body {
   box-shadow: 0 0 0 2px #0079bf;
 }
 
-/* Animation */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translate(-50%, -10px); }
-  to { opacity: 1; transform: translate(-50%, 0); }
-}
-
 .card-label {
   display: inline-block;
   width: 30px;
@@ -849,13 +843,12 @@ html, body {
   border-radius: 12px;
   padding: 16px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
-  animation: scaleIn 0.2s ease;
 }
 
 /* Nút tắt */
 .assign-close {
   position: absolute;
-  top: 8px;
+  top: 0;
   right: 10px;
   font-size: 18px;
   cursor: pointer;
@@ -871,7 +864,8 @@ html, body {
 
 /* Input search */
 #assignSearch {
-  width: 100%;
+  top: 10px;
+  width: 90%;
   padding: 10px;
   border-radius: 8px;
   border: 1px solid #ccc;
@@ -886,40 +880,122 @@ html, body {
 }
 
 /* Danh sách thành viên */
+/* Container popup */
 #assignList {
-  max-height: 260px;
-  overflow-y: auto;
-  padding: 0;
+  list-style: none;
   margin: 0;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
-/* Item thành viên */
-#assignList li {
-  list-style: none;
-  padding: 10px;
-  background: #f9f9f9;
-  margin-bottom: 8px;
-  border-radius: 8px;
-  cursor: pointer;
+/* Item member */
+.assign-member-item {
   display: flex;
   align-items: center;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 6px;
   transition: background 0.2s;
 }
 
-#assignList li:hover {
-  background: #e8e8e8;
+.assign-member-item:hover {
+  background: #f0f4f8;
 }
 
-/* Avatar nhỏ */
-#assignList li .avatar {
+/* Avatar */
+.assign-member-item .member-avatar {
   width: 32px;
   height: 32px;
-  background: #0079bf;
-  color: white;
   border-radius: 50%;
+  background-color: #0079bf;
+  color: #fff;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-right: 10px;
   font-weight: bold;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* Tên member */
+.assign-member-item .member-name {
+  font-size: 14px;
+  color: #172b4d;
+}
+
+/* Đánh dấu member đã assign */
+.assign-member-item.assigned {
+  opacity: 0.5;
+  pointer-events: none; /* không thể click lại */
+}
+
+/* Container assigned members */
+#cardAssigned {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0;
+  list-style: none;
+  margin: 0;
+}
+
+/* Item member */
+#cardAssigned li {
+  display: flex;
+  align-items: center;
+  background: #e4f0f6;
+  border-radius: 16px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: #172b4d;
+  cursor: default;
+  transition: background 0.2s;
+}
+
+#cardAssigned li:hover {
+  background: #d0e6f2;
+}
+
+/* Avatar nhỏ */
+#cardAssigned li .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0079bf;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  font-weight: bold;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* Nếu muốn tên hiển thị bên cạnh avatar */
+#cardAssigned li .member-name {
+  white-space: nowrap;
+}
+#cardAssigned li {
+  display: flex;
+  align-items: center;
+  background: #e4f0f6;
+  border-radius: 16px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: #172b4d;
+  position: relative;
+}
+
+#cardAssigned li .remove-member {
+  margin-left: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  color: #555;
+  transition: color 0.2s;
+}
+
+#cardAssigned li .remove-member:hover {
+  color: #d9534f;
 }

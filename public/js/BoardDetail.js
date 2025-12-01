@@ -402,16 +402,10 @@ function showCardDetailModal(card) {
   const modal = document.getElementById("cardDetailModal");
 
   // Assigned members
-  const cardAssignedEl = document.getElementById("cardAssigned");
-cardAssignedEl.innerHTML = "";
+assignedMembers = (card.assignedTo || []).map(m => m._id);
 
-(card.assignedTo || []).forEach(member => {
-  const li = document.createElement("li");
-  li.textContent = member.username;
-  li.dataset.id = member._id;
-  cardAssignedEl.appendChild(li);
-});
-
+// Render assigned member đầy đủ
+renderAssignedMembers();
 
   // Labels - gắn 1 lần duy nhất
   const labelsEl = document.getElementById("cardLabels");
@@ -596,11 +590,15 @@ function loadAssignList(filter = "") {
     .filter(member => member.username.toLowerCase().includes(filter.toLowerCase()))
     .forEach(member => {
       const li = document.createElement("li");
-      li.dataset.id = member._id; // <- thêm id vào đây
+      li.dataset.id = member._id;
+      li.className = "assign-member-item";
 
+      // Avatar tròn
       const avatar = document.createElement("div");
       avatar.className = "member-avatar";
+      avatar.textContent = member.username[0].toUpperCase();
 
+      // Tên member
       const name = document.createElement("span");
       name.className = "member-name";
       name.textContent = member.username;
@@ -608,6 +606,12 @@ function loadAssignList(filter = "") {
       li.appendChild(avatar);
       li.appendChild(name);
 
+      // Nếu member đã assign → đánh dấu
+      if (assignedMembers.includes(member._id)) {
+        li.classList.add("assigned");
+      }
+
+      // Click assign member
       li.addEventListener("click", () => {
         assignMemberToCard(member._id);
       });
@@ -615,6 +619,7 @@ function loadAssignList(filter = "") {
       assignListEl.appendChild(li);
     });
 }
+
 
 // Hiển thị popup
 document.getElementById("AssignedMember-btn").addEventListener("click", () => {
@@ -625,7 +630,7 @@ document.getElementById("AssignedMember-btn").addEventListener("click", () => {
       ? "flex" 
       : "none";
 
-  loadAssignList(); // load member
+ loadAssignList(); // load member
 });
 
 document.getElementById("assign-close").addEventListener("click", () => {
@@ -654,18 +659,46 @@ function assignMemberToCard(userId) {
 
 function renderAssignedMembers() {
   const cardAssignedEl = document.getElementById("cardAssigned");
-  cardAssignedEl.innerHTML = ""; // clear UI
+  cardAssignedEl.innerHTML = ""; // xóa cũ
 
   assignedMembers.forEach(id => {
     const member = members.find(m => m._id === id);
     if (!member) return;
 
     const li = document.createElement("li");
-    li.textContent = member.username;
+
+    const avatar = document.createElement("div");
+    avatar.className = "avatar";
+    avatar.textContent = member.username[0].toUpperCase();
+
+    const name = document.createElement("span");
+    name.className = "member-name";
+    name.textContent = member.username;
+
+    // Nút xóa
+    const removeBtn = document.createElement("span");
+    removeBtn.className = "remove-member";
+    removeBtn.textContent = "×";
+    removeBtn.title = "Remove member";
+    removeBtn.addEventListener("click", () => {
+      removeMemberFromCard(member._id);
+    });
+
+    li.appendChild(avatar);
+    li.appendChild(name);
+    li.appendChild(removeBtn);
     li.dataset.id = member._id;
+
     cardAssignedEl.appendChild(li);
   });
 }
+function removeMemberFromCard(userId) {
+  socket.emit("card:removeMember", {
+    cardId: currentCard._id,
+    userId
+  });
+}
+
 
 
 

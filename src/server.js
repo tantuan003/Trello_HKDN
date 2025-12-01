@@ -158,6 +158,25 @@ io.on("connection", (socket) => {
       console.error("Error assigning member:", err);
     }
   });
+  socket.on("card:removeMember", async ({ cardId, userId }) => {
+  try {
+    const card = await Card.findById(cardId).populate("assignedTo");
+    if (!card) return;
+
+    card.assignedTo = card.assignedTo.filter(m => m._id.toString() !== userId);
+    await card.save();
+
+    const populated = await Card.findById(cardId).populate("assignedTo");
+
+    io.to(cardId).emit("card:memberAssigned", {
+      cardId,
+      assignedTo: populated.assignedTo
+    });
+  } catch (err) {
+    console.error("Error removing member:", err);
+  }
+});
+
 
 
   // Thêm attachment
