@@ -9,13 +9,12 @@ const cardSchema = new mongoose.Schema({
   dueDate: { type: Date },
   position: { type: Number, default: 0 },
   createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  comments: [
-    {
-      user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-      text: String,
-      createdAt: { type: Date, default: Date.now }
-    }
-  ],
+  comments: [{
+  user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  text: String,
+  createdAt: Date
+}]
+,
    attachments: [
     {
       name: String,

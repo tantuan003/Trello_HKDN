@@ -12,6 +12,8 @@ import { fileURLToPath } from "url";
 import cookieParser from "cookie-parser";
 import workspaceRoutes from "./routes/workspaceRoutes.js";
 import Card from "./models/CardModel.js";
+import jwt from "jsonwebtoken";
+import cookie from "cookie";
 
 dotenv.config();
 
@@ -28,6 +30,40 @@ export const io = new Server(server, {
   cors: {
     origin: "http://localhost:8127",
     credentials: true
+  }
+});
+io.use((socket, next) => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  const COOKIE_NAME = process.env.COOKIE_NAME || "token";
+
+  try {
+    // Đọc raw cookie header
+    const cookieHeader = socket.request.headers.cookie;
+    if (!cookieHeader) {
+      console.log("❌ No cookie header");
+      return next(new Error("Authentication error"));
+    }
+
+    // Parse cookie
+    const cookies = cookie.parse(cookieHeader);
+
+    // COOKIE_NAME là tên cookie bạn dùng ở res.cookie(COOKIE_NAME, token)
+    const token = cookies[COOKIE_NAME];
+    if (!token) {
+      console.log("❌ No token in cookies");
+      return next(new Error("Authentication error"));
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    // Gắn user ID vào socket để dùng ở sự kiện sau này
+    socket.user = decoded.id;
+
+    next();
+  } catch (err) {
+    console.log("Socket auth error:", err.message);
+    next(new Error("Authentication error"));
   }
 });
 
@@ -192,9 +228,6 @@ io.on("connection", (socket) => {
       console.error("Error updating due date:", err);
     }
   });
-
-
-
   // Thêm attachment
   socket.on("card:updateAttachments", async ({ cardId, file }) => {
     try {
@@ -224,6 +257,26 @@ io.on("connection", (socket) => {
       socket.to(cardId).emit("card:attachmentRemoved", { fileName });
     } catch (err) {
       console.error("Error removing attachment:", err);
+    }
+  });
+  //comment
+  // Thêm comment vào card
+  socket.on("card:addComment", async ({ cardId, text }) => {
+    try {
+      if (!socket.user) return;
+
+      const card = await Card.findById(cardId);
+      if (!card) return;
+
+      const comment = { user: socket.user, text, createdAt: new Date() };
+      card.comments.push(comment);
+      await card.save();
+
+      const populated = await Card.findById(cardId).populate("comments.user", "username");
+      io.to(cardId).emit("card:commentAdded", { cardId, comment: populated.comments.slice(-1)[0] });
+
+    } catch (err) {
+      console.error("Error adding comment:", err);
     }
   });
 

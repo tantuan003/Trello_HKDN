@@ -1,4 +1,5 @@
 import { socket } from "../js/socket.js";
+
 // ===================================================================
 // Lấy boardId từ URL
 // ===================================================================
@@ -61,9 +62,6 @@ async function renderBoardWithLists() {
     if (boardTitle) {
       boardTitle.textContent = data.board.name
     }
-
-
-
     // ⬇️ Áp dụng background vào trang
     applyBoardBackground(background);
 
@@ -482,13 +480,7 @@ renderAssignedMembers();
   dateInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
   timeInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
   // Comments
-  const commentsEl = document.getElementById("cardComments");
-  commentsEl.innerHTML = "";
-  (card.comments || []).forEach(comment => {
-    const li = document.createElement("li");
-    li.textContent = `${comment.user?.username || "Unknown"}: ${comment.text}`;
-    commentsEl.appendChild(li);
-  });
+  renderComments(card.comments || []);
 
   // Attachments
   renderAttachments(card);
@@ -919,3 +911,33 @@ socket.on("card:dueDateUpdated", ({ dueDate }) => {
   updateDueStatus();
 });
 
+//comment
+// Khi mở card, render comment
+function renderComments(comments = []) {
+  const commentsEl = document.getElementById("cardComments");
+  commentsEl.innerHTML = "";
+
+  comments.forEach(comment => {
+    const li = document.createElement("li");
+    li.className = "comment-item";
+    li.textContent = `${comment.user?.username || "Unknown"}: ${comment.text}`;
+    commentsEl.appendChild(li);
+  });
+}
+
+// Gửi comment mới
+document.getElementById("addCommentBtn").addEventListener("click", () => {
+  const text = document.getElementById("commentInput").innerText.trim();
+  const cardId = currentCardId; // lấy từ URL hoặc context
+  if (!text) return;
+
+  socket.emit("card:addComment", { cardId, text });
+});
+
+// nhận comment mới từ server
+socket.on("card:commentAdded", ({ cardId, comment }) => {
+  const ul = document.getElementById("cardComments");
+  const li = document.createElement("li");
+  li.textContent = `${comment.user.username}: ${comment.text}`;
+  ul.appendChild(li);
+});
