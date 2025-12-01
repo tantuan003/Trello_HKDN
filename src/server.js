@@ -104,40 +104,60 @@ io.on("connection", (socket) => {
     }
   });
   //thêm label
-// Khi client emit thêm label
-socket.on("card:addLabel", async ({ cardId, color }) => {
-  try {
-    const card = await Card.findById(cardId);
-    if (!card) return;
+  // Khi client emit thêm label
+  socket.on("card:addLabel", async ({ cardId, color }) => {
+    try {
+      const card = await Card.findById(cardId);
+      if (!card) return;
 
-    if (!Array.isArray(card.labels)) card.labels = [];
-    if (!card.labels.includes(color)) {
-      card.labels.push(color);
-      await card.save();
+      if (!Array.isArray(card.labels)) card.labels = [];
+      if (!card.labels.includes(color)) {
+        card.labels.push(color);
+        await card.save();
+      }
+
+      // ⚠️ Gửi cho tất cả client trong room, bao gồm client hiện tại
+      io.to(cardId).emit("card:labelAdded", { cardId, color });
+    } catch (err) {
+      console.error("Error updating card label:", err);
     }
+  });
+  socket.on("card:removeLabel", async ({ cardId, color }) => {
+    try {
+      const card = await Card.findById(cardId);
+      if (!card) return;
 
-    // ⚠️ Gửi cho tất cả client trong room, bao gồm client hiện tại
-    io.to(cardId).emit("card:labelAdded", { cardId, color });
-  } catch (err) {
-    console.error("Error updating card label:", err);
-  }
-});
-socket.on("card:removeLabel", async ({ cardId, color }) => {
-  try {
-    const card = await Card.findById(cardId);
-    if (!card) return;
+      card.labels = card.labels.filter(c => c !== color);
+      await card.save();
 
-    card.labels = card.labels.filter(c => c !== color);
-    await card.save();
+      socket.to(cardId).emit("card:labelRemoved", { cardId, color });
+    } catch (err) {
+      console.error("Error removing label:", err);
+    }
+  });
+  //assign member
+  socket.on("card:assignMember", async ({ cardId, userId }) => {
+    try {
+      const card = await Card.findById(cardId).populate("assignedTo");
 
-    socket.to(cardId).emit("card:labelRemoved", { cardId, color });
-  } catch (err) {
-    console.error("Error removing label:", err);
-  }
-});
+      if (!card.assignedTo.find(m => m._id.toString() === userId)) {
+        card.assignedTo.push(userId);
+        await card.save();
+      }
+
+      const populated = await Card.findById(cardId).populate("assignedTo");
+
+      // Gửi cho tất cả client trong card, bao gồm cả người thao tác
+      io.to(cardId).emit("card:memberAssigned", {
+        cardId,
+        assignedTo: populated.assignedTo,
+      });
 
 
-
+    } catch (err) {
+      console.error("Error assigning member:", err);
+    }
+  });
 
 
   // Thêm attachment

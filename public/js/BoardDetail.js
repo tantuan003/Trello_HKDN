@@ -1,4 +1,3 @@
-
 import { socket } from "../js/socket.js";
 // ===================================================================
 // Lấy boardId từ URL
@@ -404,13 +403,15 @@ function showCardDetailModal(card) {
 
   // Assigned members
   const cardAssignedEl = document.getElementById("cardAssigned");
-  cardAssignedEl.innerHTML = "";
-  (card.assignedTo || []).forEach(member => {
-    const li = document.createElement("li");
-    li.textContent = member.username;
-    li.dataset.id = member._id;
-    cardAssignedEl.appendChild(li);
-  });
+cardAssignedEl.innerHTML = "";
+
+(card.assignedTo || []).forEach(member => {
+  const li = document.createElement("li");
+  li.textContent = member.username;
+  li.dataset.id = member._id;
+  cardAssignedEl.appendChild(li);
+});
+
 
   // Labels - gắn 1 lần duy nhất
   const labelsEl = document.getElementById("cardLabels");
@@ -618,9 +619,25 @@ function loadAssignList(filter = "") {
 // Hiển thị popup
 document.getElementById("AssignedMember-btn").addEventListener("click", () => {
   const popup = document.getElementById("assignPopup");
-  popup.style.display = popup.style.display === "none" ? "block" : "none";
-  loadAssignList(); // load tất cả member lần đầu
+
+  popup.style.display = 
+    (popup.style.display === "none" || popup.style.display === "") 
+      ? "flex" 
+      : "none";
+
+  loadAssignList(); // load member
 });
+
+document.getElementById("assign-close").addEventListener("click", () => {
+  document.getElementById("assignPopup").style.display = "none";
+});
+
+window.addEventListener("click", (e) => {
+  const popup = document.getElementById("assignPopup");
+  if (e.target === popup) popup.style.display = "none";
+});
+
+
 
 // Tìm kiếm
 document.getElementById("assignSearch").addEventListener("input", (e) => {
@@ -628,19 +645,17 @@ document.getElementById("assignSearch").addEventListener("input", (e) => {
 });
 let assignedMembers = []; // lưu member._id đã assign
 
-function assignMemberToCard(memberId) {
-  // toggle member
-  if (assignedMembers.includes(memberId)) {
-    assignedMembers = assignedMembers.filter(id => id !== memberId);
-  } else {
-    assignedMembers.push(memberId);
-  }
-
-  // Cập nhật hiển thị
-  renderAssignedMembers();
+function assignMemberToCard(userId) {
+  socket.emit("card:assignMember", {
+    cardId: currentCard._id,
+    userId
+  });
 }
+
 function renderAssignedMembers() {
   const cardAssignedEl = document.getElementById("cardAssigned");
+  cardAssignedEl.innerHTML = ""; // clear UI
+
   assignedMembers.forEach(id => {
     const member = members.find(m => m._id === id);
     if (!member) return;
@@ -651,6 +666,7 @@ function renderAssignedMembers() {
     cardAssignedEl.appendChild(li);
   });
 }
+
 
 
 // Mảng màu
@@ -755,5 +771,16 @@ socket.on("card:attachmentsUpdated", ({ file }) => {
 socket.on("card:attachmentRemoved", ({ fileName }) => {
   currentCard.attachments = currentCard.attachments.filter(f => f.name !== fileName);
   renderAttachments(currentCard);
+});
+
+// socket assign member
+socket.off("card:memberAssigned");
+socket.on("card:memberAssigned", ({ cardId, assignedTo }) => {
+  if (!currentCard || currentCard._id !== cardId) return;
+
+  // Cập nhật danh sách assigned
+  assignedMembers = assignedTo.map(m => m._id);
+
+  renderAssignedMembers();
 });
 
