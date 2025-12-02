@@ -110,18 +110,20 @@ html, body {
 
 /* Card */
 .card {
-  height: 40px;                /* cao tối thiểu, linh hoạt */
-  padding: 10px 12px;              /* padding đầy đủ */
-  background-color: #ffffff;       /* nền sáng */
-  border-radius: 8px;              /* bo góc mềm mại */
+  display: flex;
+  flex-direction: column;      /* xếp dọc */
+  align-items: flex-start;     /* 🔥 label nằm trên, title nằm dưới */
+  height: auto;                /* cho cao linh hoạt */
+  padding: 10px 12px;
+  background-color: #ffffff;
+  border-radius: 8px;
   font-size: 0.95rem;
   color: #222;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* shadow nhẹ */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   cursor: pointer;
-  display: flex;
-  align-items: center;             /* căn giữa chữ theo dọc */
   transition: all 0.2s ease;
 }
+
 
 
 .card:hover {
@@ -134,6 +136,63 @@ html, body {
   transform: translateY(0);        /* trở về khi nhấn */
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+.card-labels {
+  display: flex;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.card-label {
+  width: 50px;
+  height: 6px;
+  border-radius: 3px;
+}
+.card-footer {
+  display: flex;
+  justify-content: space-between; /* due date trái, members phải */
+  align-items: center;            /* căn dọc icon + avatar */
+  margin-top: 6px;
+  width: 100%;
+}
+
+.card-due {
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: bolder;
+  text-align: center;
+  color: #0d0404;
+  border-radius: 5px;
+}
+
+.card-members {
+  display: flex;
+  gap: 4px;
+}
+
+.card-member {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #1884f0;
+}
+
+.card-member img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 
 
 /* --- Nút Add List --- */

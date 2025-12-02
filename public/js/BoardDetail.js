@@ -9,7 +9,12 @@ let members = "";
 const attachmentInput = document.getElementById("attachmentInput");
 let currentCardId = null;
 let currentCard = []
-let currentAttachments = []; // khai báo ở đầu file
+let boardData = {
+  lists: [],   // array of lists, mỗi list có cards
+  members: []  // array of members
+};
+
+let currentAttachments = []; 
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
 if (!boardId) {
@@ -43,6 +48,9 @@ async function renderBoardWithLists() {
     const res = await fetch(`http://localhost:8127/v1/board/${currentBoardId}`);
     const data = await res.json();
     members = data.board.members;
+    boardData.lists = data.board.lists;
+    boardData.members = data.board.members;
+
     socket.emit("joinBoard", currentBoardId);
 
     if (!data.board) return;
@@ -124,15 +132,117 @@ function createListElement(list) {
   (list.cards || []).forEach(card => {
     const cardEl = document.createElement("div");
     cardEl.className = "card";
-    cardEl.textContent = card.name;
+    cardEl.dataset.id = card._id;
 
-    // ⭐ Thêm sự kiện click mở cardDetail
+    // LABELS (nếu có)
+    if (Array.isArray(card.labels) && card.labels.length > 0) {
+      const labelsEl = document.createElement("div");
+      labelsEl.className = "card-labels";
+
+      card.labels.forEach(color => {
+        const labelColor = document.createElement("div");
+        labelColor.className = "card-label";
+        labelColor.style.background = color;
+        labelsEl.appendChild(labelColor);
+      });
+
+      cardEl.appendChild(labelsEl);
+    }
+
+    // Tên card
+    const titleEl = document.createElement("div");
+    titleEl.className = "card-title";
+    titleEl.textContent = card.name;
+    cardEl.appendChild(titleEl);
+    // Tạo container footer
+    const footerEl = document.createElement("div");
+    footerEl.className = "card-footer";
+
+    // --- Due date (trái) ---
+    let dueEl = null;
+    const leftEl = document.createElement("div");
+    leftEl.style.display = "flex";
+    leftEl.style.alignItems = "center";
+    leftEl.style.gap = "4px"
+
+    if (card.dueDate) {
+      const date = new Date(card.dueDate).toLocaleDateString("vi-VN");
+
+      dueEl = document.createElement("div");
+      dueEl.className = "card-due";
+      dueEl.style.display = "flex";
+      dueEl.style.alignItems = "center";
+      dueEl.style.gap = "4px";
+
+      // Icon calendar
+      const icon = document.createElement("img");
+      icon.src = "uploads/clock-countdown-black.svg";
+      icon.alt = "calendar";
+      icon.style.width = "16px";
+      icon.style.height = "16px";
+
+      // Text date
+      const dateText = document.createTextNode(` ${date}`);
+
+      dueEl.appendChild(icon);
+      dueEl.appendChild(dateText);
+      leftEl.appendChild(dueEl);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0); // bỏ giờ phút giây
+
+      const due = new Date(card.dueDate);
+      due.setHours(0, 0, 0, 0); // bỏ giờ phút giây
+
+      const diffDays = (due - now) / (1000 * 60 * 60 * 24);
+
+      if (diffDays < 0) dueEl.style.backgroundColor = "#ff4d4f"; // đỏ quá hạn
+      else if (diffDays <= 2) dueEl.style.backgroundColor = "#f2d600"; // vàng gần hạn
+      else dueEl.style.backgroundColor = "#61bd4f"; // xanh còn nhiều thời gian
+    }
+
+
+    // --- Members (phải) ---
+    const membersEl = document.createElement("div");
+    membersEl.className = "card-members";
+    membersEl.style.display = "flex";
+    membersEl.style.gap = "4px";
+
+    // Giả sử card.members là mảng avatar URL
+    (card.assignedTo || []).forEach(userId => {
+      const user = members.find(u => u._id === userId);
+      if (!user) return;
+
+      const memberEl = document.createElement("div");
+      memberEl.className = "card-member";
+      memberEl.title = user.username + `(${user.email})` || "Unknown";
+
+      if (user.avatarUrl) {
+        const img = document.createElement("img");
+        img.src = user.avatarUrl;
+        img.alt = user.name || "member";
+        memberEl.appendChild(img);
+      } else {
+        memberEl.textContent = (user.username || "?")[0].toUpperCase();
+      }
+
+      membersEl.appendChild(memberEl);
+    });
+
+    // Thêm due date + members vào footer
+    if (dueEl) footerEl.appendChild(dueEl);
+    footerEl.appendChild(membersEl);
+
+    // Thêm footer vào card
+    cardEl.appendChild(footerEl);
+
+    // ⭐ Sự kiện mở chi tiết
     cardEl.addEventListener("click", () => {
-      openCardDetail(card._id); // Hàm gọi API lấy chi tiết card
+      openCardDetail(card._id);
     });
 
     cardsContainer.appendChild(cardEl);
   });
+
 
   // Nút Add card
   attachAddCard(listEl, list._id);
@@ -400,10 +510,10 @@ function showCardDetailModal(card) {
   const modal = document.getElementById("cardDetailModal");
 
   // Assigned members
-assignedMembers = (card.assignedTo || []).map(m => m._id);
+  assignedMembers = (card.assignedTo || []).map(m => m._id);
 
-// Render assigned member đầy đủ
-renderAssignedMembers();
+  // Render assigned member đầy đủ
+  renderAssignedMembers();
 
   // Labels - gắn 1 lần duy nhất
   const labelsEl = document.getElementById("cardLabels");
@@ -421,18 +531,22 @@ renderAssignedMembers();
   renderLabelsFromCard(card)
 
   // Title
-  const cardTitleEl = document.getElementById("cardTitle");
-  cardTitleEl.textContent = card.name;
-  cardTitleEl.addEventListener("input", () => {
-    const newName = cardTitleEl.textContent.trim();
-    currentCard.name = newName;
-    socket.emit("card:updateName", { cardId: card._id, name: newName });
-  });
-  socket.off("card:nameUpdated");
-  socket.on("card:nameUpdated", ({ name }) => {
-    currentCard.name = name;
-    cardTitleEl.textContent = name;
-  });
+const cardTitleEl = document.getElementById("cardTitle");
+cardTitleEl.contentEditable = true;
+cardTitleEl.textContent = currentCard.name;
+
+let typingTimeout;
+
+cardTitleEl.addEventListener("input", () => {
+  const newName = cardTitleEl.textContent.trim();
+  if (!newName || newName === currentCard.name) return;
+
+  currentCard.name = newName;
+
+  socket.emit("card:updateName", { cardId: currentCard._id, name: newName });
+
+});
+
 
   // Description
   const cardDescriptionEl = document.getElementById("cardDescription");
@@ -451,7 +565,7 @@ renderAssignedMembers();
   });
 
   // Due date
-   const dateInput = document.getElementById("cardDueDate");
+  const dateInput = document.getElementById("cardDueDate");
   const timeInput = document.getElementById("cardDueTime");
   const statusEl = document.getElementById("dueDateStatus");
 
@@ -459,12 +573,12 @@ renderAssignedMembers();
     const due = new Date(card.dueDate);
 
     const yyyy = due.getFullYear();
-    const mm = String(due.getMonth()+1).padStart(2,'0');
-    const dd = String(due.getDate()).padStart(2,'0');
+    const mm = String(due.getMonth() + 1).padStart(2, '0');
+    const dd = String(due.getDate()).padStart(2, '0');
     dateInput.value = `${yyyy}-${mm}-${dd}`;
 
-    const hh = String(due.getHours()).padStart(2,'0');
-    const min = String(due.getMinutes()).padStart(2,'0');
+    const hh = String(due.getHours()).padStart(2, '0');
+    const min = String(due.getMinutes()).padStart(2, '0');
     timeInput.value = `${hh}:${min}`;
 
     statusEl.textContent = formatDateDMY(due) + " đến hạn";
@@ -568,6 +682,29 @@ function renderAttachments(card) {
   });
 }
 
+socket.on("card:nameUpdated", ({ cardId, name }) => {
+  // 1️⃣ Update state
+  boardData.lists.forEach(list => {
+    const c = (list.cards || []).find(c => c._id === cardId);
+    if (c) c.name = name;
+  });
+
+  // 2️⃣ Update list view
+  const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+  if (cardEl) {
+    const nameEl = cardEl.querySelector(".card-title");
+    if (nameEl) nameEl.textContent = name;
+  }
+
+ const cardTitleEl = document.getElementById("cardTitle");
+  if (cardTitleEl && currentCard._id === cardId && document.activeElement !== cardTitleEl) {
+    cardTitleEl.textContent = name;
+  }
+});
+
+
+
+
 //thêm file attachments
 attachmentInput.addEventListener("change", async () => {
   const files = Array.from(attachmentInput.files);
@@ -641,12 +778,12 @@ function loadAssignList(filter = "") {
 document.getElementById("AssignedMember-btn").addEventListener("click", () => {
   const popup = document.getElementById("assignPopup");
 
-  popup.style.display = 
-    (popup.style.display === "none" || popup.style.display === "") 
-      ? "flex" 
+  popup.style.display =
+    (popup.style.display === "none" || popup.style.display === "")
+      ? "flex"
       : "none";
 
- loadAssignList(); // load member
+  loadAssignList(); // load member
 });
 
 document.getElementById("assign-close").addEventListener("click", () => {
@@ -716,8 +853,6 @@ function removeMemberFromCard(userId) {
 }
 
 
-
-
 // Mảng màu
 const colors = ["#61bd4f", "#f2d600", "#ff9f1a", "#eb5a46", "#c377e0"];
 
@@ -732,7 +867,7 @@ function addLabelToCard(color) {
   span.style.backgroundColor = color;
   span.style.width = "30px";
   span.style.height = "30px";
-  span.style.gap= "10px"
+  span.style.gap = "10px"
   span.dataset.color = color;
   labelsEl.appendChild(span);
 
@@ -787,6 +922,8 @@ function removeLabelFromCard(color) {
 }
 socket.on("card:labelRemoved", ({ color }) => {
   removeLabelFromCard(color);
+  renderBoardWithLists()
+
 });
 
 
@@ -799,6 +936,8 @@ socket.off("card:labelAdded");
 socket.on("card:labelAdded", ({ cardId: updatedCardId, color }) => {
   if (!currentCard || updatedCardId !== currentCard._id) return;
   addLabelToCard(color);
+  renderBoardWithLists()
+
 });
 
 // Khi mở modal, render label từ DB
@@ -815,11 +954,13 @@ socket.on("card:attachmentsUpdated", ({ file }) => {
 
   // Render lại
   renderAttachments(currentCard);
+  renderBoardWithLists()
 });
 
 socket.on("card:attachmentRemoved", ({ fileName }) => {
   currentCard.attachments = currentCard.attachments.filter(f => f.name !== fileName);
   renderAttachments(currentCard);
+  renderBoardWithLists()
 });
 
 // socket assign member
@@ -831,17 +972,18 @@ socket.on("card:memberAssigned", ({ cardId, assignedTo }) => {
   assignedMembers = assignedTo.map(m => m._id);
 
   renderAssignedMembers();
+  renderBoardWithLists()
 });
 
 // due date
 // Cập nhật giá trị khi mở card
 // Format hiển thị DD/MM/YYYY HH:MM
 function formatDateDMY(date) {
-  const d = String(date.getDate()).padStart(2,'0');
-  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const m = String(date.getMonth() + 1).padStart(2, '0');
   const y = date.getFullYear();
-  const h = String(date.getHours()).padStart(2,'0');
-  const min = String(date.getMinutes()).padStart(2,'0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
   return `${d}/${m}/${y} ${h}:${min}`;
 }
 
@@ -855,7 +997,7 @@ function getDueDateTime() {
   const [yyyy, mm, dd] = dateInput.split("-").map(Number);
   const [hh, min] = timeInput.split(":").map(Number);
 
-  const due = new Date(yyyy, mm-1, dd, hh, min);
+  const due = new Date(yyyy, mm - 1, dd, hh, min);
   return due;
 }
 
@@ -875,7 +1017,7 @@ function updateDueStatus() {
   statusEl.textContent = formatDateDMY(due) + " đến hạn";
 
   if (diff < 0) statusEl.className = "due-status overdue";
-  else if (diff < 24*60*60*1000) statusEl.className = "due-status warning";
+  else if (diff < 24 * 60 * 60 * 1000) statusEl.className = "due-status warning";
   else statusEl.className = "due-status normal";
 }
 
@@ -900,15 +1042,16 @@ socket.on("card:dueDateUpdated", ({ dueDate }) => {
 
   // Hiển thị input theo local
   const yyyy = due.getFullYear();
-  const mm = String(due.getMonth()+1).padStart(2,'0');
-  const dd = String(due.getDate()).padStart(2,'0');
+  const mm = String(due.getMonth() + 1).padStart(2, '0');
+  const dd = String(due.getDate()).padStart(2, '0');
   dateInput.value = `${yyyy}-${mm}-${dd}`;
 
-  const hh = String(due.getHours()).padStart(2,'0');
-  const min = String(due.getMinutes()).padStart(2,'0');
+  const hh = String(due.getHours()).padStart(2, '0');
+  const min = String(due.getMinutes()).padStart(2, '0');
   timeInput.value = `${hh}:${min}`;
 
   updateDueStatus();
+  renderBoardWithLists()
 });
 
 //comment

@@ -79,7 +79,7 @@ export const getBoardById = async (req, res) => {
         path: "lists",
         populate: { path: "cards" },  // nested populate cards trong list
       })
-      .populate("members", "username"); // populate member info
+      .populate("members", "username email"); // populate member info
 
     // Cập nhật lastViewedAt
     await Board.findByIdAndUpdate(boardId, { lastViewedAt: new Date() });

@@ -112,19 +112,15 @@ io.on("connection", (socket) => {
   });
   // đổi thêm card
   socket.on("card:updateName", async ({ cardId, name }) => {
-    try {
-      const card = await Card.findById(cardId);
-      if (!card) return;
+  const card = await Card.findById(cardId);
+  if (!card) return;
+  card.name = name;
+  await card.save();
 
-      card.name = name;
-      await card.save();
+  // Broadcast tới tất cả client trong room cardId
+  io.in(cardId).emit("card:nameUpdated", { cardId, name });
+});
 
-      // Phát tới các client khác trong cùng card
-      socket.to(cardId).emit("card:nameUpdated", { name });
-    } catch (err) {
-      console.error("Error updating card name:", err);
-    }
-  });
   socket.on("card:updateDescription", async ({ cardId, description }) => {
     try {
       const card = await Card.findById(cardId);
