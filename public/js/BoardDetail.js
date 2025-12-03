@@ -439,8 +439,10 @@ socket.on("newCard", (card) => {
   const cardEl = document.createElement("div");
   cardEl.className = "card";
   cardEl.textContent = card.name;
+  cardEl.addEventListener("click", () => {
+      openCardDetail(card._id);
+    });
   listEl.appendChild(cardEl);
-  renderBoardWithLists();
 });
 // ===================================================================
 // Tạo LIST mới
@@ -624,8 +626,6 @@ function showCardDetailModal(card) {
   const cardTitleEl = document.getElementById("cardTitle");
   cardTitleEl.contentEditable = true;
   cardTitleEl.textContent = currentCard.name;
-
-  let typingTimeout;
 
   cardTitleEl.addEventListener("input", () => {
     const newName = cardTitleEl.textContent.trim();
