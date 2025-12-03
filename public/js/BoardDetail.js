@@ -14,7 +14,7 @@ let boardData = {
   members: []  // array of members
 };
 
-let currentAttachments = []; 
+let currentAttachments = [];
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
 if (!boardId) {
@@ -134,7 +134,11 @@ function createListElement(list) {
     cardEl.className = "card";
     cardEl.dataset.id = card._id;
 
-    // LABELS (nếu có)
+    // Tạo topBar (luôn có)
+    const topBar = document.createElement("div");
+    topBar.className = "card-topbar";
+
+    // --- LABELS (nếu có) ---
     if (Array.isArray(card.labels) && card.labels.length > 0) {
       const labelsEl = document.createElement("div");
       labelsEl.className = "card-labels";
@@ -146,8 +150,55 @@ function createListElement(list) {
         labelsEl.appendChild(labelColor);
       });
 
-      cardEl.appendChild(labelsEl);
+      topBar.appendChild(labelsEl); // thêm labels vào topBar
     }
+
+    // --- CHECKBOX (luôn tạo) ---
+    const checkboxEl = document.createElement("input");
+    checkboxEl.type = "checkbox";
+    checkboxEl.className = "card-checkbox";
+
+    checkboxEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+
+      // Kiểm tra nếu chưa có phần tử complete
+      let completeEl = cardEl.querySelector(".card-complete");
+      if (!completeEl && checkboxEl.checked) {
+        completeEl = document.createElement("div");
+        completeEl.className = "card-complete";
+
+        // Icon
+        const icon = document.createElement("img");
+        icon.src = "uploads/checks (2).svg";
+        icon.alt = "complete";
+        icon.style.width = "16px";
+        icon.style.height = "16px";
+
+        // Text
+        const text = document.createElement("span");
+        text.textContent = "Complete";
+        text.style.marginLeft = "2px";
+
+        completeEl.appendChild(icon);
+        completeEl.appendChild(text);
+
+        // Thêm vào cuối card
+        cardEl.appendChild(completeEl);
+      }
+
+      // Nếu bỏ tick checkbox → remove element
+      if (!checkboxEl.checked && completeEl) {
+        completeEl.remove();
+      }
+    });
+
+    // Thêm checkbox vào topBar
+    topBar.appendChild(checkboxEl);
+
+    // Thêm topBar vào card
+    cardEl.appendChild(topBar);
+
+
 
     // Tên card
     const titleEl = document.createElement("div");
@@ -199,6 +250,43 @@ function createListElement(list) {
       else if (diffDays <= 2) dueEl.style.backgroundColor = "#f2d600"; // vàng gần hạn
       else dueEl.style.backgroundColor = "#61bd4f"; // xanh còn nhiều thời gian
     }
+    // --- Middle (attachments + comments) ---
+    const midEl = document.createElement("div");
+    midEl.className = "mid-footer"
+    midEl.style.display = "flex";
+    midEl.style.alignItems = "center";
+    midEl.style.gap = "6px";
+
+
+    // --- Attachments count ---
+    if (card.attachments && card.attachments.length > 0) {
+      const iconAttachments = document.createElement("img");
+      iconAttachments.src = "uploads/attachments-icon.svg";
+      iconAttachments.alt = "attachments";
+      iconAttachments.style.width = "16px";
+      iconAttachments.style.height = "16px";
+
+      const attText = document.createTextNode(card.attachments.length);
+
+      midEl.appendChild(iconAttachments);
+      midEl.appendChild(attText);
+    }
+
+
+    // --- Comments count ---
+    if (card.comments && card.comments.length > 0) {
+      const iconComments = document.createElement("img");
+      iconComments.src = "uploads/comments-icon.svg";
+      iconComments.alt = "comments";
+      iconComments.style.width = "16px";
+      iconComments.style.height = "16px";
+
+      const cmtText = document.createTextNode(card.comments.length);
+
+      midEl.appendChild(iconComments);
+      midEl.appendChild(cmtText);
+    }
+
 
 
     // --- Members (phải) ---
@@ -230,8 +318,8 @@ function createListElement(list) {
 
     // Thêm due date + members vào footer
     if (dueEl) footerEl.appendChild(dueEl);
+    footerEl.appendChild(midEl);
     footerEl.appendChild(membersEl);
-
     // Thêm footer vào card
     cardEl.appendChild(footerEl);
 
@@ -352,6 +440,7 @@ socket.on("newCard", (card) => {
   cardEl.className = "card";
   cardEl.textContent = card.name;
   listEl.appendChild(cardEl);
+  renderBoardWithLists();
 });
 // ===================================================================
 // Tạo LIST mới
@@ -387,6 +476,7 @@ socket.on("newList", (list) => {
 
   const listEl = createListElement(list); // dùng lại function
   listsContainer.appendChild(listEl);
+  renderBoardWithLists();
 });
 // ===================================================================
 // Invite user
@@ -531,21 +621,21 @@ function showCardDetailModal(card) {
   renderLabelsFromCard(card)
 
   // Title
-const cardTitleEl = document.getElementById("cardTitle");
-cardTitleEl.contentEditable = true;
-cardTitleEl.textContent = currentCard.name;
+  const cardTitleEl = document.getElementById("cardTitle");
+  cardTitleEl.contentEditable = true;
+  cardTitleEl.textContent = currentCard.name;
 
-let typingTimeout;
+  let typingTimeout;
 
-cardTitleEl.addEventListener("input", () => {
-  const newName = cardTitleEl.textContent.trim();
-  if (!newName || newName === currentCard.name) return;
+  cardTitleEl.addEventListener("input", () => {
+    const newName = cardTitleEl.textContent.trim();
+    if (!newName || newName === currentCard.name) return;
 
-  currentCard.name = newName;
+    currentCard.name = newName;
 
-  socket.emit("card:updateName", { cardId: currentCard._id, name: newName });
+    socket.emit("card:updateName", { cardId: currentCard._id, name: newName });
 
-});
+  });
 
 
   // Description
@@ -696,7 +786,7 @@ socket.on("card:nameUpdated", ({ cardId, name }) => {
     if (nameEl) nameEl.textContent = name;
   }
 
- const cardTitleEl = document.getElementById("cardTitle");
+  const cardTitleEl = document.getElementById("cardTitle");
   if (cardTitleEl && currentCard._id === cardId && document.activeElement !== cardTitleEl) {
     cardTitleEl.textContent = name;
   }
