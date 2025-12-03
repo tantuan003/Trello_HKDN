@@ -37,7 +37,7 @@ function activateBoardsMenu() {
 // RENDER BOARD + LIST + CARD
 // ===================================================================
 const listsContainer = document.getElementById("listsContainer");
-
+renderBoardWithLists();
 async function renderBoardWithLists() {
   if (!currentBoardId) {
     console.error("❌ currentBoardId chưa có!");
@@ -52,6 +52,9 @@ async function renderBoardWithLists() {
     boardData.members = data.board.members;
 
     socket.emit("joinBoard", currentBoardId);
+    socket.on("connect", () => {
+      socket.emit("joinBoard", currentBoardId);
+    });
 
     if (!data.board) return;
 
@@ -85,7 +88,6 @@ async function renderBoardWithLists() {
     console.error("Error loading board:", err);
   }
 }
-renderBoardWithLists();
 function applyBoardBackground(bg) {
   const boardPage = document.body;
   if (!boardPage) return;
@@ -440,8 +442,8 @@ socket.on("newCard", (card) => {
   cardEl.className = "card";
   cardEl.textContent = card.name;
   cardEl.addEventListener("click", () => {
-      openCardDetail(card._id);
-    });
+    openCardDetail(card._id);
+  });
   listEl.appendChild(cardEl);
 });
 // ===================================================================
@@ -1010,10 +1012,21 @@ function removeLabelFromCard(color) {
   // remove trong client copy
   currentCard.labels = currentCard.labels.filter(c => c !== color);
 }
-socket.on("card:labelRemoved", ({ color }) => {
-  removeLabelFromCard(color);
-  renderBoardWithLists()
 
+socket.on("card:labelRemoved", ({ cardId, color }) => {
+  boardData.lists.forEach(list => {
+    const card = list.cards.find(c => c._id === cardId);
+    if (card) {
+      card.labels = card.labels.filter(c => c !== color);
+    }
+  });
+  renderBoardWithLists();
+
+ if (currentCard && currentCard._id === cardId) {
+    currentCard.labels = currentCard.labels.filter(c => c !== color);
+    const labelsEl = document.getElementById("cardLabels");
+    if (labelsEl) removeLabelFromCard(color);
+  }
 });
 
 
@@ -1023,11 +1036,23 @@ document.getElementById("closeLabelPopup").onclick = () => {
 };
 // Nhận realtime
 socket.off("card:labelAdded");
-socket.on("card:labelAdded", ({ cardId: updatedCardId, color }) => {
-  if (!currentCard || updatedCardId !== currentCard._id) return;
-  addLabelToCard(color);
-  renderBoardWithLists()
+socket.on("card:labelAdded", ({ cardId, color }) => {
+  boardData.lists.forEach(list => {
+    const card = list.cards.find(c => c._id === cardId);
+    if (card && !card.labels.includes(color)) {
+      card.labels.push(color);
+    }
+  });
+  renderBoardWithLists();
+  if (currentCard && currentCard._id === cardId) {
+    currentCard.labels.push(color);
 
+    // Nếu popup đang mở
+    const labelsEl = document.getElementById("cardLabels");
+    if (labelsEl) {
+      addLabelToCard(color); // thêm trực tiếp vào popup DOM
+    }
+  }
 });
 
 // Khi mở modal, render label từ DB

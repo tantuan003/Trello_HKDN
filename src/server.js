@@ -103,7 +103,7 @@ io.on("connection", (socket) => {
 
   // Tham gia board (dành cho list, card, ...)
   socket.on("joinBoard", (boardId) => {
-    socket.join(boardId);
+    socket.join(boardId.toString());
     console.log(`🧩 Socket ${socket.id} joined board ${boardId}`);
   });
   socket.on("card:join", (cardId) => {
@@ -111,15 +111,27 @@ io.on("connection", (socket) => {
     console.log(`Socket ${socket.id} joined card ${cardId}`);
   });
   // đổi thêm card
-  socket.on("card:updateName", async ({ cardId, name }) => {
-  const card = await Card.findById(cardId);
+socket.on("card:updateName", async ({ cardId, name }) => {
+  const card = await Card.findById(cardId)
+    .populate({
+      path: "list",
+      populate: { path: "board" }
+    });
+
   if (!card) return;
+
   card.name = name;
   await card.save();
 
-  // Broadcast tới tất cả client trong room cardId
-  io.in(cardId).emit("card:nameUpdated", { cardId, name });
+  // Emit tới card detail room
+  io.to(card._id.toString()).emit("card:nameUpdated", { cardId, name });
+
+  // Emit tới tất cả client đang ở board (board list view)
+  if (card.list && card.list.board && card.list.board._id) {
+    io.to(card.list.board._id.toString()).emit("card:nameUpdated", { cardId, name });
+  }
 });
+
 
   socket.on("card:updateDescription", async ({ cardId, description }) => {
     try {
@@ -138,35 +150,61 @@ io.on("connection", (socket) => {
   //thêm label
   // Khi client emit thêm label
   socket.on("card:addLabel", async ({ cardId, color }) => {
-    try {
-      const card = await Card.findById(cardId);
-      if (!card) return;
+  try {
+    const card = await Card.findById(cardId)
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
+      console.log("board id là",card.list.board._id);
 
-      if (!Array.isArray(card.labels)) card.labels = [];
-      if (!card.labels.includes(color)) {
-        card.labels.push(color);
-        await card.save();
-      }
+    if (!card) return;
 
-      // ⚠️ Gửi cho tất cả client trong room, bao gồm client hiện tại
-      io.to(cardId).emit("card:labelAdded", { cardId, color });
-    } catch (err) {
-      console.error("Error updating card label:", err);
-    }
-  });
-  socket.on("card:removeLabel", async ({ cardId, color }) => {
-    try {
-      const card = await Card.findById(cardId);
-      if (!card) return;
-
-      card.labels = card.labels.filter(c => c !== color);
+    // Thêm label nếu chưa có
+    if (!card.labels.includes(color)) {
+      card.labels.push(color);
       await card.save();
-
-      socket.to(cardId).emit("card:labelRemoved", { cardId, color });
-    } catch (err) {
-      console.error("Error removing label:", err);
     }
-  });
+
+    // Emit tới card detail (các client đang mở card)
+    io.to(card._id.toString()).emit("card:labelAdded", { cardId, color });
+
+    // Emit tới tất cả client trong board (bao gồm board view)
+    if (card.list && card.list.board && card.list.board._id) {
+      io.to(card.list.board._id.toString()).emit("card:labelAdded", { cardId, color });
+    }
+
+  } catch (err) {
+    console.error("Error updating card label:", err);
+  }
+});
+
+socket.on("card:removeLabel", async ({ cardId, color }) => {
+  try {
+    const card = await Card.findById(cardId)
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
+
+    if (!card) return;
+
+    // Remove label
+    card.labels = card.labels.filter(c => c !== color);
+    await card.save();
+
+    // Emit tới card detail (nếu đang mở)
+    io.to(card._id.toString()).emit("card:labelRemoved", { cardId, color });
+
+    // Emit tới tất cả client ở board (board list view)
+    if (card.list && card.list.board && card.list.board._id) {
+      io.to(card.list.board._id.toString()).emit("card:labelRemoved", { cardId, color });
+    }
+  } catch (err) {
+    console.error("Error removing label:", err);
+  }
+});
+
   //assign member
   socket.on("card:assignMember", async ({ cardId, userId }) => {
     try {
