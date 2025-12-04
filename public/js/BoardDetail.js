@@ -275,18 +275,25 @@ function createListElement(list) {
 
 
     // --- Comments count ---
-    if (card.comments && card.comments.length > 0) {
-      const iconComments = document.createElement("img");
-      iconComments.src = "uploads/comments-icon.svg";
-      iconComments.alt = "comments";
-      iconComments.style.width = "16px";
-      iconComments.style.height = "16px";
+  if (card.comments && card.comments.length > 0) {
+  const commentBox = document.createElement("div");
+  commentBox.className = "comment-info";
 
-      const cmtText = document.createTextNode(card.comments.length);
+  const icon = document.createElement("img");
+  icon.src = "uploads/comments-icon.svg";
+  icon.alt = "comments";
+  icon.style.width = "16px";
+  icon.style.height = "16px";
 
-      midEl.appendChild(iconComments);
-      midEl.appendChild(cmtText);
-    }
+  const count = document.createElement("span");
+  count.className = "comment-count";
+  count.textContent = card.comments.length;
+
+  commentBox.appendChild(icon);
+  commentBox.appendChild(count);
+  midEl.appendChild(commentBox);
+}
+
 
 
 
@@ -1211,31 +1218,72 @@ socket.on("card:dueDateUpdated", ({ dueDate }) => {
 
 //comment
 // Khi mở card, render comment
-function renderComments(comments = []) {
-  const commentsEl = document.getElementById("cardComments");
-  commentsEl.innerHTML = "";
+let commentsCache = []; // lưu comment để khỏi render lại toàn bộ
 
-  comments.forEach(comment => {
-    const li = document.createElement("li");
-    li.className = "comment-item";
-    li.textContent = `${comment.user?.username || "Unknown"}: ${comment.text}`;
-    commentsEl.appendChild(li);
-  });
+function renderComments(comments = []) {
+  commentsCache = comments;
+  const el = document.getElementById("cardComments");
+  el.innerHTML = "";
+  comments.forEach(c => appendComment(c));
 }
 
-// Gửi comment mới
+function appendComment(comment) {
+  const el = document.getElementById("cardComments");
+
+  const li = document.createElement("li");
+  li.className = "comment-item";
+  li.textContent = `${comment.user?.username || "Unknown"}: ${comment.text}`;
+
+  el.appendChild(li);
+}
+
+
 document.getElementById("addCommentBtn").addEventListener("click", () => {
   const text = document.getElementById("commentInput").innerText.trim();
-  const cardId = currentCardId; // lấy từ URL hoặc context
+  const input = document.getElementById("commentInput");
+
   if (!text) return;
 
-  socket.emit("card:addComment", { cardId, text });
+  socket.emit("card:addComment", { cardId: currentCardId, text });
+  input.innerText = "";
 });
 
-// nhận comment mới từ server
+
 socket.on("card:commentAdded", ({ cardId, comment }) => {
-  const ul = document.getElementById("cardComments");
-  const li = document.createElement("li");
-  li.textContent = `${comment.user.username}: ${comment.text}`;
-  ul.appendChild(li);
+  if (currentCardId !== cardId) return;
+
+  commentsCache.push(comment);
+  appendComment(comment);
 });
+socket.on("board:commentAdded", ({ cardId, comment }) => {
+  updateCardCommentCount(cardId, comment);
+});
+
+function updateCardCommentCount(cardId, comment) {
+  // 1. Tìm card trong boardData
+  let card = null;
+  for (const list of boardData.lists) {
+    const found = (list.cards || []).find(c => c._id === cardId);
+    if (found) {
+      card = found;
+      break;
+    }
+  }
+
+  if (!card) return console.log("Không thấy card trong boardData");
+
+  // 2. Tăng số comment trong boardData
+  card.comments.push(comment);
+
+  // 3. Lấy element card ngoài board
+  const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+  if (!cardEl) return console.log("Không thấy cardEL");
+
+  const countEl = cardEl.querySelector(".comment-count");
+  if (!countEl) return console.log("Không thấy comment-count");
+
+  // 4. Cập nhật lại số
+  countEl.textContent = card.comments.length;
+}
+
+

@@ -323,56 +323,127 @@ socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
 });
 
   // Thêm attachment
-  socket.on("card:updateAttachments", async ({ cardId, file }) => {
-    try {
-      const card = await Card.findById(cardId);
-      if (!card) return;
+ socket.on("card:updateAttachments", async ({ cardId, file }) => {
+  try {
+    const card = await Card.findById(cardId)
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
 
-      if (!Array.isArray(card.attachments)) card.attachments = [];
-      card.attachments.push(file);
-      await card.save();
+    if (!card) return;
 
-      // Gửi realtime cho các client khác trong card
-      socket.to(cardId).emit("card:attachmentsUpdated", { file });
-    } catch (err) {
-      console.error("Error updating attachments:", err);
-    }
-  });
+    // Thêm file
+    card.attachments.push(file);
+    await card.save();
 
-  // Xóa attachment
-  socket.on("card:removeAttachment", async ({ cardId, fileName }) => {
-    try {
-      const card = await Card.findById(cardId);
-      if (!card) return;
+    const boardId = card.list.board._id.toString();
 
-      card.attachments = card.attachments.filter(f => f.name !== fileName);
-      await card.save();
+    // 🔄 Gửi realtime tới người đang mở card
+    io.to(cardId).emit("card:attachmentsUpdated", {
+      cardId,
+      file
+    });
 
-      socket.to(cardId).emit("card:attachmentRemoved", { fileName });
-    } catch (err) {
-      console.error("Error removing attachment:", err);
-    }
-  });
+    // 🔄 Gửi realtime tới tất cả client trong board
+    io.to(boardId).emit("card:attachmentsUpdated", {
+      cardId,
+      file
+    });
+
+  } catch (err) {
+    console.error("Error updating attachments:", err);
+  }
+});
+
+
+// ===================== REMOVE ATTACHMENT ===================== //
+
+socket.on("card:removeAttachment", async ({ cardId, fileName }) => {
+  try {
+    const card = await Card.findById(cardId)
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
+
+    if (!card) return;
+
+    card.attachments = card.attachments.filter(f => f.name !== fileName);
+    await card.save();
+
+    const boardId = card.list.board._id.toString();
+
+    // Realtime cho người đang mở card
+    io.to(cardId).emit("card:attachmentRemoved", {
+      cardId,
+      fileName
+    });
+
+    // Realtime cho người đang xem board
+    io.to(boardId).emit("card:attachmentRemoved", {
+      cardId,
+      fileName
+    });
+
+  } catch (err) {
+    console.error("Error removing attachment:", err);
+  }
+});
+
   //comment
   // Thêm comment vào card
-  socket.on("card:addComment", async ({ cardId, text }) => {
-    try {
-      if (!socket.user) return;
+socket.on("card:addComment", async ({ cardId, text }) => {
+  try {
+    if (!socket.user) return;
 
-      const card = await Card.findById(cardId);
-      if (!card) return;
+    // Tìm card + lấy luôn boardId để gửi realtime
+    const card = await Card.findById(cardId)
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
 
-      const comment = { user: socket.user, text, createdAt: new Date() };
-      card.comments.push(comment);
-      await card.save();
+    if (!card) return;
 
-      const populated = await Card.findById(cardId).populate("comments.user", "username");
-      io.to(cardId).emit("card:commentAdded", { cardId, comment: populated.comments.slice(-1)[0] });
+    // Tạo comment
+    const comment = {
+      user: socket.user,
+      text,
+      createdAt: new Date()
+    };
 
-    } catch (err) {
-      console.error("Error adding comment:", err);
-    }
-  });
+    // Lưu DB
+    card.comments.push(comment);
+    await card.save();
+
+    // Populate user cho comment cuối
+    const populated = await Card.findById(cardId)
+      .populate("comments.user", "username");
+
+    const newComment = populated.comments.slice(-1)[0];
+
+    // Lấy boardId
+    const boardId = card.list.board._id.toString();
+
+    // 🔥 Realtime cho người đang mở card detail
+    io.to(cardId).emit("card:commentAdded", {
+      cardId,
+      comment: newComment
+    });
+
+    // 🔥 Realtime cho những người đang xem board (card list)
+    io.to(boardId).emit("board:commentAdded", {
+      cardId,
+      comment: newComment
+    });
+
+  } catch (err) {
+    console.error("Error adding comment:", err);
+  }
+});
+
+
 
   socket.on("disconnect", () => {
     console.log("Client disconnected:", socket.id);

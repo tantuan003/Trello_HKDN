@@ -821,6 +821,24 @@ html, body {
 #addCommentBtn:hover {
   background: #3b75d0;
 }
+.comment-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;          /* khoảng cách icon - số */
+  font-size: 14px;
+}
+
+.comment-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.comment-count {
+  line-height: 16px;
+  font-weight: 500;
+  color: #444;
+}
 /* Tiêu đề */
 .label-content h3 {
   margin-bottom: 12px;
