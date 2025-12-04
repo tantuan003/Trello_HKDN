@@ -290,20 +290,38 @@ socket.on("card:removeMember", async ({ cardId, userId }) => {
 });
 
   //due date
-  socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
-    try {
-      const card = await Card.findById(cardId);
-      if (!card) return;
+socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
+  try {
+    const card = await Card.findById(cardId)
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
 
-      card.dueDate = dueDate;
-      await card.save();
+    if (!card) return;
 
-      // Gửi realtime cho tất cả client trong card
-      io.to(cardId).emit("card:dueDateUpdated", { dueDate: card.dueDate });
-    } catch (err) {
-      console.error("Error updating due date:", err);
+    card.dueDate = dueDate;
+    await card.save();
+
+    // Gửi realtime cho client đang mở card detail
+    io.to(cardId).emit("card:dueDateUpdated", {
+      cardId,
+      dueDate: card.dueDate
+    });
+
+    // Gửi cho tất cả client trong board view
+    if (card.list && card.list.board && card.list.board._id) {
+      io.to(card.list.board._id.toString()).emit("card:dueDateUpdated", {
+        cardId,
+        dueDate: card.dueDate
+      });
     }
-  });
+
+  } catch (err) {
+    console.error("Error updating due date:", err);
+  }
+});
+
   // Thêm attachment
   socket.on("card:updateAttachments", async ({ cardId, file }) => {
     try {
