@@ -345,3 +345,41 @@ export const updateCard = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
   }
 };
+
+//card-complete
+
+export const updateCardComplete = async (req, res) => {
+  try {
+    const { cardId } = req.params;
+    const { complete } = req.body; // true / false
+    
+    if (typeof complete !== "boolean") {
+      return res.status(400).json({ message: "complete must be boolean" });
+    }
+
+    const card = await Card.findByIdAndUpdate(
+      cardId,
+      { complete },
+      { new: true }
+    );
+
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Emit realtime nếu bạn dùng socket.io
+    req.io?.to(cardId).emit("card:completeUpdated", {
+      cardId,
+      complete
+    });
+
+    return res.json({
+      message: "Card updated successfully",
+      card
+    });
+
+  } catch (error) {
+    console.error("Error updating card complete:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
