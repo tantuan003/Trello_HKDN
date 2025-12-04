@@ -204,48 +204,90 @@ socket.on("card:removeLabel", async ({ cardId, color }) => {
     console.error("Error removing label:", err);
   }
 });
-
-  //assign member
-  socket.on("card:assignMember", async ({ cardId, userId }) => {
-    try {
-      const card = await Card.findById(cardId).populate("assignedTo");
-
-      if (!card.assignedTo.find(m => m._id.toString() === userId)) {
-        card.assignedTo.push(userId);
-        await card.save();
-      }
-
-      const populated = await Card.findById(cardId).populate("assignedTo");
-
-      // Gửi cho tất cả client trong card, bao gồm cả người thao tác
-      io.to(cardId).emit("card:memberAssigned", {
-        cardId,
-        assignedTo: populated.assignedTo,
+socket.on("card:assignMember", async ({ cardId, userId }) => {
+  try {
+    const card = await Card.findById(cardId)
+      .populate("assignedTo")
+      .populate({
+        path: "list",
+        populate: { path: "board" }
       });
 
+    if (!card) return;
 
-    } catch (err) {
-      console.error("Error assigning member:", err);
-    }
-  });
-  socket.on("card:removeMember", async ({ cardId, userId }) => {
-    try {
-      const card = await Card.findById(cardId).populate("assignedTo");
-      if (!card) return;
-
-      card.assignedTo = card.assignedTo.filter(m => m._id.toString() !== userId);
+    if (!card.assignedTo.find(m => m._id.toString() === userId)) {
+      card.assignedTo.push(userId);
       await card.save();
-
-      const populated = await Card.findById(cardId).populate("assignedTo");
-
-      io.to(cardId).emit("card:memberAssigned", {
-        cardId,
-        assignedTo: populated.assignedTo
-      });
-    } catch (err) {
-      console.error("Error removing member:", err);
     }
-  });
+
+    const updated = await Card.findById(cardId)
+      .populate("assignedTo")
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
+
+    const assignedMembers = updated.assignedTo.map(m => m._id.toString());
+
+    console.log("EMIT assign to rooms:", cardId, updated.list.board._id.toString());
+
+    // Gửi cho card detail
+    io.to(cardId).emit("card:assignedMembersUpdated", {
+      cardId,
+      assignedMembers
+    });
+
+    // Gửi cho board list
+    io.to(updated.list.board._id.toString()).emit("card:assignedMembersUpdated", {
+      cardId,
+      assignedMembers
+    });
+
+  } catch (err) {
+    console.error("Error assign member:", err);
+  }
+});
+
+
+socket.on("card:removeMember", async ({ cardId, userId }) => {
+  try {
+    const card = await Card.findById(cardId)
+      .populate("assignedTo")
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
+
+    if (!card) return;
+
+    card.assignedTo = card.assignedTo.filter(m => m._id.toString() !== userId);
+    await card.save();
+
+    const updated = await Card.findById(cardId)
+      .populate("assignedTo")
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
+
+    const assignedMembers = updated.assignedTo.map(m => m._id.toString());
+
+    console.log("EMIT remove to rooms:", cardId, updated.list.board._id.toString());
+
+    io.to(cardId).emit("card:assignedMembersUpdated", {
+      cardId,
+      assignedMembers
+    });
+
+    io.to(updated.list.board._id.toString()).emit("card:assignedMembersUpdated", {
+      cardId,
+      assignedMembers
+    });
+
+  } catch (err) {
+    console.error("Error remove member:", err);
+  }
+});
 
   //due date
   socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {

@@ -5,7 +5,7 @@ import { socket } from "../js/socket.js";
 // ===================================================================
 const urlParams = new URLSearchParams(window.location.search);
 let boardId = urlParams.get("id");
-let members = "";
+let members = [];
 const attachmentInput = document.getElementById("attachmentInput");
 let currentCardId = null;
 let currentCard = []
@@ -14,7 +14,6 @@ let boardData = {
   members: []  // array of members
 };
 
-let currentAttachments = [];
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
 if (!boardId) {
@@ -889,22 +888,33 @@ window.addEventListener("click", (e) => {
 
 
 
-// Tìm kiếm
+// Tìm kiếm member
 document.getElementById("assignSearch").addEventListener("input", (e) => {
   loadAssignList(e.target.value);
 });
-let assignedMembers = []; // lưu member._id đã assign
+
+let assignedMembers = [];  // chứa array ID user
 
 function assignMemberToCard(userId) {
+  if (!currentCard || !currentCard._id) return;
   socket.emit("card:assignMember", {
     cardId: currentCard._id,
     userId
   });
 }
 
+function removeMemberFromCard(userId) {
+  if (!currentCard || !currentCard._id) return;
+  socket.emit("card:removeMember", {
+    cardId: currentCard._id,
+    userId
+  });
+}
+
+// Render assigned
 function renderAssignedMembers() {
   const cardAssignedEl = document.getElementById("cardAssigned");
-  cardAssignedEl.innerHTML = ""; // xóa cũ
+  cardAssignedEl.innerHTML = "";
 
   assignedMembers.forEach(id => {
     const member = members.find(m => m._id === id);
@@ -920,11 +930,9 @@ function renderAssignedMembers() {
     name.className = "member-name";
     name.textContent = member.username;
 
-    // Nút xóa
     const removeBtn = document.createElement("span");
     removeBtn.className = "remove-member";
     removeBtn.textContent = "×";
-    removeBtn.title = "Remove member";
     removeBtn.addEventListener("click", () => {
       removeMemberFromCard(member._id);
     });
@@ -932,18 +940,83 @@ function renderAssignedMembers() {
     li.appendChild(avatar);
     li.appendChild(name);
     li.appendChild(removeBtn);
-    li.dataset.id = member._id;
-
     cardAssignedEl.appendChild(li);
   });
 }
-function removeMemberFromCard(userId) {
-  socket.emit("card:removeMember", {
-    cardId: currentCard._id,
-    userId
+function updateBoardViewAssignedUI(cardId, updated) {
+
+  // lấy element của card ngoài board
+  const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+  if (!cardEl) {
+    // nếu DOM chưa render → retry sau 1 frame
+    requestAnimationFrame(() => updateBoardViewAssignedUI(cardId, updated));
+    return;
+  }
+
+  const membersEl = cardEl.querySelector(".card-members");
+  if (!membersEl) return;
+
+  membersEl.innerHTML = "";
+
+  updated.forEach(uid => {
+    const m = members.find(mem => mem._id === uid);
+    if (!m) return;
+
+    const avatar = document.createElement("div");
+    avatar.className = "card-member";
+    avatar.title = m.username + `(${m.email})` || "Unknown";
+    avatar.textContent = m.username[0].toUpperCase();
+
+    membersEl.appendChild(avatar);
+  });
+}
+function updateAssignedMembersInState(cardId, updated) {
+  boardData.lists.forEach(list => {
+    const c = list.cards.find(c => c._id === cardId);
+    if (c) c.assignedTo = updated;
   });
 }
 
+
+// SOCKET UPDATE
+socket.off("card:assignedMembersUpdated");
+socket.on("card:assignedMembersUpdated", ({ cardId, assignedMembers: updated }) => {
+  if (currentCard && currentCard._id === cardId) {
+    assignedMembers = updated;
+    renderAssignedMembers();
+  }
+  
+  // đồng thời cập nhật state trong boardData
+  updateAssignedMembersInState(cardId, updated);
+
+  // và update UI ngoài board
+  updateBoardViewAssignedUI(cardId, updated);
+});
+
+
+
+
+
+// Nhận realtime
+socket.off("card:labelAdded");
+socket.on("card:labelAdded", ({ cardId, color }) => {
+  boardData.lists.forEach(list => {
+    const card = list.cards.find(c => c._id === cardId);
+    if (card && !card.labels.includes(color)) {
+      card.labels.push(color);
+    }
+  });
+  renderBoardWithLists();
+  if (currentCard && currentCard._id === cardId) {
+    currentCard.labels.push(color);
+
+    // Nếu popup đang mở
+    const labelsEl = document.getElementById("cardLabels");
+    if (labelsEl) {
+      addLabelToCard(color); // thêm trực tiếp vào popup DOM
+    }
+  }
+});
 
 // Mảng màu
 const colors = ["#61bd4f", "#f2d600", "#ff9f1a", "#eb5a46", "#c377e0"];
@@ -1034,27 +1107,6 @@ socket.on("card:labelRemoved", ({ cardId, color }) => {
 document.getElementById("closeLabelPopup").onclick = () => {
   document.getElementById("labelPopup").style.display = "none";
 };
-// Nhận realtime
-socket.off("card:labelAdded");
-socket.on("card:labelAdded", ({ cardId, color }) => {
-  boardData.lists.forEach(list => {
-    const card = list.cards.find(c => c._id === cardId);
-    if (card && !card.labels.includes(color)) {
-      card.labels.push(color);
-    }
-  });
-  renderBoardWithLists();
-  if (currentCard && currentCard._id === cardId) {
-    currentCard.labels.push(color);
-
-    // Nếu popup đang mở
-    const labelsEl = document.getElementById("cardLabels");
-    if (labelsEl) {
-      addLabelToCard(color); // thêm trực tiếp vào popup DOM
-    }
-  }
-});
-
 // Khi mở modal, render label từ DB
 function renderLabelsFromCard(card) {
   const labelsEl = document.getElementById("cardLabels");
@@ -1075,18 +1127,6 @@ socket.on("card:attachmentsUpdated", ({ file }) => {
 socket.on("card:attachmentRemoved", ({ fileName }) => {
   currentCard.attachments = currentCard.attachments.filter(f => f.name !== fileName);
   renderAttachments(currentCard);
-  renderBoardWithLists()
-});
-
-// socket assign member
-socket.off("card:memberAssigned");
-socket.on("card:memberAssigned", ({ cardId, assignedTo }) => {
-  if (!currentCard || currentCard._id !== cardId) return;
-
-  // Cập nhật danh sách assigned
-  assignedMembers = assignedTo.map(m => m._id);
-
-  renderAssignedMembers();
   renderBoardWithLists()
 });
 
