@@ -110,17 +110,95 @@ html, body {
 
 /* Card */
 .card {
-  height: 40px;                /* cao tối thiểu, linh hoạt */
-  padding: 10px 12px;              /* padding đầy đủ */
-  background-color: #ffffff;       /* nền sáng */
-  border-radius: 8px;              /* bo góc mềm mại */
+  display: flex;
+  flex-direction: column;      /* xếp dọc */
+  align-items: flex-start;     /* 🔥 label nằm trên, title nằm dưới */
+  height: auto;                /* cho cao linh hoạt */
+  padding: 10px 12px;
+  background-color: #ffffff;
+  border-radius: 8px;
   font-size: 0.95rem;
   color: #222;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* shadow nhẹ */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   cursor: pointer;
-  display: flex;
-  align-items: center;             /* căn giữa chữ theo dọc */
   transition: all 0.2s ease;
+}
+
+/* Container chung của labels + checkbox */
+.card-topbar {
+  display: flex;
+  justify-content: space-between;  /* label trái – checkbox phải */
+  align-items: center;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+/* Label màu */
+.card-labels {
+  display: flex;
+  gap: 4px;
+}
+
+.card-label {
+  width: 36px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* Checkbox bên phải */
+.card-checkbox {
+  width: 16px;
+  height: 16px;
+  margin-left: auto;   /* ⚡ đẩy luôn sang phải */
+  cursor: pointer;
+  accent-color: #45dc27;   /* màu xanh Trello */
+  border-radius: 50%;       /* ✅ làm tròn */
+  border: 1.5px solid #ccc; /* viền nhẹ khi chưa tick */
+  background-color: #fff;   /* nền trắng */
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Khi hover */
+.card-checkbox:hover {
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+.card-checkbox:active {
+  transform: scale(0.85);
+}
+
+/* Hiệu ứng tick xong bật nhẹ lên */
+.card-checkbox:checked {
+  transform: scale(1.15);
+}
+
+/* Ripple (vòng sáng) */
+.card-checkbox:active::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: rgba(97, 189, 79, 0.25);
+  animation: ripple 0.3s ease-out;
+}
+.card-complete {
+  display: flex;
+  align-items: center;
+  margin-left: auto;           /* đẩy sang phải */
+  padding: 2px 6px;            /* padding nhỏ cho icon + text */
+  border-radius: 12px;         /* bo tròn */
+}
+
+.card-complete span {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  color: #28a745;
+  font-style: italic;           /* chữ nghiêng */
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
 }
 
 
@@ -134,6 +212,67 @@ html, body {
   transform: translateY(0);        /* trở về khi nhấn */
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+.card-labels {
+  display: flex;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.card-label {
+  width: 50px;
+  height: 6px;
+  border-radius: 3px;
+}
+.card-footer {
+  display: flex;
+  justify-content: space-between; /* due date trái, members phải */
+  align-items: center;            /* căn dọc icon + avatar */
+  margin-top: 6px;
+  width: 100%;
+}
+.mid-footer{
+  padding: 2px 4px;       /* tạo cảm giác cân */
+  border-radius: 4px;  
+}
+
+.card-due {
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: bolder;
+  text-align: center;
+  color: #0d0404;
+  border-radius: 5px;
+}
+
+.card-members {
+  display: flex;
+  gap: 4px;
+}
+
+.card-member {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #1884f0;
+}
+
+.card-member img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 
 
 /* --- Nút Add List --- */
@@ -622,19 +761,6 @@ html, body {
 .add-label-btn:hover {
   background: #009a7b;
 }
-
-/* LABEL POPUP */
-.label-popup {
-  position: absolute;
-  background: #fff;
-  padding: 14px;
-  border-radius: 12px;
-  width: 220px;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
-  margin-top: 10px;
-  z-index: 3050;
-}
-
 .color-options {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -695,21 +821,24 @@ html, body {
 #addCommentBtn:hover {
   background: #3b75d0;
 }
-/* Popup tổng */
-.label-popup {
-  position: absolute;
-  top: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #ffffff;
-  width: 320px;
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 8px 28px rgba(0,0,0,0.25);
-  z-index: 999;
-  animation: fadeIn 0.2s ease;
+.comment-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;          /* khoảng cách icon - số */
+  font-size: 14px;
 }
 
+.comment-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.comment-count {
+  line-height: 16px;
+  font-weight: 500;
+  color: #444;
+}
 /* Tiêu đề */
 .label-content h3 {
   margin-bottom: 12px;
@@ -764,7 +893,12 @@ html, body {
   top: 0;
   width: 100%;
   height: 100%;
+  padding: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   background: rgba(0,0,0,0.35);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.25);
   display: flex;
   justify-content: center;
   align-items: center;

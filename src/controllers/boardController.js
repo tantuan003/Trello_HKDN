@@ -79,7 +79,7 @@ export const getBoardById = async (req, res) => {
         path: "lists",
         populate: { path: "cards" },  // nested populate cards trong list
       })
-      .populate("members", "username"); // populate member info
+      .populate("members", "username email"); // populate member info
 
     // Cập nhật lastViewedAt
     await Board.findByIdAndUpdate(boardId, { lastViewedAt: new Date() });
@@ -331,9 +331,13 @@ export const updateCard = async (req, res) => {
       return res.status(404).json({ success: false, message: "Card không tồn tại" });
 
     // ⭐ Emit sự kiện realtime tới room listId
-    if (card.list && card.list._id) {
-      io.to(card.list._id.toString()).emit("cardUpdated", card);
+    if (card.list && card.list.board && card.list.board._id) {
+      io.to(card.list.board._id.toString()).emit("cardUpdated", card);
     }
+
+    // ⭐ Emit realtime tới room cardId (card detail) nếu muốn
+    io.to(card._id.toString()).emit("cardUpdated", card);
+
 
     res.status(200).json({ success: true, data: card });
   } catch (err) {
