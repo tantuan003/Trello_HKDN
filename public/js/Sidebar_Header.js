@@ -137,107 +137,35 @@ function initGlobalSearch() {
 
   let debounceTimer = null;
 
-  // ----- focus: show lịch sử gần đây -----
+  // Focus: nếu input trống → show RECENT SEARCHES
   input.addEventListener("focus", () => {
     if (input.value.trim() !== "") return;
     const history = loadSearchHistory();
     renderSearchPanel(panel, history, { mode: "history" });
   });
 
-  // ----- gõ: search theo title -----
+  // Gõ: search theo tên board + workspace (có hỗ trợ không dấu)
   input.addEventListener("input", () => {
     const keyword = normalizeVi(input.value);
     clearTimeout(debounceTimer);
 
+    // Không có keyword → quay lại hiển thị lịch sử
     if (!keyword) {
       const history = loadSearchHistory();
       renderSearchPanel(panel, history, { mode: "history" });
       return;
     }
 
+    // Debounce 200ms rồi search
     debounceTimer = setTimeout(async () => {
       const boards = await fetchBoardsForSearch();
       const matches = boards.filter((b) => {
         const name = normalizeVi(b.name || "");
         const ws = normalizeVi(b.workspace?.name || "");
-        return name.includes(keyword) || ws.includes(keyword);
+        return name.includes(keyword);
       });
+
       renderSearchPanel(panel, matches, { mode: "search" });
-    }, 200);
-
-    // debounce 200ms
-    debounceTimer = setTimeout(async () => {
-      const boards = await fetchBoardsForSearch();
-      const matches = boards.filter((b) => {
-        const name = normalizeVi(b.name || "");
-        const wsName = normalizeVi(b.workspace?.name || "");
-        return name.includes(keyword) || wsName.includes(keyword);
-      });
-
-      panel.innerHTML = "";
-
-      if (!matches.length) {
-        panel.innerHTML =
-          '<div class="search-empty">No boards found</div>';
-        panel.classList.add("is-open");
-        return;
-      }
-
-      const header = document.createElement("div");
-      header.className = "search-results-header";
-      header.textContent = "RECENT BOARDS";
-      panel.appendChild(header);
-
-      matches.slice(0, 8).forEach((board) => {
-        const item = document.createElement("button");
-        item.type = "button";
-        item.className = "search-result-item";
-
-        const thumb = document.createElement("div");
-        thumb.className = "search-result-thumb";
-
-        // Ảnh nền upload
-        if (
-          board.background?.startsWith("/uploads/") ||
-          board.background?.startsWith("/backgrounds/")
-        ) {
-          thumb.style.backgroundImage = `url(${board.background})`;
-        }
-        // Gradient class
-        else if (board.background) {
-          thumb.classList.add(board.background);
-        }
-        // fallback
-        else {
-          thumb.classList.add("gradient-1");
-        }
-
-        const body = document.createElement("div");
-        body.className = "search-result-body";
-
-        const nameEl = document.createElement("div");
-        nameEl.className = "search-result-name";
-        nameEl.textContent = board.name;
-
-        const wsEl = document.createElement("div");
-        wsEl.className = "search-result-workspace";
-        wsEl.textContent =
-          board.workspace?.name || "Workspace";
-
-        body.appendChild(nameEl);
-        body.appendChild(wsEl);
-
-        item.appendChild(thumb);
-        item.appendChild(body);
-
-        item.addEventListener("click", () => {
-          window.location.href = `./BoardDetail.html?id=${board._id}`;
-        });
-
-        panel.appendChild(item);
-      });
-
-      panel.classList.add("is-open");
     }, 200);
   });
 
@@ -250,6 +178,7 @@ function initGlobalSearch() {
     }
   });
 }
+
 function renderSearchPanel(panel, boards, { mode }) {
   panel.innerHTML = "";
 
