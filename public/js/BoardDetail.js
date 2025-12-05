@@ -1,4 +1,5 @@
 import { socket } from "../js/socket.js";
+import { API_BASE } from "../js/config.js";
 
 // ===================================================================
 // Lấy boardId từ URL
@@ -44,7 +45,7 @@ async function renderBoardWithLists() {
   }
 
   try {
-    const res = await fetch(`http://localhost:8127/v1/board/${currentBoardId}`);
+    const res = await fetch(`${API_BASE}/v1/board/${currentBoardId}`);
     const data = await res.json();
     members = data.board.members;
     boardData.lists = data.board.lists;
@@ -339,7 +340,7 @@ function createListElement(list) {
 
       // Update API
       try {
-        await fetch(`http://localhost:8127/v1/board/complete/${card._id}`, {
+        await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ complete: isComplete })
@@ -434,7 +435,7 @@ function attachAddCard(listEl, listId) {
     saveBtn.disabled = true;
 
     try {
-      const res = await fetch(`http://localhost:8127/v1/board/create-card/${listId}`, {
+      const res = await fetch(`${API_BASE}/v1/board/create-card/${listId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -482,7 +483,7 @@ addListBtn.addEventListener("click", async () => {
   if (!title) return alert("Please enter list title");
 
   try {
-    await fetch(`http://localhost:8127/v1/board/create-list/${currentBoardId}`, {
+    await fetch(`${API_BASE}/v1/board/create-list/${currentBoardId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: title })
@@ -532,7 +533,7 @@ inviteForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch(`http://localhost:8127/v1/board/${boardId}/invite`, {
+    const res = await fetch(`${API_BASE}/v1/board/${boardId}/invite`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -615,7 +616,7 @@ cancelAddListBtn.addEventListener("click", () => {
 // card detail
 async function openCardDetail(cardId) {
   currentCardId = cardId; // lưu id card hiện tại
-  const res = await fetch(`http://localhost:8127/v1/board/get-card/cards/${cardId}`, {
+  const res = await fetch(`${API_BASE}/v1/board/get-card/cards/${cardId}`, {
     credentials: "include"
   });
   const result = await res.json();

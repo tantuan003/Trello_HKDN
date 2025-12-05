@@ -15,6 +15,7 @@ import Card from "./models/CardModel.js";
 import jwt from "jsonwebtoken";
 import cookie from "cookie";
 import cors from "cors";
+import { SOCKET_URL } from "./config/config.js";
 
 dotenv.config();
 
@@ -22,15 +23,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-
 app.use(cookieParser());
-app.use(cors({
-    origin: "https://http://localhost:8127", // URL ngrok của bạn
-    credentials: true // nếu bạn dùng cookie
-}));
-app.use(express.urlencoded({ extended: true })); // để nhận form dữ liệu
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+
+app.use(cors({
+    origin: process.env.SOCKET_URL, // URL ngrok của bạn
+    credentials: true // nếu bạn dùng cookie
+}));
 app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);
 app.use("/v1/workspace", workspaceRoutes);
@@ -46,7 +46,7 @@ connectDB();
 const server = http.createServer(app);
 export const io = new Server(server, {
   cors: {
-    origin: "http://localhost:8127",
+    origin: process.env.SOCKET_URL,
     credentials: true
   }
 });
@@ -86,8 +86,6 @@ io.use((socket, next) => {
 });
 
 app.set("socketio", io);
-app.use(express.json());
-
 // Socket.io logic
 // Socket.io logic
 io.on("connection", (socket) => {
