@@ -34,7 +34,7 @@
       </div>
       <!-- Card Detail Modal -->
       <div id="cardDetailModal" class="modal" style="display: none;">
-        <div class="modal-content">
+        <div class="modal-content" id="modalContent">
           <div class="modal-header" id="modal-header">
             <h2 id="cardTitle" contenteditable="true">Card Name</h2>
             <button id="closeModal">&times;</button>
@@ -61,10 +61,13 @@
                 <!-- Assign Member Popup -->
                 <div id="assignPopup" class="assign-popup" style="display:none;">
                   <div class="assign-content">
+                    <span class="assign-close" id="assign-close">×</span>
+
                     <input type="text" id="assignSearch" placeholder="Tìm kiếm thành viên..." />
                     <ul id="assignList"></ul>
                   </div>
                 </div>
+
                 <div class="labels-wrapper">
                   <h4>Labels</h4>
                   <div class="labels-container">
@@ -75,27 +78,27 @@
 
                 <div id="labelPopup" class="label-popup" style="display:none;">
                   <div class="label-content">
-                    <h3>Chọn màu label</h3>
-                    <div id="labelColors" class="color-options">
-                      <!-- Các màu sẽ được render ở đây -->
+                    <div class="label-header">
+                      <h3>Chọn màu label</h3>
+                      <button id="closeLabelPopup" class="close-btn">✕</button>
                     </div>
+
+                    <div id="labelColors" class="color-options"></div>
                   </div>
                 </div>
-
-
-                <div>
-                  <h4>Due Date</h4>
-                  <input type="date" id="cardDueDate" />
+                <div class="due-date-container">
+                  <label for="cardDueDate">Due Date</label>
+                  <div class="due-date-inputs">
+                    <input type="date" id="cardDueDate" placeholder="DD/MM/YYYY" />
+                    <input type="time" id="cardDueTime" />
+                    <span id="dueDateStatus" class="due-status"></span>
+                  </div>
                 </div>
 
                 <div>
                   <h4>Attachments</h4>
                   <ul id="cardAttachments"></ul>
                   <input type="file" id="attachmentInput" multiple />
-                </div>
-
-                <div class="save-card">
-                  <button id="save-card-btn">Save</button>
                 </div>
               </div>
 

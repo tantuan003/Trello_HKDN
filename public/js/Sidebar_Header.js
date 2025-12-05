@@ -1,6 +1,7 @@
 
 const WSP_KEY = "wspMenuCollapsed";
 const SEARCH_HISTORY_KEY = "recentBoardSearches";
+import { API_BASE } from "../js/config.js";
 
 let currentWorkspaceId = null;
 let currentVisibility = null;
@@ -13,7 +14,7 @@ export async function loadSidebarWorkspace() {
   list.innerHTML = "<div>Đang tải workspace...</div>";
 
   try {
-    const res = await fetch("http://localhost:8127/v1/workspace", {
+    const res = await fetch(`${API_BASE}/v1/workspace`, {
       credentials: "include",
     });
     if (!res.ok) throw new Error(`Fetch workspace lỗi: ${res.status}`);
@@ -183,7 +184,7 @@ async function fetchBoardsForSearch() {
   if (cachedSearchBoards) return cachedSearchBoards;
 
   try {
-    const res = await fetch("http://localhost:8127/v1/board/myboards", {
+    const res = await fetch(`${API_BASE}/v1/myboards`, {
       credentials: "include",
     });
     const data = await res.json();

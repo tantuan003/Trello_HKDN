@@ -1,5 +1,6 @@
 
 import { socket } from "../js/socket.js";
+import { API_BASE } from "../js/config.js";
 
 const boardCards = document.querySelectorAll(".board-card"); // NodeList
 const cardGrid = document.querySelector(".card-grid"); // chỉ 1 grid
@@ -10,83 +11,13 @@ let currentBoardId = null;
 let uploadedBg = "";
 let selectedColor = "";
 
-
-async function loadMyBoards() {
-  try {
-    const res = await fetch("http://localhost:8127/v1/board/myboards", {
-      method: "GET",
-      credentials: "include",
-    });
-
-    const boards = await res.json();
-
-    if (!res.ok || !Array.isArray(boards)) {
-      Toastify({
-        text: boards.message || "Không thể tải danh sách board",
-        duration: 3000,
-        gravity: "top",
-        position: "right",
-        backgroundColor: "#ff4d4d",
-      }).showToast();
-      return;
-    }
-
-    const container = document.getElementById("boardContainer");
-    container.innerHTML = "";
-
-    boards.forEach(board => {
-      const div = document.createElement("div");
-      div.classList.add("board-card");
-      div.dataset.id = board._id;
-
-      const cover = document.createElement("div");
-      cover.classList.add("board-cover");
-
-      if (
-        board.background?.startsWith("/uploads/") ||
-        board.background?.startsWith("/backgrounds/")
-      ) {
-        cover.style.backgroundImage = `url(${board.background})`;
-        cover.style.backgroundSize = "cover";
-        cover.style.backgroundPosition = "center";
-      } else {
-        cover.classList.add(board.background || "gradient-1");
-      }
-
-      const footer = document.createElement("div");
-      footer.classList.add("board-footer");
-
-      const title = document.createElement("span");
-      title.classList.add("board-title");
-      title.textContent = board.name;
-
-      footer.appendChild(title);
-      div.appendChild(cover);
-      div.appendChild(footer);
-
-      // 👉 Chuyển sang trang Board Detail khi click
-      div.addEventListener("click", () => {
-        window.location.href = `./BoardDetail.html?id=${board._id}`;
-
-      });
-
-      container.appendChild(div);
-    });
-  } catch (err) {
-    console.error("Lỗi load boards:", err);
-    Toastify({
-      text: "Không thể kết nối server",
-      backgroundColor: "#ff4d4d",
-    }).showToast();
-  }
-}
 // ===== Recently viewed (Boards page) =====
 async function loadRecentlyViewedBoards() {
   const container = document.getElementById("boardContainer");
   if (!container) return;
 
   try {
-    const res = await fetch("http://localhost:8127/v1/board/recent", {
+    const res = await fetch(`${API_BASE}/v1/board/recent`, {
       credentials: "include",
     });
 
@@ -202,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====== LOAD WORKSPACES ======
   async function loadWorkspaces() {
     try {
-      const res = await fetch("http://localhost:8127/v1/workspace", {
+      const res = await fetch(`${API_BASE}/v1/workspace`, {
         credentials: "include" // để gửi cookie
       }); // endpoint lấy workspace
       const data = await res.json();
@@ -263,7 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
         stopOnFocus: true          // dừng khi rê chuột vào
       }).showToast();
     try {
-      const res = await fetch("http://localhost:8127/v1/board/create", {
+      const res = await fetch(`${API_BASE}/v1/board/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -321,30 +252,6 @@ cancelAddListBtn.addEventListener("click", () => {
   showAddListBtn.style.display = "inline-block";
   newListTitle.value = "";
 });
-// ========================
-// Hàm render các list
-// ========================
-async function renderBoardWithLists(boardId) {
-  const listsContainer = document.getElementById("listsContainer");
-
-  try {
-    // Lấy dữ liệu board
-    const res = await fetch(`http://localhost:8127/v1/board/${boardId}`);
-    const data = await res.json();
-    const lists = data.board?.lists || [];
-    console.log("📦 Board data:", data);
-    // Xóa list cũ
-    listsContainer.innerHTML = "";
-
-    // Render list và card
-    lists.forEach(list => {
-      const listEl = createListElement(list);
-      listsContainer.appendChild(listEl);
-    });
-  } catch (err) {
-    console.error("Error loading board:", err);
-  }
-}
 
 //hàm thêm list html
 function createListElement(list) {
@@ -455,7 +362,7 @@ function attachAddCard(listEl, listId) {
     saveBtn.disabled = true;
 
     try {
-      const res = await fetch(`http://localhost:8127/v1/board/create-card/${listId}`, {
+      const res = await fetch(`${API_BASE}/v1/board/create-card/${listId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -499,7 +406,7 @@ addListBtn.addEventListener("click", async () => {
   if (!currentBoardId) return alert("Board not selected");
 
   try {
-    const res = await fetch(`http://localhost:8127/v1/board/create-list/${currentBoardId}`, {
+    const res = await fetch(`${API_BASE}/v1/board/create-list/${currentBoardId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: title })
@@ -538,7 +445,7 @@ inviteForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch(`http://localhost:8127/v1/board/${boardId}/invite`, {
+    const res = await fetch(`${API_BASE}/v1/board/${boardId}/invite`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -644,7 +551,7 @@ bgUpload.addEventListener("change", async (e) => {
   const formData = new FormData();
   formData.append("background", file);
 
-  const res = await fetch("http://localhost:8127/v1/upload/bg", {
+  const res = await fetch(`${API_BASE}/v1/upload/bg`, {
     method: "POST",
     body: formData,
   });
