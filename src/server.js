@@ -14,6 +14,7 @@ import workspaceRoutes from "./routes/workspaceRoutes.js";
 import Card from "./models/CardModel.js";
 import jwt from "jsonwebtoken";
 import cookie from "cookie";
+import cors from "cors";
 
 dotenv.config();
 
@@ -21,9 +22,26 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+app.use(cookieParser());
+app.use(cors({
+    origin: "https://http://localhost:8127", // URL ngrok của bạn
+    credentials: true // nếu bạn dùng cookie
+}));
 app.use(express.urlencoded({ extended: true })); // để nhận form dữ liệu
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
+app.use("/v1/User", userRoutes);
+app.use("/v1/board", boardRoutes);
+app.use("/v1/workspace", workspaceRoutes);
+app.use("/v1/upload", uploadRoutes);
+
+app.use(express.static(path.join(__dirname, "../public")));
+// Route thử
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public", "login.html"));
+});
+connectDB();
 
 const server = http.createServer(app);
 export const io = new Server(server, {
@@ -69,22 +87,6 @@ io.use((socket, next) => {
 
 app.set("socketio", io);
 app.use(express.json());
-app.use(cookieParser());
-// Route API
-app.use("/v1/User", userRoutes);
-app.use("/v1/board", boardRoutes);
-app.use("/v1/workspace", workspaceRoutes);
-app.use("/v1/upload", uploadRoutes);
-// ⚙️ Public nằm cùng cấp với src
-app.use(express.static(path.join(__dirname, "../public")));
-
-
-connectDB();
-
-// Route thử
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public", "login.html"));
-});
 
 // Socket.io logic
 // Socket.io logic
