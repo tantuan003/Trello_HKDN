@@ -1,5 +1,6 @@
 
 import { socket } from "../js/socket.js";
+import { API_BASE } from "../js/config.js";
 
 const boardCards = document.querySelectorAll(".board-card"); // NodeList
 const cardGrid = document.querySelector(".card-grid"); // chỉ 1 grid
@@ -16,7 +17,7 @@ async function loadRecentlyViewedBoards() {
   if (!container) return;
 
   try {
-    const res = await fetch("http://localhost:8127/v1/board/recent", {
+    const res = await fetch(`${API_BASE}/v1/board/recent`, {
       credentials: "include",
     });
 
@@ -132,7 +133,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // ====== LOAD WORKSPACES ======
   async function loadWorkspaces() {
     try {
-      const res = await fetch("http://localhost:8127/v1/workspace", {
+      const res = await fetch(`${API_BASE}/v1/workspace`, {
         credentials: "include" // để gửi cookie
       }); // endpoint lấy workspace
       const data = await res.json();
@@ -193,7 +194,7 @@ document.addEventListener("DOMContentLoaded", () => {
         stopOnFocus: true          // dừng khi rê chuột vào
       }).showToast();
     try {
-      const res = await fetch("http://localhost:8127/v1/board/create", {
+      const res = await fetch(`${API_BASE}/v1/board/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -361,7 +362,7 @@ function attachAddCard(listEl, listId) {
     saveBtn.disabled = true;
 
     try {
-      const res = await fetch(`http://localhost:8127/v1/board/create-card/${listId}`, {
+      const res = await fetch(`${API_BASE}/v1/board/create-card/${listId}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -405,7 +406,7 @@ addListBtn.addEventListener("click", async () => {
   if (!currentBoardId) return alert("Board not selected");
 
   try {
-    const res = await fetch(`http://localhost:8127/v1/board/create-list/${currentBoardId}`, {
+    const res = await fetch(`${API_BASE}/v1/board/create-list/${currentBoardId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: title })
@@ -444,7 +445,7 @@ inviteForm.addEventListener("submit", async (e) => {
   }
 
   try {
-    const res = await fetch(`http://localhost:8127/v1/board/${boardId}/invite`, {
+    const res = await fetch(`${API_BASE}/v1/board/${boardId}/invite`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
@@ -550,7 +551,7 @@ bgUpload.addEventListener("change", async (e) => {
   const formData = new FormData();
   formData.append("background", file);
 
-  const res = await fetch("http://localhost:8127/v1/upload/bg", {
+  const res = await fetch(`${API_BASE}/v1/upload/bg`, {
     method: "POST",
     body: formData,
   });

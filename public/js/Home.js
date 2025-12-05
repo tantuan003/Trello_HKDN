@@ -1,3 +1,4 @@
+import { API_BASE } from "../js/config.js";
 // Inject component dùng lại cách như templates.html
 async function inject(file, targetSelector) {
   try {
@@ -32,7 +33,7 @@ async function loadRecentlyViewedBoards() {
   if (!container) return;
 
   try {
-    const res = await fetch("http://localhost:8127/v1/board/recent", {
+    const res = await fetch(`${API_BASE}/v1/board/recent`, {
       credentials: "include",
     });
 

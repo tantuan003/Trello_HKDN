@@ -1,3 +1,4 @@
+import { API_BASE } from "../js/config.js";
 const loginForm = document.getElementById('loginForm');
 const loginButton = document.getElementById('login');
 
@@ -21,7 +22,7 @@ loginButton.addEventListener('click', async (e) => {
   }
 
   try {
-    const response = await fetch('http://localhost:8127/v1/User/login', {
+    const response = await fetch(`${API_BASE}/v1/User/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
