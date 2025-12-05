@@ -70,6 +70,49 @@ html, body {
   margin: 0;
   display: block;
 }
+.assigned-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.assigned-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0079bf;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 14px;
+  position: relative;
+  cursor: pointer;
+}
+
+.remove-member {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
+  background: red;
+  border-radius: 50%;
+  color: white;
+  font-size: 11px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.assigned-avatar:hover .remove-member {
+  opacity: 1;
+}
+
 
 /* List */
 .list {
@@ -428,12 +471,30 @@ html, body {
   margin: 0;                  /* xoá margin mặc định của h2 */
   font-size: 20px;
 }
-
+.invite-right {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* khoảng cách giữa avatar và icon */
+}
+#assignedAvatars {
+  display: flex;
+}
+.assigned-avatar {
+  width: 22px;
+  height: 22px;
+  background: #4b7bec;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
 #inviteUser img {
   width: 27px;
   height: 27px;
   object-fit: contain;        /* giữ nguyên tỉ lệ hình */
-  cursor: pointer;            /* trỏ chuột hình bàn tay khi hover */
+  cursor: pointer;            
 }
 #inviteForm input {
   height: 35px;
