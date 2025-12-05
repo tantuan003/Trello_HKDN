@@ -20,7 +20,8 @@ const cardSchema = new mongoose.Schema({
       name: String,
       data: String
     }
-  ]
+  ],
+  complete: { type: Boolean, default: false }
 }, { timestamps: true });
 
 export default mongoose.model("Card", cardSchema);

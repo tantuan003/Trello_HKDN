@@ -113,6 +113,7 @@ function applyBoardBackground(bg) {
 
 // ===================================================================
 // Tạo LIST
+
 // ===================================================================
 function createListElement(list) {
   const listEl = document.createElement("div");
@@ -159,47 +160,9 @@ function createListElement(list) {
     checkboxEl.type = "checkbox";
     checkboxEl.className = "card-checkbox";
 
-    checkboxEl.addEventListener("click", (e) => {
-      e.stopPropagation();
-
-      // Kiểm tra nếu chưa có phần tử complete
-      let completeEl = cardEl.querySelector(".card-complete");
-      if (!completeEl && checkboxEl.checked) {
-        completeEl = document.createElement("div");
-        completeEl.className = "card-complete";
-
-        // Icon
-        const icon = document.createElement("img");
-        icon.src = "uploads/checks (2).svg";
-        icon.alt = "complete";
-        icon.style.width = "16px";
-        icon.style.height = "16px";
-
-        // Text
-        const text = document.createElement("span");
-        text.textContent = "Complete";
-        text.style.marginLeft = "2px";
-
-        completeEl.appendChild(icon);
-        completeEl.appendChild(text);
-
-        // Thêm vào cuối card
-        cardEl.appendChild(completeEl);
-      }
-
-      // Nếu bỏ tick checkbox → remove element
-      if (!checkboxEl.checked && completeEl) {
-        completeEl.remove();
-      }
-    });
-
     // Thêm checkbox vào topBar
     topBar.appendChild(checkboxEl);
-
-    // Thêm topBar vào card
     cardEl.appendChild(topBar);
-
-
 
     // Tên card
     const titleEl = document.createElement("div");
@@ -275,27 +238,24 @@ function createListElement(list) {
 
 
     // --- Comments count ---
-  if (card.comments && card.comments.length > 0) {
-  const commentBox = document.createElement("div");
-  commentBox.className = "comment-info";
+    if (card.comments && card.comments.length > 0) {
+      const commentBox = document.createElement("div");
+      commentBox.className = "comment-info";
 
-  const icon = document.createElement("img");
-  icon.src = "uploads/comments-icon.svg";
-  icon.alt = "comments";
-  icon.style.width = "16px";
-  icon.style.height = "16px";
+      const icon = document.createElement("img");
+      icon.src = "uploads/comments-icon.svg";
+      icon.alt = "comments";
+      icon.style.width = "16px";
+      icon.style.height = "16px";
 
-  const count = document.createElement("span");
-  count.className = "comment-count";
-  count.textContent = card.comments.length;
+      const count = document.createElement("span");
+      count.className = "comment-count";
+      count.textContent = card.comments.length;
 
-  commentBox.appendChild(icon);
-  commentBox.appendChild(count);
-  midEl.appendChild(commentBox);
-}
-
-
-
+      commentBox.appendChild(icon);
+      commentBox.appendChild(count);
+      midEl.appendChild(commentBox);
+    }
 
     // --- Members (phải) ---
     const membersEl = document.createElement("div");
@@ -330,6 +290,65 @@ function createListElement(list) {
     footerEl.appendChild(membersEl);
     // Thêm footer vào card
     cardEl.appendChild(footerEl);
+
+    //checkbox render
+      // Hàm tạo completeEl ở cuối card
+    function renderCompleteElement() {
+      // Nếu đã có → xoá để tránh nhân đôi
+      const old = cardEl.querySelector(".card-complete");
+      if (old) old.remove();
+
+      const completeEl = document.createElement("div");
+      completeEl.className = "card-complete";
+
+      const icon = document.createElement("img");
+      icon.src = "uploads/checks (2).svg";
+      icon.alt = "complete";
+      icon.style.width = "16px";
+      icon.style.height = "16px";
+
+      const text = document.createElement("span");
+      text.textContent = "Complete";
+      text.style.marginLeft = "2px";
+
+      completeEl.appendChild(icon);
+      completeEl.appendChild(text);
+
+      // Luôn append ở cuối cùng
+      cardEl.appendChild(completeEl);
+    }
+
+    // --- RENDER LÚC VỪA VÀO ---
+    if (card.complete === true) {
+      checkboxEl.checked = true;
+      renderCompleteElement();   // luôn tạo dưới cùng
+    }
+
+    // --- CLICK CHECKBOX ---
+    checkboxEl.addEventListener("click", async (e) => {
+      e.stopPropagation();
+
+      const isComplete = checkboxEl.checked;
+
+      if (isComplete) {
+        renderCompleteElement();       // tạo ở cuối
+      } else {
+        const el = cardEl.querySelector(".card-complete");
+        if (el) el.remove();           // xoá nếu bỏ tick
+      }
+
+      // Update API
+      try {
+        await fetch(`http://localhost:8127/v1/board/complete/${card._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ complete: isComplete })
+        });
+      } catch (err) {
+        console.error("Error updating card complete:", err);
+      }
+    });
+
 
     // ⭐ Sự kiện mở chi tiết
     cardEl.addEventListener("click", () => {
@@ -992,7 +1011,7 @@ socket.on("card:assignedMembersUpdated", ({ cardId, assignedMembers: updated }) 
     assignedMembers = updated;
     renderAssignedMembers();
   }
-  
+
   // đồng thời cập nhật state trong boardData
   updateAssignedMembersInState(cardId, updated);
 
@@ -1102,7 +1121,7 @@ socket.on("card:labelRemoved", ({ cardId, color }) => {
   });
   renderBoardWithLists();
 
- if (currentCard && currentCard._id === cardId) {
+  if (currentCard && currentCard._id === cardId) {
     currentCard.labels = currentCard.labels.filter(c => c !== color);
     const labelsEl = document.getElementById("cardLabels");
     if (labelsEl) removeLabelFromCard(color);
