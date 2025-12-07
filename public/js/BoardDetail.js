@@ -824,31 +824,30 @@ socket.on("card:nameUpdated", ({ cardId, name }) => {
 
 
 //thêm file attachments
-attachmentInput.addEventListener("change", async () => {
+attachmentInput.onchange = async () => {
   const files = Array.from(attachmentInput.files);
 
   for (let file of files) {
-    // tránh trùng lặp
     if (!currentCard.attachments?.some(f => f.name === file.name && f.size === file.size)) {
       const fileObj = { name: file.name, data: await fileToBase64(file) };
-
-      if (!currentCard.attachments) currentCard.attachments = [];
+      currentCard.attachments ??= [];
       currentCard.attachments.push(fileObj);
 
-      // emit lên server
-      socket.emit("card:updateAttachments", { cardId: currentCardId, file: fileObj });
+      socket.emit("card:updateAttachments", {
+        cardId: currentCardId,
+        file: fileObj
+      });
     }
   }
+  console.log("render from onchange");
 
   attachmentInput.value = "";
-  renderAttachments(currentCard);
-});
+};
+
 
 function removeAttachment(index) {
   const file = currentCard.attachments[index];
   currentCard.attachments.splice(index, 1);
-  renderAttachments(currentCard);
-
   // Gửi sự kiện xóa file
   socket.emit("card:removeAttachment", { cardId: currentCard._id, fileName: file.name });
 }
@@ -1142,14 +1141,15 @@ function renderLabelsFromCard(card) {
 }
 
 //socket attackment
-socket.on("card:attachmentsUpdated", ({ file }) => {
-  if (!Array.isArray(currentCard.attachments)) currentCard.attachments = [];
-  currentCard.attachments.push(file);
+socket.on("card:attachmentsUpdated", ({ cardId, attachments }) => {
+  if (currentCardId !== cardId) return;
 
-  // Render lại
+  currentCard.attachments = attachments; // luôn đồng bộ DB
+
+  console.log("render from socket");
   renderAttachments(currentCard);
-  renderBoardWithLists()
 });
+
 
 socket.on("card:attachmentRemoved", ({ fileName }) => {
   currentCard.attachments = currentCard.attachments.filter(f => f.name !== fileName);

@@ -42,7 +42,7 @@ export async function loadSidebarWorkspace() {
       head.innerHTML = `
         <span class="wsp-badge">${firstLetter}</span>
         <span class="wsp-name">${workspace.name}</span>
-        <span class="chev">▼</span>
+        <span class="chev"></span>
       `;
 
       const menu = document.createElement("ul");
