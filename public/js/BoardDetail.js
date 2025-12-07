@@ -14,6 +14,9 @@ let boardData = {
   lists: [],   // array of lists, mỗi list có cards
   members: []  // array of members
 };
+// Map lưu các hàm render UI của từng card
+const cardUIActions = {};
+
 
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
@@ -116,6 +119,7 @@ function applyBoardBackground(bg) {
 // Tạo LIST
 
 // ===================================================================
+
 function createListElement(list) {
   const listEl = document.createElement("div");
   listEl.className = "list";
@@ -157,9 +161,38 @@ function createListElement(list) {
     }
 
     // --- CHECKBOX (luôn tạo) ---
+    const footerEl = document.createElement("div");
+    footerEl.className = "card-footer";
+
+    // --- COMPLETE FOOTER (luôn có, nhưng rỗng) ---
+    const completeFooter = document.createElement("div");
+    completeFooter.className = "card-complete-footer";
+    footerEl.appendChild(completeFooter);
+
     const checkboxEl = document.createElement("input");
     checkboxEl.type = "checkbox";
     checkboxEl.className = "card-checkbox";
+    // --- SET INITIAL COMPLETE STATE ---
+    checkboxEl.checked = card.complete === true;
+    function renderCompleteElement() {
+      completeFooter.innerHTML = `
+    <div class="card-complete">
+      <img src="uploads/checks (2).svg" width="16" height="16">
+      <span style="margin-left:4px">Complete</span>
+    </div>
+  `;
+    }
+
+    cardUIActions[card._id] = {
+      render: renderCompleteElement,
+      checkboxEl
+    };
+
+    // LOAD LẦN ĐẦU
+    if (card.complete === true) {
+      renderCompleteElement();
+    }
+
 
     // Thêm checkbox vào topBar
     topBar.appendChild(checkboxEl);
@@ -170,10 +203,6 @@ function createListElement(list) {
     titleEl.className = "card-title";
     titleEl.textContent = card.name;
     cardEl.appendChild(titleEl);
-    // Tạo container footer
-    const footerEl = document.createElement("div");
-    footerEl.className = "card-footer";
-
     // --- Due date (trái) ---
     let dueEl = null;
     const leftEl = document.createElement("div");
@@ -291,54 +320,26 @@ function createListElement(list) {
     footerEl.appendChild(membersEl);
     // Thêm footer vào card
     cardEl.appendChild(footerEl);
+    cardEl.appendChild(completeFooter);
 
-    //checkbox render
-      // Hàm tạo completeEl ở cuối card
-    function renderCompleteElement() {
-      // Nếu đã có → xoá để tránh nhân đôi
-      const old = cardEl.querySelector(".card-complete");
-      if (old) old.remove();
-
-      const completeEl = document.createElement("div");
-      completeEl.className = "card-complete";
-
-      const icon = document.createElement("img");
-      icon.src = "uploads/checks (2).svg";
-      icon.alt = "complete";
-      icon.style.width = "16px";
-      icon.style.height = "16px";
-
-      const text = document.createElement("span");
-      text.textContent = "Complete";
-      text.style.marginLeft = "2px";
-
-      completeEl.appendChild(icon);
-      completeEl.appendChild(text);
-
-      // Luôn append ở cuối cùng
-      cardEl.appendChild(completeEl);
-    }
-
-    // --- RENDER LÚC VỪA VÀO ---
-    if (card.complete === true) {
-      checkboxEl.checked = true;
-      renderCompleteElement();   // luôn tạo dưới cùng
-    }
-
+    //checkbox render   
     // --- CLICK CHECKBOX ---
     checkboxEl.addEventListener("click", async (e) => {
       e.stopPropagation();
 
       const isComplete = checkboxEl.checked;
 
-      if (isComplete) {
-        renderCompleteElement();       // tạo ở cuối
-      } else {
-        const el = cardEl.querySelector(".card-complete");
-        if (el) el.remove();           // xoá nếu bỏ tick
-      }
+      // UI local (client A)
+      if (isComplete) renderCompleteElement();
+      else completeFooter.innerHTML = "";
 
-      // Update API
+      // Emit realtime
+      socket.emit("card:completeToggle", {
+        cardId: card._id,
+        complete: isComplete
+      });
+
+      // Update DB
       try {
         await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
           method: "PUT",
@@ -349,8 +350,6 @@ function createListElement(list) {
         console.error("Error updating card complete:", err);
       }
     });
-
-
     // ⭐ Sự kiện mở chi tiết
     cardEl.addEventListener("click", () => {
       openCardDetail(card._id);
@@ -365,6 +364,30 @@ function createListElement(list) {
 
   return listEl;
 }
+
+socket.on("card:completeUpdated", ({ cardId, complete }) => {
+  const ui = cardUIActions[cardId];
+  if (!ui) return;
+
+  // Cập nhật checkbox
+  ui.checkboxEl.checked = complete;
+
+  // Cập nhật UI
+  if (complete) {
+    ui.render();      // ✔ gọi hàm render đúng
+  } else {
+    const footer = ui.checkboxEl
+      .closest(".card")
+      .querySelector(".card-complete-footer");
+    if (footer) footer.innerHTML = "";
+  }
+});
+
+
+
+
+
+
 
 
 // ===================================================================
