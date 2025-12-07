@@ -9,6 +9,7 @@ let boardId = urlParams.get("id");
 let members = [];
 const attachmentInput = document.getElementById("attachmentInput");
 let currentCardId = null;
+let assignedMembers = [];  // chứa array ID user
 let currentCard = []
 let boardData = {
   lists: [],   // array of lists, mỗi list có cards
@@ -40,7 +41,26 @@ function activateBoardsMenu() {
 // RENDER BOARD + LIST + CARD
 // ===================================================================
 const listsContainer = document.getElementById("listsContainer");
+function renderAssignedMembersinvite(members) {
+  const container = document.getElementById("assignedAvatars");
+  container.innerHTML = "";
+
+  if (!members || members.length === 0) {
+    container.innerHTML = "<p>Không có thành viên</p>";
+    return;
+  }
+
+  members.forEach(member => {
+    const avatar = document.createElement("div");
+    avatar.className = "assigned-avatar";
+    avatar.textContent = member.username[0].toUpperCase();
+    avatar.title = member.email;
+    container.appendChild(avatar);
+  });
+}
+
 renderBoardWithLists();
+
 async function renderBoardWithLists() {
   if (!currentBoardId) {
     console.error("❌ currentBoardId chưa có!");
@@ -53,6 +73,7 @@ async function renderBoardWithLists() {
     members = data.board.members;
     boardData.lists = data.board.lists;
     boardData.members = data.board.members;
+    renderAssignedMembersinvite(members)
 
     socket.emit("joinBoard", currentBoardId);
     socket.on("connect", () => {
@@ -533,6 +554,7 @@ socket.on("newList", (list) => {
 });
 // ===================================================================
 // Invite user
+
 // ===================================================================
 const inviteForm = document.getElementById("inviteForm");
 
@@ -649,15 +671,13 @@ async function openCardDetail(cardId) {
   socket.emit("card:join", currentCard._id);
   showCardDetailModal(currentCard);
 }
+
 function showCardDetailModal(card) {
   const modal = document.getElementById("cardDetailModal");
-
   // Assigned members
   assignedMembers = (card.assignedTo || []).map(m => m._id);
-
   // Render assigned member đầy đủ
   renderAssignedMembers();
-
   // Labels - gắn 1 lần duy nhất
   const labelsEl = document.getElementById("cardLabels");
   labelsEl.innerHTML = "";
@@ -687,7 +707,6 @@ function showCardDetailModal(card) {
     socket.emit("card:updateName", { cardId: currentCard._id, name: newName });
 
   });
-
 
   // Description
   const cardDescriptionEl = document.getElementById("cardDescription");
@@ -942,7 +961,6 @@ document.getElementById("assignSearch").addEventListener("input", (e) => {
   loadAssignList(e.target.value);
 });
 
-let assignedMembers = [];  // chứa array ID user
 
 function assignMemberToCard(userId) {
   if (!currentCard || !currentCard._id) return;
