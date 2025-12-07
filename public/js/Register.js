@@ -1,3 +1,4 @@
+import { API_BASE } from "../js/config.js";
 document.getElementById("registerForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -7,7 +8,7 @@ document.getElementById("registerForm").addEventListener("submit", async (e) => 
     password: document.getElementById("password").value
   };
 
-  const res = await fetch("http://localhost:8127/v1/User/register", {
+  const res = await fetch(`${API_BASE}/v1/User/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data)
