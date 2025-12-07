@@ -1,10 +1,12 @@
 import express from "express";
-import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete } from "../controllers/boardController.js";
+import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace } from "../controllers/boardController.js";
 const router = express.Router();
 import { verifyToken } from "../middlewares/verifyToken.js";
 // POST /v1/board
 router.post("/create",verifyToken,createBoard);
 router.get("/myboards",verifyToken, getBoardsByCurrentUser);
+router.get("/workspace/:workspaceId",verifyToken, getBoardsByWorkspace);
+
 //board recent
 router.get("/recent", verifyToken, getBoardsrecent);
 
