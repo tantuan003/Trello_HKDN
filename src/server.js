@@ -323,7 +323,7 @@ socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
 });
 
   // Thêm attachment
- socket.on("card:updateAttachments", async ({ cardId, file }) => {
+socket.on("card:updateAttachments", async ({ cardId, file }) => {
   try {
     const card = await Card.findById(cardId)
       .populate({
@@ -339,16 +339,15 @@ socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
 
     const boardId = card.list.board._id.toString();
 
-    // 🔄 Gửi realtime tới người đang mở card
+    // Gửi full danh sách attachments
     io.to(cardId).emit("card:attachmentsUpdated", {
       cardId,
-      file
+      attachments: card.attachments
     });
 
-    // 🔄 Gửi realtime tới tất cả client trong board
     io.to(boardId).emit("card:attachmentsUpdated", {
       cardId,
-      file
+      attachments: card.attachments
     });
 
   } catch (err) {
