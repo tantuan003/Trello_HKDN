@@ -1173,3 +1173,10 @@ html, body {
 .due-status.normal { background-color: #61bd4f; }  /* bình thường */
 .due-status.warning { background-color: #f2d600; } /* sắp đến hạn */
 .due-status.overdue { background-color: #eb5a46; } /* quá hạn */
+
+
+.card-complete-footer {
+  margin-top: auto; /* đẩy xuống dưới cùng */
+  margin-left: auto;
+  padding-top: 4px;
+}
