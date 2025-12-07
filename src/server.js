@@ -28,8 +28,8 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
 app.use(cors({
-    origin: process.env.SOCKET_URL, // URL ngrok của bạn
-    credentials: true // nếu bạn dùng cookie
+  origin: process.env.SOCKET_URL, // URL ngrok của bạn
+  credentials: true // nếu bạn dùng cookie
 }));
 app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);
@@ -111,26 +111,26 @@ io.on("connection", (socket) => {
     console.log(`Socket ${socket.id} joined card ${cardId}`);
   });
   // đổi thêm card
-socket.on("card:updateName", async ({ cardId, name }) => {
-  const card = await Card.findById(cardId)
-    .populate({
-      path: "list",
-      populate: { path: "board" }
-    });
+  socket.on("card:updateName", async ({ cardId, name }) => {
+    const card = await Card.findById(cardId)
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
 
-  if (!card) return;
+    if (!card) return;
 
-  card.name = name;
-  await card.save();
+    card.name = name;
+    await card.save();
 
-  // Emit tới card detail room
-  io.to(card._id.toString()).emit("card:nameUpdated", { cardId, name });
+    // Emit tới card detail room
+    io.to(card._id.toString()).emit("card:nameUpdated", { cardId, name });
 
-  // Emit tới tất cả client đang ở board (board list view)
-  if (card.list && card.list.board && card.list.board._id) {
-    io.to(card.list.board._id.toString()).emit("card:nameUpdated", { cardId, name });
-  }
-});
+    // Emit tới tất cả client đang ở board (board list view)
+    if (card.list && card.list.board && card.list.board._id) {
+      io.to(card.list.board._id.toString()).emit("card:nameUpdated", { cardId, name });
+    }
+  });
 
 
   socket.on("card:updateDescription", async ({ cardId, description }) => {
@@ -150,299 +150,302 @@ socket.on("card:updateName", async ({ cardId, name }) => {
   //thêm label
   // Khi client emit thêm label
   socket.on("card:addLabel", async ({ cardId, color }) => {
-  try {
-    const card = await Card.findById(cardId)
-      .populate({
-        path: "list",
-        populate: { path: "board" }
-      });
-      console.log("board id là",card.list.board._id);
+    try {
+      const card = await Card.findById(cardId)
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
+      console.log("board id là", card.list.board._id);
 
-    if (!card) return;
+      if (!card) return;
 
-    // Thêm label nếu chưa có
-    if (!card.labels.includes(color)) {
-      card.labels.push(color);
+      // Thêm label nếu chưa có
+      if (!card.labels.includes(color)) {
+        card.labels.push(color);
+        await card.save();
+      }
+
+      // Emit tới card detail (các client đang mở card)
+      io.to(card._id.toString()).emit("card:labelAdded", { cardId, color });
+
+      // Emit tới tất cả client trong board (bao gồm board view)
+      if (card.list && card.list.board && card.list.board._id) {
+        io.to(card.list.board._id.toString()).emit("card:labelAdded", { cardId, color });
+      }
+
+    } catch (err) {
+      console.error("Error updating card label:", err);
+    }
+  });
+
+  socket.on("card:removeLabel", async ({ cardId, color }) => {
+    try {
+      const card = await Card.findById(cardId)
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
+
+      if (!card) return;
+
+      // Remove label
+      card.labels = card.labels.filter(c => c !== color);
       await card.save();
+
+      // Emit tới card detail (nếu đang mở)
+      io.to(card._id.toString()).emit("card:labelRemoved", { cardId, color });
+
+      // Emit tới tất cả client ở board (board list view)
+      if (card.list && card.list.board && card.list.board._id) {
+        io.to(card.list.board._id.toString()).emit("card:labelRemoved", { cardId, color });
+      }
+    } catch (err) {
+      console.error("Error removing label:", err);
     }
+  });
+  socket.on("card:assignMember", async ({ cardId, userId }) => {
+    try {
+      const card = await Card.findById(cardId)
+        .populate("assignedTo")
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
 
-    // Emit tới card detail (các client đang mở card)
-    io.to(card._id.toString()).emit("card:labelAdded", { cardId, color });
+      if (!card) return;
 
-    // Emit tới tất cả client trong board (bao gồm board view)
-    if (card.list && card.list.board && card.list.board._id) {
-      io.to(card.list.board._id.toString()).emit("card:labelAdded", { cardId, color });
-    }
+      if (!card.assignedTo.find(m => m._id.toString() === userId)) {
+        card.assignedTo.push(userId);
+        await card.save();
+      }
 
-  } catch (err) {
-    console.error("Error updating card label:", err);
-  }
-});
+      const updated = await Card.findById(cardId)
+        .populate("assignedTo")
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
 
-socket.on("card:removeLabel", async ({ cardId, color }) => {
-  try {
-    const card = await Card.findById(cardId)
-      .populate({
-        path: "list",
-        populate: { path: "board" }
+      const assignedMembers = updated.assignedTo.map(m => m._id.toString());
+
+      console.log("EMIT assign to rooms:", cardId, updated.list.board._id.toString());
+
+      // Gửi cho card detail
+      io.to(cardId).emit("card:assignedMembersUpdated", {
+        cardId,
+        assignedMembers
       });
 
-    if (!card) return;
-
-    // Remove label
-    card.labels = card.labels.filter(c => c !== color);
-    await card.save();
-
-    // Emit tới card detail (nếu đang mở)
-    io.to(card._id.toString()).emit("card:labelRemoved", { cardId, color });
-
-    // Emit tới tất cả client ở board (board list view)
-    if (card.list && card.list.board && card.list.board._id) {
-      io.to(card.list.board._id.toString()).emit("card:labelRemoved", { cardId, color });
-    }
-  } catch (err) {
-    console.error("Error removing label:", err);
-  }
-});
-socket.on("card:assignMember", async ({ cardId, userId }) => {
-  try {
-    const card = await Card.findById(cardId)
-      .populate("assignedTo")
-      .populate({
-        path: "list",
-        populate: { path: "board" }
+      // Gửi cho board list
+      io.to(updated.list.board._id.toString()).emit("card:assignedMembersUpdated", {
+        cardId,
+        assignedMembers
       });
 
-    if (!card) return;
+    } catch (err) {
+      console.error("Error assign member:", err);
+    }
+  });
 
-    if (!card.assignedTo.find(m => m._id.toString() === userId)) {
-      card.assignedTo.push(userId);
+
+  socket.on("card:removeMember", async ({ cardId, userId }) => {
+    try {
+      const card = await Card.findById(cardId)
+        .populate("assignedTo")
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
+
+      if (!card) return;
+
+      card.assignedTo = card.assignedTo.filter(m => m._id.toString() !== userId);
       await card.save();
+
+      const updated = await Card.findById(cardId)
+        .populate("assignedTo")
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
+
+      const assignedMembers = updated.assignedTo.map(m => m._id.toString());
+
+      console.log("EMIT remove to rooms:", cardId, updated.list.board._id.toString());
+
+      io.to(cardId).emit("card:assignedMembersUpdated", {
+        cardId,
+        assignedMembers
+      });
+
+      io.to(updated.list.board._id.toString()).emit("card:assignedMembersUpdated", {
+        cardId,
+        assignedMembers
+      });
+
+    } catch (err) {
+      console.error("Error remove member:", err);
     }
-
-    const updated = await Card.findById(cardId)
-      .populate("assignedTo")
-      .populate({
-        path: "list",
-        populate: { path: "board" }
-      });
-
-    const assignedMembers = updated.assignedTo.map(m => m._id.toString());
-
-    console.log("EMIT assign to rooms:", cardId, updated.list.board._id.toString());
-
-    // Gửi cho card detail
-    io.to(cardId).emit("card:assignedMembersUpdated", {
-      cardId,
-      assignedMembers
-    });
-
-    // Gửi cho board list
-    io.to(updated.list.board._id.toString()).emit("card:assignedMembersUpdated", {
-      cardId,
-      assignedMembers
-    });
-
-  } catch (err) {
-    console.error("Error assign member:", err);
-  }
-});
-
-
-socket.on("card:removeMember", async ({ cardId, userId }) => {
-  try {
-    const card = await Card.findById(cardId)
-      .populate("assignedTo")
-      .populate({
-        path: "list",
-        populate: { path: "board" }
-      });
-
-    if (!card) return;
-
-    card.assignedTo = card.assignedTo.filter(m => m._id.toString() !== userId);
-    await card.save();
-
-    const updated = await Card.findById(cardId)
-      .populate("assignedTo")
-      .populate({
-        path: "list",
-        populate: { path: "board" }
-      });
-
-    const assignedMembers = updated.assignedTo.map(m => m._id.toString());
-
-    console.log("EMIT remove to rooms:", cardId, updated.list.board._id.toString());
-
-    io.to(cardId).emit("card:assignedMembersUpdated", {
-      cardId,
-      assignedMembers
-    });
-
-    io.to(updated.list.board._id.toString()).emit("card:assignedMembersUpdated", {
-      cardId,
-      assignedMembers
-    });
-
-  } catch (err) {
-    console.error("Error remove member:", err);
-  }
-});
+  });
 
   //due date
-socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
-  try {
-    const card = await Card.findById(cardId)
-      .populate({
-        path: "list",
-        populate: { path: "board" }
-      });
+  socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
+    try {
+      const card = await Card.findById(cardId)
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
 
-    if (!card) return;
+      if (!card) return;
 
-    card.dueDate = dueDate;
-    await card.save();
+      card.dueDate = dueDate;
+      await card.save();
 
-    // Gửi realtime cho client đang mở card detail
-    io.to(cardId).emit("card:dueDateUpdated", {
-      cardId,
-      dueDate: card.dueDate
-    });
-
-    // Gửi cho tất cả client trong board view
-    if (card.list && card.list.board && card.list.board._id) {
-      io.to(card.list.board._id.toString()).emit("card:dueDateUpdated", {
+      // Gửi realtime cho client đang mở card detail
+      io.to(cardId).emit("card:dueDateUpdated", {
         cardId,
         dueDate: card.dueDate
       });
-    }
 
-  } catch (err) {
-    console.error("Error updating due date:", err);
-  }
-});
+      // Gửi cho tất cả client trong board view
+      if (card.list && card.list.board && card.list.board._id) {
+        io.to(card.list.board._id.toString()).emit("card:dueDateUpdated", {
+          cardId,
+          dueDate: card.dueDate
+        });
+      }
+
+    } catch (err) {
+      console.error("Error updating due date:", err);
+    }
+  });
 
   // Thêm attachment
- socket.on("card:updateAttachments", async ({ cardId, file }) => {
-  try {
-    const card = await Card.findById(cardId)
-      .populate({
-        path: "list",
-        populate: { path: "board" }
+  socket.on("card:updateAttachments", async ({ cardId, file }) => {
+    try {
+      const card = await Card.findById(cardId)
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
+
+      if (!card) return;
+
+      // Thêm file
+      card.attachments.push(file);
+      await card.save();
+
+      const boardId = card.list.board._id.toString();
+
+      // Gửi full danh sách attachments
+      io.to(cardId).emit("card:attachmentsUpdated", {
+        cardId,
+        attachments: card.attachments
       });
 
-    if (!card) return;
-
-    // Thêm file
-    card.attachments.push(file);
-    await card.save();
-
-    const boardId = card.list.board._id.toString();
-
-    // 🔄 Gửi realtime tới người đang mở card
-    io.to(cardId).emit("card:attachmentsUpdated", {
-      cardId,
-      file
-    });
-
-    // 🔄 Gửi realtime tới tất cả client trong board
-    io.to(boardId).emit("card:attachmentsUpdated", {
-      cardId,
-      file
-    });
-
-  } catch (err) {
-    console.error("Error updating attachments:", err);
-  }
-});
-
-
-// ===================== REMOVE ATTACHMENT ===================== //
-
-socket.on("card:removeAttachment", async ({ cardId, fileName }) => {
-  try {
-    const card = await Card.findById(cardId)
-      .populate({
-        path: "list",
-        populate: { path: "board" }
+      io.to(boardId).emit("card:attachmentsUpdated", {
+        cardId,
+        attachments: card.attachments
       });
 
-    if (!card) return;
+    } catch (err) {
+      console.error("Error updating attachments:", err);
+    }
+  });
 
-    card.attachments = card.attachments.filter(f => f.name !== fileName);
-    await card.save();
 
-    const boardId = card.list.board._id.toString();
+  // ===================== REMOVE ATTACHMENT ===================== //
 
-    // Realtime cho người đang mở card
-    io.to(cardId).emit("card:attachmentRemoved", {
-      cardId,
-      fileName
-    });
+  socket.on("card:removeAttachment", async ({ cardId, fileName }) => {
+    try {
+      const card = await Card.findById(cardId)
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
 
-    // Realtime cho người đang xem board
-    io.to(boardId).emit("card:attachmentRemoved", {
-      cardId,
-      fileName
-    });
+      if (!card) return;
 
-  } catch (err) {
-    console.error("Error removing attachment:", err);
-  }
-});
+      card.attachments = card.attachments.filter(f => f.name !== fileName);
+      await card.save();
+
+      const boardId = card.list.board._id.toString();
+
+      // Realtime cho người đang mở card
+      io.to(cardId).emit("card:attachmentRemoved", {
+        cardId,
+        fileName
+      });
+
+      // Realtime cho người đang xem board
+      io.to(boardId).emit("card:attachmentRemoved", {
+        cardId,
+        fileName
+      });
+
+    } catch (err) {
+      console.error("Error removing attachment:", err);
+    }
+  });
 
   //comment
   // Thêm comment vào card
-socket.on("card:addComment", async ({ cardId, text }) => {
-  try {
-    if (!socket.user) return;
+  socket.on("card:addComment", async ({ cardId, text }) => {
+    try {
+      if (!socket.user) return;
 
-    // Tìm card + lấy luôn boardId để gửi realtime
-    const card = await Card.findById(cardId)
-      .populate({
-        path: "list",
-        populate: { path: "board" }
+      // Tìm card + lấy luôn boardId để gửi realtime
+      const card = await Card.findById(cardId)
+        .populate({
+          path: "list",
+          populate: { path: "board" }
+        });
+
+      if (!card) return;
+
+      // Tạo comment
+      const comment = {
+        user: socket.user,
+        text,
+        createdAt: new Date()
+      };
+
+      // Lưu DB
+      card.comments.push(comment);
+      await card.save();
+
+      // Populate user cho comment cuối
+      const populated = await Card.findById(cardId)
+        .populate("comments.user", "username");
+
+      const newComment = populated.comments.slice(-1)[0];
+
+      // Lấy boardId
+      const boardId = card.list.board._id.toString();
+
+      // 🔥 Realtime cho người đang mở card detail
+      io.to(cardId).emit("card:commentAdded", {
+        cardId,
+        comment: newComment
       });
 
-    if (!card) return;
+      // 🔥 Realtime cho những người đang xem board (card list)
+      io.to(boardId).emit("board:commentAdded", {
+        cardId,
+        comment: newComment
+      });
 
-    // Tạo comment
-    const comment = {
-      user: socket.user,
-      text,
-      createdAt: new Date()
-    };
+    } catch (err) {
+      console.error("Error adding comment:", err);
+    }
+  });
 
-    // Lưu DB
-    card.comments.push(comment);
-    await card.save();
-
-    // Populate user cho comment cuối
-    const populated = await Card.findById(cardId)
-      .populate("comments.user", "username");
-
-    const newComment = populated.comments.slice(-1)[0];
-
-    // Lấy boardId
-    const boardId = card.list.board._id.toString();
-
-    // 🔥 Realtime cho người đang mở card detail
-    io.to(cardId).emit("card:commentAdded", {
-      cardId,
-      comment: newComment
-    });
-
-    // 🔥 Realtime cho những người đang xem board (card list)
-    io.to(boardId).emit("board:commentAdded", {
-      cardId,
-      comment: newComment
-    });
-
-  } catch (err) {
-    console.error("Error adding comment:", err);
-  }
+  //checkbox complete
+  socket.on("card:completeToggle", ({ cardId, complete }) => {
+  socket.broadcast.emit("card:completeUpdated", { cardId, complete });
 });
-
 
 
   socket.on("disconnect", () => {
