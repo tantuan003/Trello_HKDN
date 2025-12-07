@@ -13,79 +13,102 @@ let selectedColor = "";
 
 // ===== Recently viewed (Boards page) =====
 async function loadRecentlyViewedBoards() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const workspaceId = urlParams.get("ws");
   const container = document.getElementById("boardContainer");
+
   if (!container) return;
 
+  let apiUrl = "";
+  if (workspaceId) {
+    apiUrl = `${API_BASE}/v1/board/workspace/${workspaceId}`;
+  } else {
+    apiUrl = `${API_BASE}/v1/board/recent`;
+  }
+
   try {
-    const res = await fetch(`${API_BASE}/v1/board/recent`, {
+    const res = await fetch(apiUrl, {
       credentials: "include",
     });
 
     const result = await res.json();
 
-    // reset UI
+    // Reset UI
     container.innerHTML = "";
     container.classList.remove("empty");
 
-    // API mới: { success: true, data: [...] }
-    if (!res.ok || !result.success || !Array.isArray(result.data)) {
-      container.classList.add("empty");
-      container.innerHTML =
-        "<p class='no-recent'>No recently viewed boards yet.</p>";
-      return;
-    }
+    // An toàn: lấy từ data hoặc boards
+    const boards = result.data || result.boards || [];
 
-    const boards = result.data;
+    if (!res.ok || !result.success) {
+      return showEmptyRecentlyViewed(container);
+    }
 
     if (boards.length === 0) {
-      container.classList.add("empty");
-      container.innerHTML =
-        "<p class='no-recent'>No recently viewed boards yet.</p>";
-      return;
+      return showEmptyRecentlyViewed(container);
     }
 
-    // Có dữ liệu → render card-grid giống phần còn lại
+    // Render các board
     boards.forEach((board) => {
-      const card = document.createElement("a");
-      card.className = "board-card";
-      card.href = `./BoardDetail.html?id=${board._id}`;
-
-      const cover = document.createElement("div");
-      cover.className = "board-cover";
-
-      if (
-        board.background?.startsWith("/uploads/") ||
-        board.background?.startsWith("/backgrounds/")
-      ) {
-        cover.style.backgroundImage = `url(${board.background})`;
-        cover.style.backgroundSize = "cover";
-        cover.style.backgroundPosition = "center";
-      } else if (board.background) {
-        cover.classList.add(board.background);
-      } else {
-        cover.classList.add("gradient-1");
-      }
-
-      const footer = document.createElement("div");
-      footer.className = "board-footer";
-
-      const title = document.createElement("span");
-      title.className = "board-title";
-      title.textContent = board.name;
-
-      footer.appendChild(title);
-      card.appendChild(cover);
-      card.appendChild(footer);
-
+      const card = createBoardCard(board);
       container.appendChild(card);
     });
+
   } catch (err) {
     console.error("Lỗi load recently viewed:", err);
-    container.classList.add("empty");
-    container.innerHTML =
-      "<p class='no-recent'>Không thể tải danh sách recently viewed.</p>";
+    showEmptyRecentlyViewed(container);
   }
 }
+
+
+/* ===========================
+   HÀM PHỤ — GIỮ CODE SẠCH
+=========================== */
+
+// Hiển thị UI rỗng
+function showEmptyRecentlyViewed(container) {
+  container.classList.add("empty");
+  container.innerHTML = `<p class="no-recent">No recently viewed boards yet.</p>`;
+}
+
+// Tạo card board
+function createBoardCard(board) {
+  const card = document.createElement("a");
+  card.className = "board-card";
+  card.href = `./BoardDetail.html?id=${board._id}`;
+
+  // Cover
+  const cover = document.createElement("div");
+  cover.className = "board-cover";
+
+  if (
+    board.background?.startsWith("/uploads/") ||
+    board.background?.startsWith("/backgrounds/")
+  ) {
+    cover.style.backgroundImage = `url(${board.background})`;
+    cover.style.backgroundSize = "cover";
+    cover.style.backgroundPosition = "center";
+  } else if (board.background) {
+    cover.classList.add(board.background); // class CSS gradient
+  } else {
+    cover.classList.add("gradient-1");    // fallback
+  }
+
+  // Footer
+  const footer = document.createElement("div");
+  footer.className = "board-footer";
+
+  const title = document.createElement("span");
+  title.className = "board-title";
+  title.textContent = board.name;
+
+  footer.appendChild(title);
+  card.appendChild(cover);
+  card.appendChild(footer);
+
+  return card;
+}
+
 
 // Chèn file components/sidebar_header.html vào #app-shell
 async function inject(file, targetSelector) {
