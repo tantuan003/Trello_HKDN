@@ -93,6 +93,34 @@ export const getBoardById = async (req, res) => {
   }
 };
 
+export const getBoardsByWorkspace = async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+
+    // Lấy toàn bộ boards thuộc workspace
+    const boards = await Board.find({ workspace: workspaceId })
+      .populate({
+        path: "lists",
+        populate: { path: "cards" },
+      })
+      .populate("members", "username email");
+
+    res.status(200).json({
+      success: true,
+      data: boards
+    });
+
+  } catch (error) {
+    console.error("Lỗi getBoardsByWorkspace:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server"
+    });
+  }
+};
+
+
+
 
 export const createList = async (req, res) => {
   try {
