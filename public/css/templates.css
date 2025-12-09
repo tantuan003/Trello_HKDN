@@ -1,85 +1,205 @@
-/* ===== Templates page (chỉ style phần nội dung, không đụng sidebar/header) ===== */
-
-.content-templates {
-  /* content đã có padding từ sidebar_header.css.
-     Bổ sung spacing nhỏ theo layout ảnh */
-  padding-top: 18px;
+.template-section {
+  margin-left: 40px;
 }
 
-/* Thanh tiêu đề + ô tìm kiếm (tiêu đề trái, search phải) */
-.template-bar{
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
 
-.template-title{
-  margin: 0;
-  font-size: 16px;
+
+.template-title {
+  font-size: 20px;
   font-weight: 600;
+  margin-bottom: 16px;
   color: #111827;
 }
 
-/* Ô tìm kiếm góc phải giống ảnh */
-.template-search{
-  position: relative;
-  display: inline-flex;
-  align-items: center;
+/* ===== SECTION THEO CHỦ ĐỀ ===== */
+.template-section {
+  margin-bottom: 28px;
 }
-.template-search input{
-  width: 260px;
-  padding: 8px 36px 8px 12px;
+
+.template-section-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+/* Grid chứa các template card */
+.template-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 230px);
+  column-gap: 12px;
+  row-gap: 16px;
+}
+
+/* Card template – giống cảm giác board */
+.template-card {
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 6px;
-  background: #fff;
-  outline: none;
-  font-size: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  min-height: 120px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
-.template-search svg{
-  position: absolute;
-  right: 10px;
-  pointer-events: none;
+
+.template-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.16);
+  border-color: #d1d5db;
+}
+
+/* Phần “ảnh” trên card (giống cover) */
+.template-card__thumb {
+  height: 80px;
+  border-radius: 10px;
+  margin: 8px 8px 0 8px;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Nội dung dưới */
+.template-card__body {
+  padding: 8px 10px 10px;
+}
+
+.template-card__title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #111827;
+}
+
+.template-card__desc {
+  font-size: 12px;
   color: #6b7280;
 }
 
-/* Lưới 1 thẻ như ảnh (có thể mở rộng về sau) */
-.template-grid{
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-  gap: 18px;
+/* Nhóm category + nút Use template (nếu cần sau này) */
+.template-card__meta {
+  margin-top: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-/* Card “Start with a blank board” */
-.template-card{
-  height: 132px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #EEF0F3; /* tông xám nhạt như ảnh */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+.template-card__category {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #9ca3af;
+}
+
+.template-card__btn {
+  border: none;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  background: #2563eb;
+  color: #fff;
   cursor: pointer;
-  transition: transform .08s ease, box-shadow .2s ease;
 }
-.template-card:hover{
-  transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(0,0,0,.06);
+
+/* Gradient riêng cho templates (không đụng tới boards) */
+.template-gradient-1 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.template-gradient-2 { background: linear-gradient(135deg, #43e97b, #38f9d7); }
+.template-gradient-3 { background: linear-gradient(135deg, #fa709a, #fee140); }
+.template-gradient-4 { background: linear-gradient(135deg, #89f7fe, #66a6ff); }
+.template-gradient-5 { background: linear-gradient(135deg, #ff758c, #ff7eb3); }
+
+/* Responsive nhỏ */
+@media (max-width: 900px) {
+  .template-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
-.template-card__title{
-  color: #374151;
-  font-weight: 600;
+
+@media (max-width: 600px) {
+  .content-templates {
+    padding: 16px;
+  }
+
+  .template-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+/* ===== Modal tạo board từ template ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: none; /* mặc định ẩn */
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal {
+  background: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  width: 320px;
+  max-width: 95vw;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.25);
+}
+
+.modal h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+}
+
+.modal label {
+  display: block;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.modal input,
+.modal select {
+  width: 100%;
+  padding: 8px;
+  margin-top: 4px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
   font-size: 14px;
 }
 
-/* Responsive nhỏ: search co giãn */
-@media (max-width: 700px){
-  .template-bar{
-    grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .template-search input{ width: 100%; }
+.modal-actions {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
+/* nút dùng chung */
+.btn-primary {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: none;
+  background: #0b5ed7;
+  color: #fff;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-outline {
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-outline:hover {
+  background: #f3f4f6;
+}

@@ -38,19 +38,33 @@ async function loadMyBoards() {
       const div = document.createElement("div");
       div.classList.add("board-card");
       div.dataset.id = board._id;
-
       const cover = document.createElement("div");
       cover.classList.add("board-cover");
 
+      const bg = board.background;
+
       if (
-        board.background?.startsWith("/uploads/") ||
-        board.background?.startsWith("/backgrounds/")
+        bg &&
+        (
+          bg.endsWith(".png") ||
+          bg.endsWith(".jpg") ||
+          bg.endsWith(".jpeg") ||
+          bg.includes("/images/") ||
+          bg.startsWith("/uploads/") ||
+          bg.startsWith("/backgrounds/")
+        )
       ) {
-        cover.style.backgroundImage = `url(${board.background})`;
+        // 🔥 background là URL ảnh
+        cover.style.backgroundImage = `url("${bg}")`;
         cover.style.backgroundSize = "cover";
         cover.style.backgroundPosition = "center";
+        cover.style.backgroundRepeat = "no-repeat";
+      } else if (bg) {
+        // 🔥 background là tên class (gradient-1, ...)
+        cover.classList.add(bg);
       } else {
-        cover.classList.add(board.background || "gradient-1");
+        // không có gì thì dùng default
+        cover.classList.add("gradient-1");
       }
 
       const footer = document.createElement("div");
@@ -122,18 +136,31 @@ async function loadRecentlyViewedBoards() {
       const cover = document.createElement("div");
       cover.className = "board-cover";
 
+      const bg = board.background;
+
       if (
-        board.background?.startsWith("/uploads/") ||
-        board.background?.startsWith("/backgrounds/")
+        bg &&
+        (
+          bg.endsWith(".png") ||
+          bg.endsWith(".jpg") ||
+          bg.endsWith(".jpeg") ||
+          bg.includes("/images/") ||
+          bg.startsWith("/uploads/") ||
+          bg.startsWith("/backgrounds/")
+        )
       ) {
-        cover.style.backgroundImage = `url(${board.background})`;
+        // 🔥 URL ảnh
+        cover.style.backgroundImage = `url("${bg}")`;
         cover.style.backgroundSize = "cover";
         cover.style.backgroundPosition = "center";
-      } else if (board.background) {
-        cover.classList.add(board.background);
+        cover.style.backgroundRepeat = "no-repeat";
+      } else if (bg) {
+        // 🔥 class gradient
+        cover.classList.add(bg);
       } else {
         cover.classList.add("gradient-1");
       }
+
 
       const footer = document.createElement("div");
       footer.className = "board-footer";

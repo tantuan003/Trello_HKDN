@@ -275,71 +275,7 @@ body {
     overflow: visible;
   }
 }
-/* ===== TEMPLATES NAV (submenu) ===== */
-.nav-section { 
-  margin-bottom: 2px; 
-}
 
-.nav-item.has-sub {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background .15s, color .15s;
-}
-.nav-item.has-sub:hover {
-  background: #f5f8ff;
-}
-
-.nav-item.has-sub .chev {
-  width: 8px;
-  height: 8px;
-  border-right: 2px solid #6b7280;
-  border-bottom: 2px solid #6b7280;
-  transform: rotate(-45deg);
-  transition: transform .2s ease;
-  margin-left: auto;
-}
-.nav-item.has-sub.active .chev {
-  transform: rotate(45deg);
-}
-
-/* Submenu */
-.sub-menu {
-  list-style: none;
-  margin: 0 0 0 28px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  overflow: hidden;
-  max-height: 0;
-  opacity: 0;
-  transition: max-height .25s ease, opacity .25s ease;
-}
-.nav-section.open .sub-menu {
-  margin-top: 6px;
-  max-height: 520px; /* đủ lớn để chứa toàn bộ item */
-  opacity: 1;
-}
-
-.sub-menu a {
-  display: block;
-  padding: 6px 8px;
-  border-radius: 8px;
-  color: #374151;
-  text-decoration: none;
-  font-weight: 600;
-}
-.sub-menu a:hover {
-  background: #f3f4f6;
-  color: #111827;
-}
 /* cho thumbnail để hiển thị ảnh/gradient đẹp */
 .recent-board-card__thumb {
   width: 38px;

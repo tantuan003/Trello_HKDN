@@ -1,6 +1,6 @@
-// js/sidebar_header.js
 const WSP_KEY = "wspMenuCollapsed";
 const SEARCH_HISTORY_KEY = "recentBoardSearches";
+
 function loadSearchHistory() {
   try {
     const raw = localStorage.getItem(SEARCH_HISTORY_KEY);
@@ -27,6 +27,7 @@ function saveSearchHistory(board) {
 function clearSearchHistory() {
   localStorage.removeItem(SEARCH_HISTORY_KEY);
 }
+
 function initWorkspaceToggle() {
   const wsp = document.getElementById("wsp");
   const btn = document.getElementById("wspToggle");
@@ -45,29 +46,6 @@ function initWorkspaceToggle() {
   });
 }
 
-function initTemplatesMenuToggle() {
-  const nav = document.getElementById("sideNav");
-  if (!nav) return;
-
-  // Uỷ quyền sự kiện
-  nav.addEventListener("click", (e) => {
-    const head = e.target.closest(".nav-item.has-sub");
-    if (!head) return;
-
-    const section = head.closest(".nav-section");
-    const clickOnChevron = !!e.target.closest(".chev");
-
-    if (clickOnChevron) {
-      e.preventDefault();
-      section?.classList.toggle("open");
-      head.classList.toggle("active");
-    } else {
-      const href = head.getAttribute("href") || "templates.html";
-      window.location.href = href;
-    }
-  });
-}
-
 /* ---------------------------------------------------
    AUTO ACTIVE MENU DỰA THEO URL
    --------------------------------------------------- */
@@ -80,14 +58,9 @@ function initActiveMenu() {
     document.getElementById("boardsMenu")?.classList.add("is-active");
   }
 
-  // Templates + mở submenu
+  // Templates
   if (page === "templates.html") {
-    const head = document.getElementById("templateMenu");
-    if (head) {
-      head.classList.add("is-active", "active");
-      const section = head.closest(".nav-section");
-      section?.classList.add("open");
-    }
+    document.getElementById("templateMenu")?.classList.add("is-active");
   }
 
   // Home
@@ -95,6 +68,7 @@ function initActiveMenu() {
     document.getElementById("homeMenu")?.classList.add("is-active");
   }
 }
+
 // ===== Global search by board title =====
 let cachedSearchBoards = null;
 
@@ -121,6 +95,7 @@ async function fetchBoardsForSearch() {
     return [];
   }
 }
+
 function normalizeVi(str = "") {
   return str
     .normalize("NFD")
@@ -130,6 +105,7 @@ function normalizeVi(str = "") {
     .toLowerCase()
     .trim();
 }
+
 function initGlobalSearch() {
   const input = document.querySelector(".searchbar input");
   const panel = document.getElementById("globalSearchResults");
@@ -162,7 +138,7 @@ function initGlobalSearch() {
       const matches = boards.filter((b) => {
         const name = normalizeVi(b.name || "");
         const ws = normalizeVi(b.workspace?.name || "");
-        return name.includes(keyword);
+        return name.includes(keyword) || ws.includes(keyword);
       });
 
       renderSearchPanel(panel, matches, { mode: "search" });
@@ -171,8 +147,7 @@ function initGlobalSearch() {
 
   // Click ra ngoài thì đóng panel
   document.addEventListener("click", (e) => {
-    const isInside =
-      panel.contains(e.target) || input.contains(e.target);
+    const isInside = panel.contains(e.target) || input.contains(e.target);
     if (!isInside) {
       panel.classList.remove("is-open");
     }
@@ -219,14 +194,35 @@ function renderSearchPanel(panel, boards, { mode }) {
     const thumb = document.createElement("div");
     thumb.className = "search-result-thumb";
 
+    const bg = board.background;
+
+    // reset
+    thumb.style.backgroundImage = "";
+
+    // 🔥 ẢNH (URL)
     if (
-      board.background?.startsWith("/uploads/") ||
-      board.background?.startsWith("/backgrounds/")
+      bg &&
+      (
+        bg.endsWith(".png") ||
+        bg.endsWith(".jpg") ||
+        bg.endsWith(".jpeg") ||
+        bg.includes("/images/") ||
+        bg.startsWith("./images/") ||
+        bg.startsWith("/uploads/") ||
+        bg.startsWith("/backgrounds/")
+      )
     ) {
-      thumb.style.backgroundImage = `url(${board.background})`;
-    } else if (board.background) {
-      thumb.classList.add(board.background);
-    } else {
+      thumb.style.backgroundImage = `url("${bg}")`;
+      thumb.style.backgroundSize = "cover";
+      thumb.style.backgroundPosition = "center";
+      thumb.style.backgroundRepeat = "no-repeat";
+    }
+    // 🔥 MÀU (class gradient,…)
+    else if (bg) {
+      thumb.classList.add(bg);
+    }
+    // fallback
+    else {
       thumb.classList.add("gradient-1");
     }
 
@@ -266,7 +262,6 @@ export function initSidebarHeader() {
   if (document.body.dataset.sidebarHeaderInit === "1") return;
 
   initWorkspaceToggle();
-  initTemplatesMenuToggle();
   initActiveMenu();
   initGlobalSearch();
 

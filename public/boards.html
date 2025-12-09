@@ -50,6 +50,20 @@
         </div>
       </div>
     </div>
+     <!-- 🔹 NEW: Section chứa nút Create new board -->
+    <section class="section-block">
+      <div class="section-head">
+        <div class="section-title">
+          <h3>New board</h3>
+        </div>
+      </div>
+
+      <div class="card-grid mt-2">
+        <button class="board-card create-card" type="button">
+          <div class="create-body">+ Create new board</div>
+        </button>
+      </div>
+    </section>
     <!-- Recently viewed -->
     <section class="section-block">
       <div class="section-head">
@@ -57,47 +71,9 @@
           <h3>Recently viewed</h3>
         </div>
       </div>
-      <div class="card-grid" id="boardContainer">
-
-      </div>
+      <div class="card-grid" id="boardContainer"> 
     </section>
 
-    <!-- Your workspaces -->
-    <section class="section-block">
-      <div class="workspace-info">
-        <div class="section-head">
-          <h3 class="heading">YOUR WORKSPACES</h3>
-          <div class="actions-inline">
-            <a class="chip" href="#"><span class="ic">🗂️</span>Boards</a>
-            <a class="chip" href="#"><span class="ic">👤</span>Members</a>
-            <a class="chip" href="#"><span class="ic">⚙️</span>Settings</a>
-          </div>
-        </div>
-
-        <div class="workspace-row">
-          <div class="ws-title">
-            <span class="ws-badge">T</span>
-            <span class="ws-name">Teamhub Workspace</span>
-          </div>
-        </div>
-
-
-        <div class="card-grid mt-2">
-          <a class="board-card" href="#">
-            <div class="board-cover gradient-1"></div>
-            <div class="board-footer"><span class="board-title">My Trello board</span></div>
-          </a>
-
-          <button class="board-card create-card" type="button">
-            <div class="create-body">Create new board</div>
-          </button>
-        </div>
-
-        <div class="mt-3">
-          <a class="btn-outline" href="#">View all closed boards</a>
-        </div>
-      </div>
-    </section>
   </main>
   <div class="modal-overlay" id="createBoardModal" style="display:none;">
     <div class="modal">
