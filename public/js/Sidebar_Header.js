@@ -141,12 +141,7 @@ function initActiveMenu() {
 
   if (page === "boards.html") document.getElementById("boardsMenu")?.classList.add("is-active");
   if (page === "templates.html") {
-    const head = document.getElementById("templateMenu");
-    if (head) {
-      head.classList.add("is-active", "active");
-      const section = head.closest(".nav-section");
-      section?.classList.add("open");
-    }
+    document.getElementById("templateMenu")?.classList.add("is-active");
   }
   if (page === "home.html") document.getElementById("homeMenu")?.classList.add("is-active");
 }
@@ -227,12 +222,14 @@ function initGlobalSearch() {
     const keyword = normalizeVi(input.value);
     clearTimeout(debounceTimer);
 
+    // Không có keyword → quay lại hiển thị lịch sử
     if (!keyword) {
       const history = loadSearchHistory();
       renderSearchPanel(panel, history, { mode: "history" });
       return;
     }
 
+    // Debounce 200ms rồi search
     debounceTimer = setTimeout(async () => {
       const boards = await fetchBoardsForSearch();
       const matches = boards.filter((b) => {
@@ -288,13 +285,28 @@ function renderSearchPanel(panel, boards, { mode }) {
     const thumb = document.createElement("div");
     thumb.className = "search-result-thumb";
     if (
-      board.background?.startsWith("/uploads/") ||
-      board.background?.startsWith("/backgrounds/")
+      bg &&
+      (
+        bg.endsWith(".png") ||
+        bg.endsWith(".jpg") ||
+        bg.endsWith(".jpeg") ||
+        bg.includes("/images/") ||
+        bg.startsWith("./images/") ||
+        bg.startsWith("/uploads/") ||
+        bg.startsWith("/backgrounds/")
+      )
     ) {
-      thumb.style.backgroundImage = `url(${board.background})`;
-    } else if (board.background) {
-      thumb.classList.add(board.background);
-    } else {
+      thumb.style.backgroundImage = `url("${bg}")`;
+      thumb.style.backgroundSize = "cover";
+      thumb.style.backgroundPosition = "center";
+      thumb.style.backgroundRepeat = "no-repeat";
+    }
+    // 🔥 MÀU (class gradient,…)
+    else if (bg) {
+      thumb.classList.add(bg);
+    }
+    // fallback
+    else {
       thumb.classList.add("gradient-1");
     }
 
@@ -332,7 +344,6 @@ export function initSidebarHeader() {
 
   loadSidebarWorkspace();
   initWorkspaceToggle();
-  initTemplatesMenuToggle();
   initActiveMenu();
   initGlobalSearch();
 

@@ -27,7 +27,7 @@ function activateHomeMenu() {
   }
 }
 
-// TODO: thay URL API cho đúng backend của bạn
+// ===== Load Recently viewed boards trên trang Home =====
 async function loadRecentlyViewedBoards() {
   const container = document.getElementById("recentBoards");
   if (!container) return;
@@ -62,36 +62,50 @@ async function loadRecentlyViewedBoards() {
       const workspaceName = board.workspace?.name || "Untitled workspace";
 
       card.innerHTML = `
-    <div class="recent-board-card__thumb"></div>
-    <div class="recent-board-card__body">
-      <div class="recent-board-card__name">${board.name}</div>
-      <div class="recent-board-card__workspace">${workspaceName}</div>
-    </div>
-  `;
+        <div class="recent-board-card__thumb"></div>
+        <div class="recent-board-card__body">
+          <div class="recent-board-card__name">${board.name}</div>
+          <div class="recent-board-card__workspace">${workspaceName}</div>
+        </div>
+      `;
 
       const thumb = card.querySelector(".recent-board-card__thumb");
+      const bg = board.background;
 
-      // === ẢNH ===
+      // reset class & style
+      thumb.className = "recent-board-card__thumb";
+      thumb.style.backgroundImage = "";
+
+      // === ẢNH (URL) ===
       if (
-        board.background?.startsWith("/uploads/") ||
-        board.background?.startsWith("/backgrounds/")
+        bg &&
+        (
+          bg.endsWith(".png") ||
+          bg.endsWith(".jpg") ||
+          bg.endsWith(".jpeg") ||
+          bg.includes("/images/") ||
+          bg.startsWith("/uploads/") ||
+          bg.startsWith("/backgrounds/")
+        )
       ) {
-        thumb.style.backgroundImage = `url(${board.background})`;
-        thumb.className = "recent-board-card__thumb"; // reset class
+        thumb.style.backgroundImage = `url("${bg}")`;
+        thumb.style.backgroundSize = "cover";
+        thumb.style.backgroundPosition = "center";
+        thumb.style.backgroundRepeat = "no-repeat";
       }
-      // === MÀU ===
-      else if (board.background) {
-        thumb.style.backgroundImage = ""; // xoá ảnh nếu còn
-        thumb.classList.add(board.background);
+      // === MÀU (class) ===
+      else if (bg) {
+        thumb.classList.add(bg);
       }
-      // === fallback ===
+      // === fallback default ===
       else {
-        thumb.style.backgroundImage = "";
         thumb.classList.add("gradient-1");
       }
 
+      // Đi đến chi tiết board
       card.addEventListener("click", () => {
-        window.location.href = `/boardDetail.html?id=${board._id}`;
+        // dùng đúng path như các trang khác
+        window.location.href = `./BoardDetail.html?id=${board._id}`;
       });
 
       container.appendChild(card);
@@ -103,7 +117,6 @@ async function loadRecentlyViewedBoards() {
       "<p class='no-recent'>Lỗi khi tải danh sách board gần đây.</p>";
   }
 }
-
 
 document.addEventListener("DOMContentLoaded", async () => {
   await inject("./components/sidebar_header.html", "#app-shell");

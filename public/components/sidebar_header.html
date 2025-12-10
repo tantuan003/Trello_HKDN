@@ -33,7 +33,6 @@
         </div>
 
         <div class="actions">
-          <button class="btn">Create</button>
           <button class="icon-btn" aria-label="Notifications">🔔</button>
           <div class="avatar"></div>
         </div>
@@ -61,39 +60,17 @@
           </a>
 
           <!-- Templates (link + submenu) -->
-          <div class="nav-section">
-            <!-- NHẤN chữ “Templates” => đi templates.html; NHẤN mũi tên => thu/mở -->
-            <a href="templates.html" class="nav-item has-sub" id="templateMenu">
-              <span class="nav-ic">
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor"
-                    stroke-width="1.8" />
-                  <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-                </svg>
-              </span>
-              <span>Templates</span>
-              <span class="chev" aria-hidden="true"></span>
-            </a>
+          <a href="templates.html" class="nav-item" data-target="templates" id="templateMenu">
+            <span class="nav-ic">
+              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                <rect x="3" y="4" width="18" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8" />
+                <path d="M7 8h10M7 12h10M7 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+              </svg>
+            </span>
+            <span>Templates</span>
+          </a>
 
-            <ul class="sub-menu">
-              <li><a href="templates.html?cat=business">Business</a></li>
-              <li><a href="templates.html?cat=design">Design</a></li>
-              <li><a href="templates.html?cat=education">Education</a></li>
-              <li><a href="templates.html?cat=engineering">Engineering</a></li>
-              <li><a href="templates.html?cat=marketing">Marketing</a></li>
-              <li><a href="templates.html?cat=hr">HR &amp; Operations</a></li>
-              <li><a href="templates.html?cat=personal">Personal</a></li>
-              <li><a href="templates.html?cat=productivity">Productivity</a></li>
-              <li><a href="templates.html?cat=pm">Product management</a></li>
-              <li><a href="templates.html?cat=project-mgmt">Project management</a></li>
-              <li><a href="templates.html?cat=remote">Remote work</a></li>
-              <li><a href="templates.html?cat=sales">Sales</a></li>
-              <li><a href="templates.html?cat=support">Support</a></li>
-              <li><a href="templates.html?cat=team">Team management</a></li>
-            </ul>
-          </div>
 
-          <!-- Home -->
           <!-- Home -->
           <a href="home.html" class="nav-item" data-target="home" id="homeMenu">
 
