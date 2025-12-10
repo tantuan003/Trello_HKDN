@@ -70,6 +70,49 @@ html, body {
   margin: 0;
   display: block;
 }
+.assigned-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.assigned-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #0079bf;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 14px;
+  position: relative;
+  cursor: pointer;
+}
+
+.remove-member {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 16px;
+  height: 16px;
+  background: red;
+  border-radius: 50%;
+  color: white;
+  font-size: 11px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  transition: 0.2s;
+}
+
+.assigned-avatar:hover .remove-member {
+  opacity: 1;
+}
+
 
 /* List */
 .list {
@@ -110,17 +153,95 @@ html, body {
 
 /* Card */
 .card {
-  height: 40px;                /* cao tối thiểu, linh hoạt */
-  padding: 10px 12px;              /* padding đầy đủ */
-  background-color: #ffffff;       /* nền sáng */
-  border-radius: 8px;              /* bo góc mềm mại */
+  display: flex;
+  flex-direction: column;      /* xếp dọc */
+  align-items: flex-start;     /* 🔥 label nằm trên, title nằm dưới */
+  height: auto;                /* cho cao linh hoạt */
+  padding: 10px 12px;
+  background-color: #ffffff;
+  border-radius: 8px;
   font-size: 0.95rem;
   color: #222;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* shadow nhẹ */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
   cursor: pointer;
-  display: flex;
-  align-items: center;             /* căn giữa chữ theo dọc */
   transition: all 0.2s ease;
+}
+
+/* Container chung của labels + checkbox */
+.card-topbar {
+  display: flex;
+  justify-content: space-between;  /* label trái – checkbox phải */
+  align-items: center;
+  width: 100%;
+  margin-bottom: 6px;
+}
+
+/* Label màu */
+.card-labels {
+  display: flex;
+  gap: 4px;
+}
+
+.card-label {
+  width: 36px;
+  height: 8px;
+  border-radius: 4px;
+}
+
+/* Checkbox bên phải */
+.card-checkbox {
+  width: 16px;
+  height: 16px;
+  margin-left: auto;   /* ⚡ đẩy luôn sang phải */
+  cursor: pointer;
+  accent-color: #45dc27;   /* màu xanh Trello */
+  border-radius: 50%;       /* ✅ làm tròn */
+  border: 1.5px solid #ccc; /* viền nhẹ khi chưa tick */
+  background-color: #fff;   /* nền trắng */
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+/* Khi hover */
+.card-checkbox:hover {
+  box-shadow: 0 0 2px rgba(0,0,0,0.3);
+}
+.card-checkbox:active {
+  transform: scale(0.85);
+}
+
+/* Hiệu ứng tick xong bật nhẹ lên */
+.card-checkbox:checked {
+  transform: scale(1.15);
+}
+
+/* Ripple (vòng sáng) */
+.card-checkbox:active::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  background: rgba(97, 189, 79, 0.25);
+  animation: ripple 0.3s ease-out;
+}
+.card-complete {
+  display: flex;
+  align-items: center;
+  margin-left: auto;           /* đẩy sang phải */
+  padding: 2px 6px;            /* padding nhỏ cho icon + text */
+  border-radius: 12px;         /* bo tròn */
+}
+
+.card-complete span {
+  font-size: 10px;
+  font-weight: 600;
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  color: #28a745;
+  font-style: italic;           /* chữ nghiêng */
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
 }
 
 
@@ -134,6 +255,67 @@ html, body {
   transform: translateY(0);        /* trở về khi nhấn */
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+.card-labels {
+  display: flex;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.card-label {
+  width: 50px;
+  height: 6px;
+  border-radius: 3px;
+}
+.card-footer {
+  display: flex;
+  justify-content: space-between; /* due date trái, members phải */
+  align-items: center;            /* căn dọc icon + avatar */
+  margin-top: 6px;
+  width: 100%;
+}
+.mid-footer{
+  padding: 2px 4px;       /* tạo cảm giác cân */
+  border-radius: 4px;  
+}
+
+.card-due {
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: bolder;
+  text-align: center;
+  color: #0d0404;
+  border-radius: 5px;
+}
+
+.card-members {
+  display: flex;
+  gap: 4px;
+}
+
+.card-member {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: bold;
+  color: #fff;
+  background-color: #1884f0;
+}
+
+.card-member img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
 
 
 /* --- Nút Add List --- */
@@ -289,12 +471,30 @@ html, body {
   margin: 0;                  /* xoá margin mặc định của h2 */
   font-size: 20px;
 }
-
+.invite-right {
+  display: flex;
+  align-items: center;
+  gap: 5px; /* khoảng cách giữa avatar và icon */
+}
+#assignedAvatars {
+  display: flex;
+}
+.assigned-avatar {
+  width: 22px;
+  height: 22px;
+  background: #4b7bec;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+}
 #inviteUser img {
   width: 27px;
   height: 27px;
   object-fit: contain;        /* giữ nguyên tỉ lệ hình */
-  cursor: pointer;            /* trỏ chuột hình bàn tay khi hover */
+  cursor: pointer;            
 }
 #inviteForm input {
   height: 35px;
@@ -419,106 +619,625 @@ html, body {
   font-weight: 600;
 }
 /* Modal background */
+/* ===== MODAL WRAPPER ===== */
 .modal {
-  display: none;
   position: fixed;
-  z-index: 1000;
+  top: 0;
   left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  justify-content: center;   /* căn ngang */
+  align-items: center;       /* căn dọc */
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  z-index: 9999;
+}
+
+
+/* ===== MODAL CONTENT ===== */
+.modal-content {
+  width: 90%;
+  max-width: 1100px;
+  justify-content: center;
+  background: #ffffff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+}
+
+@keyframes fadeIn {
+  from { transform: translateY(-10px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* ===== HEADER ===== */
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 18px 22px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+#cardTitle {
+  font-size: 22px;
+  font-weight: 600;
+  outline: none;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+#cardTitle:focus {
+  background: #fff;
+  box-shadow: 0 0 0 2px rgba(76,140,245,0.25);
+}
+
+#closeModal {
+  font-size: 26px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #444;
+  transition: 0.2s;
+}
+#closeModal:hover {
+  color: #ff4d4d;
+}
+
+/* ===== BODY ===== */
+.modal-body {
+  padding: 22px;
+  background: #fafbfc;
+}
+
+/* ===== COLUMNS ===== */
+.modal-columns {
+  display: flex;
+  gap: 22px;
+}
+
+/* ===== LEFT SECTION ===== */
+.left-section,
+.right-section {
+  background: #fff;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+  max-height: 60vh;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+}
+
+.left-section {
+  width: 60%;
+  scroll-behavior: smooth;
+}
+
+.right-section {
+  width: 40%;
+}
+
+/* HEADINGS */
+.left-section h4,
+.right-section h4 {
+  margin-bottom: 12px;
+  font-weight: 600;
+  color: #222;
+}
+
+/* ===== DESCRIPTION ===== */
+#cardDescription {
+  padding: 10px 12px;
+  min-height: 90px;
+  background: #f7f9fc;
+  border: 1px solid #e5e8ec;
+  border-radius: 8px;
+  outline: none;
+  transition: 0.2s;
+}
+
+#cardDescription:focus {
+  background: #fff;
+  border-color: #4c8cf5;
+  box-shadow: 0 0 0 2px rgba(76,140,245,0.25);
+}
+
+/* ===== ASSIGNED MEMBERS ===== */
+.assigned-member-box {
+  margin-top: 20px;
+}
+
+.assigned-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#AssignedMember-btn {
+  border: none;
+  background: #4c8cf5;
+  color: #fff;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+#AssignedMember-btn:hover {
+  background: #3a74d4;
+}
+
+/* ===== ASSIGN POPUP ===== */
+.assign-popup {
+  position: absolute;
+  background: white;
+  border-radius: 12px;
+  padding: 14px;
+  width: 240px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  margin-top: 10px;
+  z-index: 3000;
+}
+
+#assignSearch {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  margin-bottom: 10px;
+}
+
+/* ===== LABELS ===== */
+.labels-wrapper {
+  margin-top: 20px;
+}
+
+.labels-container {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.labels .label {
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #fff;
+  font-weight: 600;
+}
+
+.add-label-btn {
+  border: none;
+  background: #00b894;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.add-label-btn:hover {
+  background: #009a7b;
+}
+.color-options {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+}
+
+.color-options div {
+  border-radius: 8px;
+  cursor: pointer;
+  border: 2px solid transparent;
+}
+.color-options div:hover {
+  border-color: #333;
+}
+/* ===== ATTACHMENTS ===== */
+#cardAttachments li {
+  padding: 6px 0;
+  border-bottom: 1px solid #eee;
+}
+
+/* ===== COMMENTS ===== */
+#cardComments {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+}
+
+#cardComments li {
+  background: #f3f6fa;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border-left: 4px solid #4c8cf5;
+}
+
+.comment-input-box {
+  margin-bottom: 14px;
+}
+
+.comment-editor {
+  border: 1px solid #ccc;
+  background: #fff;
+  min-height: 80px;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+#addCommentBtn {
+  background: #4c8cf5;
+  border: none;
+  padding: 10px 18px;
+  color: white;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  transition: 0.2s;
+}
+#addCommentBtn:hover {
+  background: #3b75d0;
+}
+.comment-info {
+  display: flex;
+  align-items: center;
+  gap: 4px;          /* khoảng cách icon - số */
+  font-size: 14px;
+}
+
+.comment-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+.comment-count {
+  line-height: 16px;
+  font-weight: 500;
+  color: #444;
+}
+/* Tiêu đề */
+.label-content h3 {
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
+  text-align: center;
+}
+
+/* Khối chứa chọn màu */
+.color-options {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+}
+
+/* Ô màu */
+.color-options .color-item {
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Hover */
+.color-options .color-item:hover {
+  transform: scale(1.07);
+  box-shadow: 0 0 8px rgba(0,0,0,0.25);
+}
+
+/* Khi được chọn */
+.color-options .color-item.selected {
+  border: 3px solid #fff;
+  box-shadow: 0 0 0 2px #0079bf;
+}
+
+.card-label {
+  display: inline-block;
+  width: 30px;
+  height: 8px;
+  border-radius: 4px;
+  margin-right: 6px;
+  margin-bottom: 6px;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.card-label:hover {
+  transform: scale(1.1);
+}
+.label-popup {
+  position: fixed;
   top: 0;
   width: 100%;
   height: 100%;
-  overflow-y: auto;
-  background-color: rgba(0, 0, 0, 0.5);
+  padding: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0,0,0,0.35);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
 }
 
-/* Nội dung modal */
-.modal-content {
-  background-color: #fff;
-  margin: 3% auto;
-  width: 500px;
+.label-content {
+  background: white;
+  padding: 18px;
+  width: 300px;
+  border-radius: 10px;
+  box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+}
+
+.label-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.close-btn {
+  border: none;
+  background: transparent;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.color-options {
+  margin-top: 15px;
+}
+
+.color-item {
+  display: flex;
+  width: 20px;
+  height: 20px;
+  align-items: center;
+  padding: 8px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.color-checkbox {
+  margin-left: auto;
+  transform: scale(1.3);
+  cursor: pointer;
+}
+/* Overlay tối nhẹ */
+.assign-popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.25s ease;
+  z-index: 9999;
+}
+
+/* Hộp nội dung */
+.assign-content {
+  position: relative;
+  width: 320px;
+  background: #fff;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.15);
+}
+
+/* Nút tắt */
+.assign-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  font-size: 18px;
+  cursor: pointer;
+  color: #555;
+  padding: 4px;
+  border-radius: 6px;
+  transition: 0.2s;
+}
+
+.assign-close:hover {
+  color: rgb(227, 5, 5);
+}
+
+/* Input search */
+#assignSearch {
+  top: 10px;
+  width: 90%;
+  padding: 10px;
   border-radius: 8px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  border: 1px solid #ccc;
+  outline: none;
+  font-size: 14px;
+  margin-bottom: 12px;
+  transition: border-color 0.2s;
+}
+
+#assignSearch:focus {
+  border-color: #0079bf;
+}
+
+/* Danh sách thành viên */
+/* Container popup */
+#assignList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+/* Item member */
+.assign-member-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 10px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.assign-member-item:hover {
+  background: #f0f4f8;
+}
+
+/* Avatar */
+.assign-member-item .member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #0079bf;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+/* Tên member */
+.assign-member-item .member-name {
+  font-size: 14px;
+  color: #172b4d;
+}
+
+/* Đánh dấu member đã assign */
+.assign-member-item.assigned {
+  opacity: 0.5;
+  pointer-events: none; /* không thể click lại */
+}
+
+/* Container assigned members */
+#cardAssigned {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 0;
+  list-style: none;
+  margin: 0;
+}
+
+/* Item member */
+#cardAssigned li {
+  display: flex;
+  align-items: center;
+  background: #e4f0f6;
+  border-radius: 16px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: #172b4d;
+  cursor: default;
+  transition: background 0.2s;
+}
+
+#cardAssigned li:hover {
+  background: #d0e6f2;
+}
+
+/* Avatar nhỏ */
+#cardAssigned li .avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #0079bf;
+  color: #fff;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+  font-weight: bold;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* Nếu muốn tên hiển thị bên cạnh avatar */
+#cardAssigned li .member-name {
+  white-space: nowrap;
+}
+#cardAssigned li {
+  display: flex;
+  align-items: center;
+  background: #e4f0f6;
+  border-radius: 16px;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: #172b4d;
   position: relative;
 }
 
-/* Header */
-.modal-header {
-  display: flex;
-  width: 100%; /* 100% modal-content */
-  justify-content: space-between;
-  height: 50px;
-  align-items: center;
-  margin: 0; /* bỏ margin-bottom */
-  padding: 10px 10px; /* padding bên trong */
-  box-sizing: border-box;
-  background: #1a1c1cc7;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-  border-top-left-radius: 8px;
-  border-top-right-radius: 8px;
-}
-
-
-#closeModal {
-  background: none;
-  border: none;
-  font-size: 20px;
+#cardAssigned li .remove-member {
+  margin-left: 6px;
+  font-weight: bold;
   cursor: pointer;
   color: #555;
+  transition: color 0.2s;
 }
 
-/* Body */
-.modal-body div {
-  margin-bottom: 5px;
-  padding-left: 10px;
+#cardAssigned li .remove-member:hover {
+  color: #d9534f;
+}
+.due-date-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 12px;
+  font-family: Arial, sans-serif;
 }
 
-/* Editable fields */
-.modal-body p,
-.modal-body span {
-  padding-left: 10px;
-  padding-top: 10px;
-  border: 1px solid transparent;
+.due-date-container label {
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #172b4d;
+}
+
+.due-date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.due-date-inputs input[type="date"],
+.due-date-inputs input[type="time"] {
+  padding: 6px 10px;
+  font-size: 14px;
+  border: 1px solid #dfe1e6;
   border-radius: 4px;
-  min-height: 30px;
-  width: 450px;
-}
-
-.modal-body p[contenteditable],
-.modal-body span[contenteditable] {
-  background-color: #f9f9f9;
-  cursor: text;
-}
-
-.modal-body p[contenteditable]:focus,
-.modal-body span[contenteditable]:focus {
   outline: none;
-  border-color: #007bff;
-  background-color: #fff;
+  transition: border 0.2s, box-shadow 0.2s;
 }
 
-/* Labels */
-#cardLabels span {
+.due-date-inputs input[type="date"]:focus,
+.due-date-inputs input[type="time"]:focus {
+  border-color: #0079bf;
+  box-shadow: 0 0 0 2px rgba(0, 121, 191, 0.2);
+}
+
+/* Trạng thái tiến độ */
+.due-status {
   display: inline-block;
   padding: 2px 6px;
-  margin-right: 4px;
-  margin-bottom: 4px;
-  background-color: #eee;
   border-radius: 4px;
   font-size: 12px;
-  cursor: pointer;
+  font-weight: bold;
+  color: #fff;
 }
 
-#cardLabels span[contenteditable]:focus {
-  background-color: #fff;
-  border: 1px solid #007bff;
-}
+.due-status.normal { background-color: #61bd4f; }  /* bình thường */
+.due-status.warning { background-color: #f2d600; } /* sắp đến hạn */
+.due-status.overdue { background-color: #eb5a46; } /* quá hạn */
 
-/* Lists */
-ul {
-  padding-left: 20px;
-}
 
-ul li {
-  margin-bottom: 4px;
+.card-complete-footer {
+  margin-top: auto; /* đẩy xuống dưới cùng */
+  margin-left: auto;
+  padding-top: 4px;
 }
-

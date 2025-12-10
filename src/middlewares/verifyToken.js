@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
+import UserModel from "../models/UserModel.js";
 
-export const verifyToken = (req, res, next) => {
+export const verifyToken = async (req, res, next) => {
   try {
     const token = req.cookies.token;
 
@@ -12,9 +13,20 @@ export const verifyToken = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = decoded;
+
+    const user = await UserModel.findById(decoded.id).populate("workspaces");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User không tồn tại",
+      });
+    }
+
+    req.user = user;
 
     next();
+    
   } catch (err) {
     console.error("Token lỗi:", err);
 

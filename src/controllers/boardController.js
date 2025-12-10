@@ -73,16 +73,16 @@ export const getBoardById = async (req, res) => {
   try {
     const { boardId } = req.params;
 
-    // Populate lists và cards
+    // Populate lists + cards + members
     const board = await Board.findById(boardId)
       .populate({
         path: "lists",
-        populate: { path: "cards" }  // nested populate cards trong list
-      });
-    await Board.findByIdAndUpdate(boardId, {
-      lastViewedAt: new Date()
-    });
+        populate: { path: "cards" },  // nested populate cards trong list
+      })
+      .populate("members", "username email"); // populate member info
 
+    // Cập nhật lastViewedAt
+    await Board.findByIdAndUpdate(boardId, { lastViewedAt: new Date() });
 
     if (!board) return res.status(404).json({ message: "Board không tồn tại" });
 
@@ -92,6 +92,35 @@ export const getBoardById = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
+
+export const getBoardsByWorkspace = async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+
+    // Lấy toàn bộ boards thuộc workspace
+    const boards = await Board.find({ workspace: workspaceId })
+      .populate({
+        path: "lists",
+        populate: { path: "cards" },
+      })
+      .populate("members", "username email");
+
+    res.status(200).json({
+      success: true,
+      data: boards
+    });
+
+  } catch (error) {
+    console.error("Lỗi getBoardsByWorkspace:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server"
+    });
+  }
+};
+
+
+
 
 export const createList = async (req, res) => {
   try {
@@ -321,7 +350,7 @@ export const updateCard = async (req, res) => {
 
     // Update card
     const card = await Card.findByIdAndUpdate(id, updateData, { new: true })
-      .populate("assignedTo", "username email")
+      .populate("assignedTo", "username _id")
       .populate("createdBy", "username email")
       .populate("list", "name")
       .populate("comments.user", "username email");
@@ -330,13 +359,55 @@ export const updateCard = async (req, res) => {
       return res.status(404).json({ success: false, message: "Card không tồn tại" });
 
     // ⭐ Emit sự kiện realtime tới room listId
-    if (card.list && card.list._id) {
-      io.to(card.list._id.toString()).emit("cardUpdated", card);
+    if (card.list && card.list.board && card.list.board._id) {
+      io.to(card.list.board._id.toString()).emit("cardUpdated", card);
     }
+
+    // ⭐ Emit realtime tới room cardId (card detail) nếu muốn
+    io.to(card._id.toString()).emit("cardUpdated", card);
+
 
     res.status(200).json({ success: true, data: card });
   } catch (err) {
     console.error("updateCard error:", err);
     res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
+
+//card-complete
+
+export const updateCardComplete = async (req, res) => {
+  try {
+    const { cardId } = req.params;
+    const { complete } = req.body; // true / false
+    
+    if (typeof complete !== "boolean") {
+      return res.status(400).json({ message: "complete must be boolean" });
+    }
+
+    const card = await Card.findByIdAndUpdate(
+      cardId,
+      { complete },
+      { new: true }
+    );
+
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Emit realtime nếu bạn dùng socket.io
+    req.io?.to(cardId).emit("card:completeUpdated", {
+      cardId,
+      complete
+    });
+
+    return res.json({
+      message: "Card updated successfully",
+      card
+    });
+
+  } catch (error) {
+    console.error("Error updating card complete:", error);
+    res.status(500).json({ message: "Server error" });
   }
 };

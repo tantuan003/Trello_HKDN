@@ -212,7 +212,9 @@ body {
   font-size: 12px;
   font-weight: 800;
 }
-.wsp-name { font-weight: 700; }
+.wsp-name {
+  font-size: 12px;
+  font-weight: 700; }
 .wsp-head .chev {
   margin-left: auto;
   width: 10px;
