@@ -179,7 +179,7 @@ async function fetchBoardsForSearch() {
   if (cachedSearchBoards) return cachedSearchBoards;
 
   try {
-    const res = await fetch(`${API_BASE}/v1/myboards`, {
+    const res = await fetch(`${API_BASE}/v1/board/myboards`, {
       credentials: "include",
     });
     const data = await res.json();
@@ -278,6 +278,7 @@ function renderSearchPanel(panel, boards, { mode }) {
   panel.appendChild(header);
 
   boards.forEach((board) => {
+    const bg = board.background;
     const item = document.createElement("button");
     item.type = "button";
     item.className = "search-result-item";
@@ -349,6 +350,3 @@ export function initSidebarHeader() {
 
   document.body.dataset.sidebarHeaderInit = "1";
 }
-
-
-
