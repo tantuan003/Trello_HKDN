@@ -201,7 +201,12 @@ html, body {
   transition: all 0.2s ease;
   position: relative;
 }
-
+.card-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 /* Khi hover */
 .card-checkbox:hover {
   box-shadow: 0 0 2px rgba(0,0,0,0.3);
@@ -1240,4 +1245,69 @@ html, body {
   margin-top: auto; /* đẩy xuống dưới cùng */
   margin-left: auto;
   padding-top: 4px;
+}
+
+.list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
+.list-title {
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.list-menu-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  color: white;
+}
+
+.list-menu {
+  position: absolute;
+  top: 32px;
+  right: 0;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  z-index: 10;
+}
+
+.list-menu-item {
+  width: auto;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.list-menu-item:hover {
+  background: #828283;
+    border-radius: 6px;
+
+}
+
+.list-menu-item.danger {
+  color: #d33;
+}
+.card-delete-btn {
+  width: 18px;
+  height: 18px;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  margin-left: auto;
+}
+
+/* Hover card mới hiện */
+.card:hover .card-delete-btn {
+  opacity: 1;
+}
+
+/* Hover icon */
+.card-delete-btn:hover {
+  background: rgba(0,0,0,0.1);
 }
