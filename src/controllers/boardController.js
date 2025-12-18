@@ -520,3 +520,77 @@ export const deleteCard = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+export const deleteBoard = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const userId = req.user?.id;
+
+    // 1️⃣ Auth
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized"
+      });
+    }
+
+    // 2️⃣ Board tồn tại?
+    const board = await Board.findById(boardId);
+    if (!board) {
+      return res.status(404).json({
+        success: false,
+        message: "Board không tồn tại"
+      });
+    }
+
+    // 3️⃣ Quyền xoá (chỉ creator)
+    if (board.createdBy.toString() !== userId.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền xoá board này"
+      });
+    }
+
+    // 4️⃣ Lấy tất cả list của board
+    const lists = await List.find({ board: boardId }).select("_id");
+    const listIds = lists.map(l => l._id);
+
+    // 5️⃣ Xoá card
+    if (listIds.length > 0) {
+      await Card.deleteMany({ list: { $in: listIds } });
+    }
+
+    // 6️⃣ Xoá list
+    await List.deleteMany({ board: boardId });
+
+    // 7️⃣ Gỡ board khỏi workspace
+    if (board.workspace) {
+      await Workspace.updateOne(
+        { _id: board.workspace },
+        { $pull: { boards: boardId } }
+      );
+    }
+
+    // 8️⃣ Xoá board
+    await Board.deleteOne({ _id: boardId });
+
+    // 9️⃣ Realtime
+    if (req.io && board.workspace) {
+      req.io
+        .to(board.workspace.toString())
+        .emit("board-deleted", { boardId });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Xoá board thành công",
+      boardId
+    });
+
+  } catch (err) {
+    console.error("❌ deleteBoard error:", err);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server"
+    });
+  }
+};
