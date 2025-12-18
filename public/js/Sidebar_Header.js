@@ -340,6 +340,56 @@ function renderSearchPanel(panel, boards, { mode }) {
 }
 
 // ================= INIT =================
+function initUserMenu() {
+  const avatarBtn = document.getElementById("avatarBtn");
+  const dropdown = document.getElementById("userDropdown");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const userMenu = document.getElementById("userMenu");
+
+  if (!avatarBtn || !dropdown || !logoutBtn || !userMenu) return;
+
+  avatarBtn.addEventListener("click", () => {
+    const open = dropdown.classList.toggle("is-open");
+    avatarBtn.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest("#userMenu")) {
+      dropdown.classList.remove("is-open");
+      avatarBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  logoutBtn.addEventListener("click", async () => {
+    try {
+      await fetch(`${API_BASE}/v1/User/logout`, {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Logout error:", err);
+    } finally {
+      clearClientStateOnLogout(); // ✅ CHỈ THÊM DÒNG NÀY
+      window.location.href = "/login.html";
+    }
+  });
+
+}
+function clearClientStateOnLogout() {
+  // Xóa history search (nguyên nhân chính gây dính board cũ)
+  localStorage.removeItem(SEARCH_HISTORY_KEY);
+
+  // Reset cache search trong memory
+  cachedSearchBoards = null;
+
+  // Reset workspace state
+  currentWorkspaceId = null;
+  currentVisibility = null;
+
+  // Xóa session storage nếu có
+  sessionStorage.clear();
+}
+
 export function initSidebarHeader() {
   if (document.body.dataset.sidebarHeaderInit === "1") return;
 
@@ -347,6 +397,7 @@ export function initSidebarHeader() {
   initWorkspaceToggle();
   initActiveMenu();
   initGlobalSearch();
+  initUserMenu();
 
   document.body.dataset.sidebarHeaderInit = "1";
 }

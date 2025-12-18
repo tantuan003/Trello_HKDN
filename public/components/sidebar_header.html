@@ -34,7 +34,15 @@
 
         <div class="actions">
           <button class="icon-btn" aria-label="Notifications">🔔</button>
-          <div class="avatar"></div>
+          <div class="user-menu" id="userMenu">
+            <button class="avatar" id="avatarBtn" type="button" aria-haspopup="menu" aria-expanded="false"></button>
+
+            <div class="user-dropdown" id="userDropdown" role="menu">
+              <button class="user-dropdown__item" id="logoutBtn" type="button" role="menuitem">
+                🚪 Logout
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -95,7 +103,7 @@
           <div id="workspace-list"></div>
 
         </section>
-      </aside>  
+      </aside>
 
       <!-- Content slot -->
       <main class="content">
@@ -105,6 +113,7 @@
   </div>
 
   <script type="module" src="../js/Sidebar_Header.js"></script>
-  
+
 </body>
+
 </html>
