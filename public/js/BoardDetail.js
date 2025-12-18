@@ -46,7 +46,7 @@ function renderAssignedMembersinvite(members) {
   container.innerHTML = "";
 
   if (!members || members.length === 0) {
-    container.innerHTML = "<p>Không có thành viên</p>";
+    container.innerHTML = "";
     return;
   }
 
