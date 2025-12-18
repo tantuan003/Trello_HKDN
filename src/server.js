@@ -34,9 +34,12 @@ app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);
 app.use("/v1/workspace", workspaceRoutes);
 app.use("/v1/upload", uploadRoutes);
-// ⚙️ Public nằm cùng cấp với src
+
+// Public nằm cùng cấp với src
 app.use(express.static(path.join(__dirname, "../public")));
 
+// Cho phép truy cập ảnh trong thư mục uploads
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 connectDB();
 

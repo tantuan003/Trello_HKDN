@@ -23,34 +23,6 @@
     font-weight: 700;
 }
 
-/* Workspace name */
-.workspace-name {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 0;
-}
-
-.ws-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
-    background: #dce8ff;
-    color: #0c4bdb;
-    font-weight: 700;
-    font-size: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-transform: uppercase;
-}
-
-#ws-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #222;
-}
-
 .edit-icon {
     font-size: 18px;
     color: #555;

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Profile Settings</title>
+  <link rel="stylesheet" href="css/profile.css">
+  <link rel="stylesheet" href="css/nav.css">
+</head>
+
+<body>
+  <div id="app">
+    <!-- Sidebar -->
+    <div id="nav-container"></div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="profile-wrapper">
+
+        <img src="uploads/banner.jpg" alt="Profile Banner" class="banner-img">
+
+        <h2>Manage your personal information</h2>
+        <hr>
+        <section class="form-section">
+
+          <form class="profile-form">
+
+            <div class="form-row">
+
+              <!-- Left side -->
+              <div class="left-panel">
+                <div class="profile-photo" id="profile-photo">
+                  <span id="default-initial">G</span>
+                  <img id="profile-img" alt="Profile Photo" />
+                  <button type="button" class="cancel-btn" id="cancel-photo">×</button>
+                </div>
+                <input type="file" id="upload-photo" hidden />
+                <label for="upload-photo" class="btn-upload">Upload photo</label>
+
+                <div class="form-group">
+                  <label for="old-password">Old Password</label>
+                  <input type="password" id="old-password" />
+                </div>
+                <div class="form-group">
+                  <label for="new-password">New Password</label>
+                  <input type="password" id="new-password" />
+                </div>
+                <button type="button" class="btn-change">Change password</button>
+              </div>
+
+              <!-- Right side -->
+              <div class="right-panel">
+                <div class="form-group">
+                  <label for="username">Username <span>*</span></label>
+                  <input type="text" id="username" />
+                </div>
+
+                <div class="form-group">
+                  <label for="email">Email</label>
+                  <input type="email" id="email" readonly />
+                </div>
+
+                <div class="form-group">
+                  <label for="bio">Bio</label>
+                  <textarea id="bio" placeholder="Write something about yourself..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-save">Save</button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/nav.js"></script>
+  <script src="js/profile.js"></script>
+
+</body>
+
+</html>
