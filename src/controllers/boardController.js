@@ -411,3 +411,112 @@ export const updateCardComplete = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+//xoá 
+
+export const clearCardsInList = async (req, res) => {
+  try {
+    const { listId } = req.params;
+
+    // Kiểm tra list tồn tại
+    const list = await List.findById(listId);
+    if (!list) {
+      return res.status(404).json({ message: "List không tồn tại" });
+    }
+
+    // Xoá card trong DB
+    await Card.deleteMany({ list: listId });
+
+    // Clear mảng cards trong list
+    list.cards = [];
+    await list.save();
+    // realtime
+     req.io.to(list.board.toString()).emit("cards-cleared", {
+      listId
+    });
+
+
+    res.json({
+      message: "Đã xoá toàn bộ card trong list",
+      listId,
+    });
+  } catch (err) {
+    console.error("clearCardsInList error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+/**
+ * DELETE /v1/lists/:listId
+ * Xoá list + toàn bộ card trong list
+ */
+export const deleteList = async (req, res) => {
+  try {
+    const { listId } = req.params;
+
+    const list = await List.findById(listId);
+    if (!list) {
+      return res.status(404).json({ message: "List không tồn tại" });
+    }
+
+    await Card.deleteMany({ list: listId });
+    await List.findByIdAndDelete(listId);
+     req.io.to(list.board.toString()).emit("list-deleted", {
+      listId
+    });
+
+
+    res.json({
+      message: "Đã xoá list và toàn bộ card trong list",
+      listId,
+    });
+  } catch (err) {
+    console.error("deleteList error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+export const deleteCard = async (req, res) => {
+  try {
+    const { cardId } = req.params;
+
+    // 1. Tìm card
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ message: "Card không tồn tại" });
+    }
+
+    const listId = card.list;
+
+    // 2. Tìm list để lấy boardId
+    const list = await List.findById(listId);
+    if (!list) {
+      return res.status(404).json({ message: "List không tồn tại" });
+    }
+
+    const boardId = list.board;
+
+    // 3. Xoá card
+    await Card.findByIdAndDelete(cardId);
+
+    // 4. Gỡ card khỏi list.cards
+    await List.findByIdAndUpdate(listId, {
+      $pull: { cards: cardId }
+    });
+
+    // 5. 🔥 REALTIME
+    req.io.to(boardId.toString()).emit("card-deleted", {
+      cardId,
+      listId
+    });
+
+    res.json({
+      message: "Đã xoá card",
+      cardId,
+      listId
+    });
+  } catch (err) {
+    console.error("deleteCard error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};

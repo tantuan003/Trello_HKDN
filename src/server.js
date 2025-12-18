@@ -31,6 +31,10 @@ app.use(cors({
   origin: process.env.SOCKET_URL, // URL ngrok của bạn
   credentials: true // nếu bạn dùng cookie
 }));
+app.use((req, res, next) => {
+  req.io = io;   // 👈 thêm io vào req
+  next();
+});
 app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);
 app.use("/v1/workspace", workspaceRoutes);
@@ -444,8 +448,30 @@ io.on("connection", (socket) => {
 
   //checkbox complete
   socket.on("card:completeToggle", ({ cardId, complete }) => {
-  socket.broadcast.emit("card:completeUpdated", { cardId, complete });
-});
+    socket.broadcast.emit("card:completeUpdated", { cardId, complete });
+  });
+  socket.on("clear-cards", ({ listId, boardId }) => {
+    // chỉ emit, DB xử lý ở controller
+    io.to(boardId).emit("cards-cleared", {
+      listId
+    });
+  });
+
+  // =============================
+  // 🗑️ DELETE LIST
+  // =============================
+  socket.on("delete-list", ({ listId, boardId }) => {
+    io.to(boardId).emit("list-deleted", {
+      listId
+    });
+  });
+
+  socket.on("delete-card", ({ cardId, boardId }) => {
+    io.to(boardId).emit("card-deleted", {
+      listId
+    });
+  });
+
 
 
   socket.on("disconnect", () => {
