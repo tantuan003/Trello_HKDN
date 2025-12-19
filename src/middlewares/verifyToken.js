@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import UserModel from "../models/UserModel.js";
+import User from "../models/UserModel.js";
 
 export const verifyToken = async (req, res, next) => {
   try {
@@ -14,7 +14,7 @@ export const verifyToken = async (req, res, next) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const user = await UserModel.findById(decoded.id).populate("workspaces");
+    const user = await User.findById(decoded.id).populate("workspaces");
 
     if (!user) {
       return res.status(404).json({
