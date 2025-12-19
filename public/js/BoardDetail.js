@@ -46,7 +46,7 @@ function renderAssignedMembersinvite(members) {
   container.innerHTML = "";
 
   if (!members || members.length === 0) {
-    container.innerHTML = "<p>Không có thành viên</p>";
+    container.innerHTML = "";
     return;
   }
 
@@ -147,9 +147,91 @@ function createListElement(list) {
   listEl.dataset.id = list._id;
 
   // Title
+  // ===== LIST HEADER =====
+  const header = document.createElement("div");
+  header.className = "list-header";
+
+  // Title
   const h3 = document.createElement("h3");
+  h3.className = "list-title";
   h3.textContent = list.name;
-  listEl.appendChild(h3);
+
+  // Nút ...
+  const menuBtn = document.createElement("button");
+  menuBtn.className = "list-menu-btn";
+  menuBtn.textContent = "⋯";
+
+  // Menu dropdown
+  const menu = document.createElement("div");
+  menu.className = "list-menu";
+  menu.style.display = "none";
+
+  menu.innerHTML = `
+  <div class="list-menu-item" data-action="clear-cards">Xoá tất cả card trong list</div>
+  <div class="list-menu-item danger" data-action="delete-list">Xoá list</div>
+`;
+  menuBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    menu.style.display = menu.style.display === "none" ? "block" : "none";
+  });
+  menu.addEventListener("click", async (e) => {
+    const action = e.target.dataset.action;
+    if (!action) return;
+
+    // === XOÁ TẤT CẢ CARD TRONG LIST ===
+    if (action === "clear-cards") {
+      const ok = confirm("Xoá TẤT CẢ card trong list này?");
+      if (!ok) return;
+
+      try {
+        // UI: xoá card trước
+        cardsContainer.innerHTML = "";
+
+        // Backend
+        await fetch(`/v1/board/${list._id}/clear-cards`, {
+          method: "DELETE",
+        });
+
+      } catch (err) {
+        alert("Xoá card thất bại");
+        console.error(err);
+      }
+    }
+
+    // === XOÁ LIST ===
+    if (action === "delete-list") {
+      const ok = confirm("Xoá list này? Tất cả card sẽ mất!");
+      if (!ok) return;
+
+      try {
+        // UI: xoá list
+        listEl.remove();
+
+        // Backend
+        await fetch(`/v1/board/${list._id}`, {
+          method: "DELETE",
+        });
+
+      } catch (err) {
+        alert("Xoá list thất bại");
+        console.error(err);
+      }
+    }
+
+    menu.style.display = "none";
+  });
+
+  // Click ra ngoài thì đóng menu
+  document.addEventListener("click", () => {
+    menu.style.display = "none";
+  });
+
+
+  header.appendChild(h3);
+  header.appendChild(menuBtn);
+  header.appendChild(menu);
+
+  listEl.appendChild(header);
 
   // CARD container
   const cardsContainer = document.createElement("div");
@@ -165,7 +247,6 @@ function createListElement(list) {
     // Tạo topBar (luôn có)
     const topBar = document.createElement("div");
     topBar.className = "card-topbar";
-
     // --- LABELS (nếu có) ---
     if (Array.isArray(card.labels) && card.labels.length > 0) {
       const labelsEl = document.createElement("div");
@@ -190,11 +271,46 @@ function createListElement(list) {
     completeFooter.className = "card-complete-footer";
     footerEl.appendChild(completeFooter);
 
+    const actionsWrap = document.createElement("div");
+    actionsWrap.className = "card-actions";
+
+    // Checkbox complete
     const checkboxEl = document.createElement("input");
     checkboxEl.type = "checkbox";
     checkboxEl.className = "card-checkbox";
-    // --- SET INITIAL COMPLETE STATE ---
     checkboxEl.checked = card.complete === true;
+
+    // Icon thùng rác
+    const deleteBtn = document.createElement("img");
+    deleteBtn.src = "uploads/icons8-delete-128.png"; // sửa đúng path của bạn
+    deleteBtn.className = "card-delete-btn";
+    deleteBtn.alt = "Delete card"
+    deleteBtn.addEventListener("click", async (e) => {
+      // ⛔ chặn bubble lên card
+      e.stopPropagation();
+      e.preventDefault();
+
+      if (!confirm("Xoá card này?")) return;
+
+      try {
+        // UI trước
+        cardEl.remove();
+
+        // Backend
+        await fetch(`/v1/board/delete/${card._id}`, {
+          method: "DELETE",
+        });
+      } catch (err) {
+        alert("Xoá card thất bại");
+        console.error(err);
+      }
+    });
+
+
+    // Gộp vào wrapper
+    actionsWrap.appendChild(deleteBtn);
+    actionsWrap.appendChild(checkboxEl);
+
     function renderCompleteElement() {
       completeFooter.innerHTML = `
     <div class="card-complete">
@@ -216,7 +332,9 @@ function createListElement(list) {
 
 
     // Thêm checkbox vào topBar
-    topBar.appendChild(checkboxEl);
+    topBar.appendChild(actionsWrap);
+    cardEl.appendChild(topBar);
+
     cardEl.appendChild(topBar);
 
     // Tên card
@@ -385,6 +503,25 @@ function createListElement(list) {
 
   return listEl;
 }
+//socket xoá 
+socket.on("cards-cleared", ({ listId }) => {
+  const listEl = document.querySelector(`.list[data-id="${listId}"]`);
+  if (!listEl) return;
+
+  const cardsContainer = listEl.querySelector(".cards-container");
+  cardsContainer.innerHTML = "";
+});
+socket.on("list-deleted", ({ listId }) => {
+  const listEl = document.querySelector(`.list[data-id="${listId}"]`);
+  if (listEl) listEl.remove();
+});
+socket.on("card-deleted", ({ cardId }) => {
+  const cardEl = document.querySelector(
+    `.card[data-id="${cardId}"]`
+  );
+  if (cardEl) cardEl.remove();
+});
+
 
 socket.on("card:completeUpdated", ({ cardId, complete }) => {
   const ui = cardUIActions[cardId];
@@ -515,6 +652,7 @@ socket.on("newCard", (card) => {
     openCardDetail(card._id);
   });
   listEl.appendChild(cardEl);
+  renderBoardWithLists();
 });
 // ===================================================================
 // Tạo LIST mới

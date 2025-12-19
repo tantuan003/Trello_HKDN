@@ -81,19 +81,31 @@ function createBoardCard(board) {
   const cover = document.createElement("div");
   cover.className = "board-cover";
 
-  if (
-    board.background?.startsWith("/uploads/") ||
-    board.background?.startsWith("/backgrounds/")
-  ) {
-    cover.style.backgroundImage = `url(${board.background})`;
-    cover.style.backgroundSize = "cover";
-    cover.style.backgroundPosition = "center";
-  } else if (board.background) {
-    cover.classList.add(board.background); // class CSS gradient
-  } else {
-    cover.classList.add("gradient-1");    // fallback
-  }
+  const bg = board.background;
 
+      if (
+        bg &&
+        (
+          bg.endsWith(".png") ||
+          bg.endsWith(".jpg") ||
+          bg.endsWith(".jpeg") ||
+          bg.includes("/images/") ||
+          bg.startsWith("/uploads/") ||
+          bg.startsWith("/backgrounds/")
+        )
+      ) {
+        // 🔥 background là URL ảnh
+        cover.style.backgroundImage = `url("${bg}")`;
+        cover.style.backgroundSize = "cover";
+        cover.style.backgroundPosition = "center";
+        cover.style.backgroundRepeat = "no-repeat";
+      } else if (bg) {
+        // 🔥 background là tên class (gradient-1, ...)
+        cover.classList.add(bg);
+      } else {
+        // không có gì thì dùng default
+        cover.classList.add("gradient-1");
+      }
   // Footer
   const footer = document.createElement("div");
   footer.className = "board-footer";
