@@ -59,3 +59,73 @@ body {
   transform: translateY(-4px);
   box-shadow: 0 4px 10px rgba(0,0,0,0.12);
 }
+/* ===========================
+   ✅ DELETE ICON (hover)
+=========================== */
+.board-footer{
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* title trái, icon phải */
+  gap: 10px;
+}
+
+.board-delete-btn{
+  border: none;
+  background: transparent;
+  padding: 4px;
+  border-radius: 8px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(2px);
+  transition: opacity .15s ease, transform .15s ease, background .15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.board-delete-btn img{
+  width: 18px;
+  height: 18px;
+}
+
+.board-card:hover .board-delete-btn{
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.board-delete-btn:hover{
+  background: rgba(0,0,0,0.06);
+}
+
+.board-delete-icon{
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+}
+
+
+/* ===========================
+   ✅ DELETE MODAL STYLE
+=========================== */
+.delete-modal .delete-desc{
+  margin: 10px 0 16px;
+  color: #5e6c84;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.btn-danger{
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-danger:hover{
+  background: #dc2626;
+}

@@ -58,7 +58,7 @@ export async function loadSidebarWorkspace() {
       if (workspaceIdFromUrl === workspace._id) {
         currentWorkspaceId = workspace._id;
         currentVisibility = workspace.visibility;
-        head.setAttribute("aria-expanded", "true");
+        head.setAttribute("aria-expanded", "false");
         menu.style.display = "none";
       }
 
@@ -66,14 +66,14 @@ export async function loadSidebarWorkspace() {
       if (!workspaceIdFromUrl && index === 0) {
         currentWorkspaceId = workspace._id;
         currentVisibility = workspace.visibility;
-        head.setAttribute("aria-expanded", "true");
+        head.setAttribute("aria-expanded", "false");
         menu.style.display = "none";
       }
 
       head.addEventListener("click", () => {
         const isOpen = menu.style.display === "block";
         menu.style.display = isOpen ? "none" : "block";
-        head.setAttribute("aria-expanded", !isOpen);
+        head.setAttribute("aria-expanded", isOpen ? "false" : "true");
       });
 
       item.appendChild(head);
@@ -176,6 +176,10 @@ function clearSearchHistory() {
 }
 
 async function fetchBoardsForSearch() {
+  if (localStorage.getItem("boardsDirty")) {
+    cachedSearchBoards = null;
+    localStorage.removeItem("boardsDirty");
+  }
   if (cachedSearchBoards) return cachedSearchBoards;
 
   try {

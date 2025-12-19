@@ -224,7 +224,13 @@ body {
   transform: rotate(-45deg);
   transition: transform .15s ease;
 }
-.workspaces.is-collapsed .wsp-head .chev { transform: rotate(45deg); }
+.wsp-head[aria-expanded="false"] .chev {
+  transform: rotate(-45deg);
+}
+.wsp-head[aria-expanded="true"] .chev {
+  transform: rotate(45deg);
+}
+.workspaces.is-collapsed .wsp-head .chev { transform: rotate(-45deg); }
 
 .wsp-menu {
   list-style: none;

@@ -282,7 +282,7 @@ export const uploadBackground = [
 
 // GET /api/boards/recent
 export const getBoardsrecent = async (req, res) => {
- try {
+  try {
     // 🔐 đảm bảo có user từ token
     if (!req.user || !req.user.id) {
       console.log("Không tìm thấy user trong req.user:", req.user);
@@ -380,7 +380,7 @@ export const updateCardComplete = async (req, res) => {
   try {
     const { cardId } = req.params;
     const { complete } = req.body; // true / false
-    
+
     if (typeof complete !== "boolean") {
       return res.status(400).json({ message: "complete must be boolean" });
     }
@@ -409,5 +409,54 @@ export const updateCardComplete = async (req, res) => {
   } catch (error) {
     console.error("Error updating card complete:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+export const deleteBoard = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const board = await Board.findById(boardId);
+    if (!board) {
+      return res.status(404).json({ success: false, message: "Board không tồn tại" });
+    }
+
+    // ✅ Chỉ cho phép người tạo board xoá
+    if (board.createdBy?.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: "Bạn không có quyền xoá board này" });
+    }
+
+    // ✅ Xoá toàn bộ cards thuộc các list của board
+    const lists = await List.find({ board: boardId }).select("_id");
+    const listIds = lists.map((l) => l._id);
+
+    if (listIds.length) {
+      await Card.deleteMany({ list: { $in: listIds } });
+      await List.deleteMany({ _id: { $in: listIds } });
+    }
+
+    // ✅ Gỡ board khỏi workspace.boards
+    if (board.workspace) {
+      await Workspace.findByIdAndUpdate(board.workspace, {
+        $pull: { boards: board._id },
+      });
+    }
+
+    // ✅ Xoá board
+    await Board.deleteOne({ _id: boardId });
+
+    const io = req.app.get("socketio");
+    if (io) {
+      io.emit("board:deleted", { boardId });  // ✅ đổi từ io.to(workspace) -> io.emit
+    }
+
+    return res.status(200).json({ success: true, message: "Xoá board thành công" });
+  } catch (error) {
+    console.error("❌ deleteBoard error:", error);
+    return res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
