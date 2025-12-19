@@ -114,7 +114,34 @@ function createBoardCard(board) {
   title.className = "board-title";
   title.textContent = board.name;
 
+  const deleteicon = document.createElement("img");
+  deleteicon.src="uploads/icons8-delete-128.png"
+  deleteicon.addEventListener("click", async (e) => {
+  e.stopPropagation();     // ❗ chặn bubble
+  e.preventDefault();      // ❗❗ chặn <a> navigate
+
+  const ok = confirm("Xoá board này? Toàn bộ list và card sẽ mất!");
+  if (!ok) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/v1/board/delete/${board._id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message);
+
+    // ❗ remove đúng phần tử
+    card.remove();
+  } catch (err) {
+    alert(err.message || "Xoá board thất bại");
+  }
+});
+
+
   footer.appendChild(title);
+  footer.appendChild(deleteicon);
   card.appendChild(cover);
   card.appendChild(footer);
 
