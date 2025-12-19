@@ -224,7 +224,13 @@ body {
   transform: rotate(-45deg);
   transition: transform .15s ease;
 }
-.workspaces.is-collapsed .wsp-head .chev { transform: rotate(45deg); }
+.wsp-head[aria-expanded="false"] .chev {
+  transform: rotate(-45deg);
+}
+.wsp-head[aria-expanded="true"] .chev {
+  transform: rotate(45deg);
+}
+.workspaces.is-collapsed .wsp-head .chev { transform: rotate(-45deg); }
 
 .wsp-menu {
   list-style: none;
@@ -404,3 +410,33 @@ body {
   font-size: 13px;
   color: var(--muted);
 }
+/* ===== USER DROPDOWN (Logout) ===== */
+.user-menu { position: relative; }
+
+.user-dropdown{
+  position: absolute;
+  right: 0;
+  top: 42px;
+  min-width: 160px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0,0,0,.12);
+  display: none;
+  z-index: 999;
+  overflow: hidden;
+}
+
+.user-dropdown.is-open { display: block; }
+
+.user-dropdown__item{
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.user-dropdown__item:hover { background: var(--hover); }

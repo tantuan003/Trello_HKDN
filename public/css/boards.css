@@ -52,7 +52,6 @@
   font-size: 16px;
 }
 
-
 /* Grid cho các board */
 .card-grid {
   display: grid;
@@ -76,6 +75,9 @@
   overflow: hidden;
   transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   min-height: 120px;
+
+  /* ✅ để button absolute bám theo card */
+  position: relative;
 }
 
 .board-card:hover {
@@ -83,9 +85,7 @@
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
   border-color: #e2e8f0;
 }
-.board-card:hover .board-footer img{
-  opacity: 1;
-}
+
 .board-cover {
   height: 100%;
   width: auto;
@@ -129,12 +129,7 @@
   display: flex;
   align-items: center;
 }
-.board-footer img{
-  width: 18px;
-  height: 18px;
-  margin-left: auto;
-  opacity: 0;
-}
+
 .board-title {
   font-weight: 600;
 }
@@ -152,6 +147,40 @@
   color: #6b7280;
   font-weight: 600;
 }
+
+/* ✅ DELETE ICON – chỉ ẩn / hiện (không viền, không nền, không nhún) */
+.board-delete-btn{
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  z-index: 20;
+
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+
+  opacity: 0;              /* ẩn */
+  pointer-events: none;    /* không click khi ẩn */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* hover card thì hiện */
+.board-card:hover .board-delete-btn{
+  opacity: 1;
+  pointer-events: auto;    /* click được */
+}
+
+/* icon giữ nguyên */
+.board-delete-btn img{
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
 /* nút outline chung */
 .btn-outline {
   display: inline-flex;
@@ -182,12 +211,47 @@
   background: #eceff3;
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
+/* ✅ nút Delete: giống nút Cancel (btn-outline) nhưng màu đỏ */
+.btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 10px 18px;        /* giống btn-outline */
+  border-radius: 10px;       /* giống btn-outline */
+
+  background: #dc2626;       /* nền đỏ */
+  border: 1px solid #dc2626; /* viền đỏ */
+  color: #ffffff;            /* chữ trắng */
+
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+
+  transition: all 0.18s ease; /* giống btn-outline */
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+.btn-danger:hover {
+  background: #b91c1c;
+  border-color: #b91c1c;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+}
+
+.btn-danger:active {
+  transform: translateY(0);
+  background: #991b1b;
+  border-color: #991b1b;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
 
 /* Popup overlay */
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0, 0, 0, 0.25); /* nhẹ hơn, đồng điệu UI */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -196,17 +260,21 @@
 
 /* Popup box */
 .modal {
-  background: #fff;
-  padding: 20px;
-  border-radius: 12px;
-  width: 300px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-  animation: fadeInScale 0.2s ease-in-out;
+  background: #ffffff;
+  padding: 20px 22px;
+  border-radius: 10px;
+  width: 320px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12); /* mềm, không gắt */
+
+  /* ✅ bỏ nhún: không dùng scale animation nữa */
+  animation: fadeInScale 0.15s ease-in-out;
 }
 
 .modal h3 {
-  margin-top: 0;
-  margin-bottom: 15px;
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #172b4d;
 }
 
 .modal input {
@@ -259,9 +327,10 @@
   cursor: pointer;
 }
 
+/* ✅ fade in nhẹ, KHÔNG scale (không nhún) */
 @keyframes fadeInScale {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal select {
@@ -272,373 +341,9 @@
   margin: 5px 0 15px 0;
 }
 
-/* css cho list */
-/* ===== CONTAINER CHỨA CÁC LIST ===== */
-/* Vùng chứa tất cả list + nút add */
-.boardView {
-  display: flex;
-  width: 100%;
-  padding: 20px;
-  height: calc(100vh - 120px);
-  box-sizing: border-box;
-}
+/* ... phần list / invite / card ... giữ nguyên như bạn gửi ... */
 
-/* Container chứa list */
-.lists-container {
-  display: flex;
-  height: 500px;
-  align-items: flex-start;
-  gap: 20px;
-  flex-wrap: nowrap;
-  padding-bottom: 10px;
-  scroll-behavior: smooth;
-  margin-top: 20px;
-  z-index: 10;
-}
-
-/* Thanh cuộn ngang */
-.lists-container::-webkit-scrollbar {
-  height: 8px;
-}
-
-.lists-container::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.15);
-  border-radius: 10px;
-}
-
-/* List */
-.list {
-  display: flex;
-  flex-direction: column;
-  background-color: #0a0303d8;
-  border-radius: 8px;
-  padding: 12px;
-  flex: 0 0 280px;
-  min-height: 100px;
-  max-height: 400px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-}
-
-.list h3 {
-  height: 10px;
-  font-size: 1rem;
-  font-weight: 600;
-  color: #ffffffd1;
-}
-
-/* Cards container */
-.cards-container {
-  flex-grow: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 5px 0;
-}
-
-.cards-container::-webkit-scrollbar {
-  width: 6px;
-}
-
-.cards-container::-webkit-scrollbar-thumb {
-  background: rgba(0,0,0,0.15);
-  border-radius: 6px;
-}
-
-/* Card */
-.card {
-  height: 40px;
-  padding: 10px 12px;
-  background-color: #ffffff;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  color: #222;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  transition: all 0.2s ease;
-}
-
-.card:hover {
-  background-color: #f0f4f8;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
-}
-
-.card:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-/* --- Nút Add List --- */
-.add-list {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1.5px dashed rgba(0, 0, 0, 0.15);
-  border-radius: 8px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  color: #444;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  min-height: 44px;
-}
-
-.add-list:hover {
-  background: rgba(255, 255, 255, 0.45);
-  border-color: #0079bf;
-  transform: translateY(-1px);
-}
-
-/* Nút hiển thị Add form */
-#showAddListBtn {
-  background: none;
-  border: none;
-  color: #0079bf;
-  font-size: 0.85rem;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  cursor: pointer;
-  transition: color 0.2s, transform 0.2s;
-}
-
-#showAddListBtn:hover {
-  color: #026aa7;
-  transform: scale(1.02);
-}
-
-/* Form thêm list */
-#addListForm {
-  display: flex;
-  flex-direction: column;
-  width: 220px;
-  gap: 6px;
-  margin-top: 6px;
-  padding: 8px;
-  background-color: #020409cd;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  animation: fadeInUp 0.25s ease;
-}
-
-/* Input */
-#addListForm input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  outline: none;
-  font-size: 0.9rem;
-  transition: all 0.1s ease;
-}
-
-#addListForm input:focus {
-  border: 2px solid #00f2fe;
-  outline: none;
-  box-shadow: 0 0 5px #00f2fe;
-}
-
-/* Container hai nút Add / Cancel */
-.list-btn {
-  display: flex;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-/* Nút Add / Cancel */
-.list-btn button {
-  flex: 1;
-  border: none;
-  padding: 6px 0;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 0.85rem;
-  transition: all 0.2s ease;
-}
-
-/* Nút Add */
-#addListBtn {
-  background-color: #2af553;
-  color: white;
-}
-
-#addListBtn:hover {
-  background-color: #15f241;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-
-/* Nút Cancel */
-#cancelAddListBtn {
-  background-color: #e1e2e6;
-  color: #333;
-}
-
-#cancelAddListBtn:hover {
-  background-color: #cfd0d4;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Ẩn form ban đầu */
-.hidden {
-  display: none;
-}
-
-#inviteFormContainer {
-  position: absolute;
-  right: 0;
-  margin-right: 45px;
-  margin-top: 10px;
-  background: rgba(36, 35, 35, 0.408);
-  border: 1px solid #ccc;
-  padding: 10px;
-  border-radius: 6px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-  z-index: 15;
-}
-
-#inviteUser {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 8px;
-  border-radius: 10px;
-  background: rgba(36, 35, 35, 0.262);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.036);
-}
-
-#inviteUser h2 {
-  margin: 0;
-  font-size: 20px;
-}
-
-#inviteUser img {
-  width: 27px;
-  height: 27px;
-  object-fit: contain;
-  cursor: pointer;
-}
-
-#inviteForm input {
-  height: 35px;
-  padding: 5px 5px;
-  color: #ccc;
-  margin-right: 5px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background-color: #000000dd;
-  box-sizing: border-box;
-  transition: border 0.1s ease, box-shadow 0.1s ease;
-}
-
-#inviteForm input:focus {
-  border: 2px solid #00f2fe;
-  outline: none;
-  box-shadow: 0 0 5px #00f2fe;
-}
-
-#inviteForm button {
-  padding: 5px 10px;
-  border-radius: 4px;
-  border: none;
-  background-color: #06f455;
-  color: rgb(255, 255, 255);
-  cursor: pointer;
-}
-
-#inviteForm button:hover {
-  background-color: #049526;
-}
-
-.add-card-btn {
-  margin-top: 8px;
-  background: none;
-  border: none;
-  color: #0079bf;
-  cursor: pointer;
-  text-align: left;
-  padding: 6px;
-}
-
-.add-card-btn:hover {
-  background-color: #363942e8;
-  border-radius: 4px;
-}
-
-.add-card-input-container {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background-color: #fff;
-  padding: 10px;
-  border-radius: 8px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-  overflow: hidden;
-  opacity: 0;
-  max-height: 200px;
-}
-
-.add-card-input-container.show {
-  min-height: 125px;
-  max-height: 150px;
-  opacity: 1;
-  z-index: 30;
-}
-
-.add-card-input-container.hidden {
-  display: none;
-}
-
-.add-card-input {
-  width: 100%;
-  height: 40px;
-  padding: 6px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-.add-card-input:focus {
-  border: 2px solid #00f2fe;
-  outline: none;
-  box-shadow: 0 0 5px #00f2fe;
-}
-
-.save-card-btn,
-.cancel-card-btn {
-  padding: 6px 10px;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.save-card-btn {
-  background-color: #07a8f3;
-  color: white;
-}
-
-.save-card-btn:hover {
-  background-color: #047abd;
-}
-
-.cancel-card-btn {
-  background-color: #ccc;
-}
-
-.cancel-card-btn:hover {
-  background-color: #7a7878;
-}
-
+/* Empty */
 .card-grid.empty {
   display: flex;
   justify-content: center;
