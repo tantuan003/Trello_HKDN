@@ -5,6 +5,7 @@ const UserSchema = new mongoose.Schema({
   email:    { type: String, required: true, unique: true },
   password: { type: String, required: true },
   workspaces: [{ type: mongoose.Schema.Types.ObjectId, ref: "Workspace" }],
+  avatar:     { type: String }
 }, { timestamps: true });
 
 export default mongoose.model("User", UserSchema);

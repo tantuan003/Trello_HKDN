@@ -1,5 +1,5 @@
 import express from "express";
-import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard } from "../controllers/boardController.js";
+import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard,deleteBoard } from "../controllers/boardController.js";
 const router = express.Router();
 import { verifyToken } from "../middlewares/verifyToken.js";
 // POST /v1/board
@@ -8,6 +8,7 @@ router.get("/myboards",verifyToken, getBoardsByCurrentUser);
 router.get("/workspace/:workspaceId",verifyToken, getBoardsByWorkspace);
 
 //xoá 
+router.delete("/delete/:boardId", verifyToken, deleteBoard);
 router.delete("/:listId/clear-cards", clearCardsInList);
 router.delete("/:listId", deleteList);
 router.delete("/delete/:cardId", deleteCard);
