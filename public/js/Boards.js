@@ -61,7 +61,7 @@ function openDeleteModal(boardId, cardEl) {
   btnConfirm.onclick = async () => {
     btnConfirm.disabled = true;
     try {
-      const res = await fetch(`${API_BASE}/v1/board/${pendingDelete.boardId}`, {
+      const res = await fetch(`${API_BASE}/v1/board/delete/${pendingDelete.boardId}`, {
         method: "DELETE",
         credentials: "include",
       });
