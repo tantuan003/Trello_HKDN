@@ -6,6 +6,7 @@ import Card from "../models/CardModel.js";
 import User from "../models/UserModel.js";
 import multer from "multer";
 import path from "path";
+import { io } from "../server.js";
 
 export const createBoard = async (req, res) => {
   try {
@@ -72,16 +73,16 @@ export const getBoardById = async (req, res) => {
   try {
     const { boardId } = req.params;
 
-    // Populate lists và cards
+    // Populate lists + cards + members
     const board = await Board.findById(boardId)
       .populate({
         path: "lists",
-        populate: { path: "cards" }  // nested populate cards trong list
-      });
-    await Board.findByIdAndUpdate(boardId, {
-      lastViewedAt: new Date()
-    });
+        populate: { path: "cards" },  // nested populate cards trong list
+      })
+      .populate("members", "username email"); // populate member info
 
+    // Cập nhật lastViewedAt
+    await Board.findByIdAndUpdate(boardId, { lastViewedAt: new Date() });
 
     if (!board) return res.status(404).json({ message: "Board không tồn tại" });
 
@@ -91,6 +92,35 @@ export const getBoardById = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };
+
+export const getBoardsByWorkspace = async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+
+    // Lấy toàn bộ boards thuộc workspace
+    const boards = await Board.find({ workspace: workspaceId })
+      .populate({
+        path: "lists",
+        populate: { path: "cards" },
+      })
+      .populate("members", "username email");
+
+    res.status(200).json({
+      success: true,
+      data: boards
+    });
+
+  } catch (error) {
+    console.error("Lỗi getBoardsByWorkspace:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server"
+    });
+  }
+};
+
+
+
 
 export const createList = async (req, res) => {
   try {
@@ -168,7 +198,25 @@ export const getCardsByList = async (req, res) => {
     res.status(500).json({ message: "Lỗi server khi lấy card." });
   }
 };
+export const getCardById = async (req, res) => {
+  try {
+    const { id } = req.params;
 
+    const card = await Card.findById(id)
+      .populate("list", "name")               // tên list
+      .populate("assignedTo", "username email") // user được giao
+      .populate("createdBy", "username email")  // người tạo
+      .populate("comments.user", "username email"); // bình luận
+
+    if (!card)
+      return res.status(404).json({ success: false, message: "Card không tồn tại" });
+
+    res.status(200).json({ success: true, data: card });
+  } catch (err) {
+    console.error("getCardById error:", err);
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
 
 // mời user
 export const inviteUser = async (req, res) => {
@@ -277,3 +325,198 @@ export const getBoardsrecent = async (req, res) => {
   }
 };
 
+// update card
+export const updateCard = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Các trường được phép update
+    const allowedFields = ["name", "description", "dueDate", "labels", "assignedTo", "attachments"];
+    const updateData = {};
+
+    // Lấy những trường tồn tại trong req.body
+    allowedFields.forEach(field => {
+      if (req.body[field] !== undefined) {
+        if (field === "dueDate") {
+          const date = new Date(req.body[field]);
+          if (!isNaN(date.valueOf())) {
+            updateData[field] = date;
+          }
+        } else {
+          updateData[field] = req.body[field];
+        }
+      }
+    });
+
+    // Update card
+    const card = await Card.findByIdAndUpdate(id, updateData, { new: true })
+      .populate("assignedTo", "username _id")
+      .populate("createdBy", "username email")
+      .populate("list", "name")
+      .populate("comments.user", "username email");
+
+    if (!card)
+      return res.status(404).json({ success: false, message: "Card không tồn tại" });
+
+    // ⭐ Emit sự kiện realtime tới room listId
+    if (card.list && card.list.board && card.list.board._id) {
+      io.to(card.list.board._id.toString()).emit("cardUpdated", card);
+    }
+
+    // ⭐ Emit realtime tới room cardId (card detail) nếu muốn
+    io.to(card._id.toString()).emit("cardUpdated", card);
+
+
+    res.status(200).json({ success: true, data: card });
+  } catch (err) {
+    console.error("updateCard error:", err);
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
+
+//card-complete
+
+export const updateCardComplete = async (req, res) => {
+  try {
+    const { cardId } = req.params;
+    const { complete } = req.body; // true / false
+    
+    if (typeof complete !== "boolean") {
+      return res.status(400).json({ message: "complete must be boolean" });
+    }
+
+    const card = await Card.findByIdAndUpdate(
+      cardId,
+      { complete },
+      { new: true }
+    );
+
+    if (!card) {
+      return res.status(404).json({ message: "Card not found" });
+    }
+
+    // Emit realtime nếu bạn dùng socket.io
+    req.io?.to(cardId).emit("card:completeUpdated", {
+      cardId,
+      complete
+    });
+
+    return res.json({
+      message: "Card updated successfully",
+      card
+    });
+
+  } catch (error) {
+    console.error("Error updating card complete:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+
+//xoá 
+
+export const clearCardsInList = async (req, res) => {
+  try {
+    const { listId } = req.params;
+
+    // Kiểm tra list tồn tại
+    const list = await List.findById(listId);
+    if (!list) {
+      return res.status(404).json({ message: "List không tồn tại" });
+    }
+
+    // Xoá card trong DB
+    await Card.deleteMany({ list: listId });
+
+    // Clear mảng cards trong list
+    list.cards = [];
+    await list.save();
+    // realtime
+     req.io.to(list.board.toString()).emit("cards-cleared", {
+      listId
+    });
+
+
+    res.json({
+      message: "Đã xoá toàn bộ card trong list",
+      listId,
+    });
+  } catch (err) {
+    console.error("clearCardsInList error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+/**
+ * DELETE /v1/lists/:listId
+ * Xoá list + toàn bộ card trong list
+ */
+export const deleteList = async (req, res) => {
+  try {
+    const { listId } = req.params;
+
+    const list = await List.findById(listId);
+    if (!list) {
+      return res.status(404).json({ message: "List không tồn tại" });
+    }
+
+    await Card.deleteMany({ list: listId });
+    await List.findByIdAndDelete(listId);
+     req.io.to(list.board.toString()).emit("list-deleted", {
+      listId
+    });
+
+
+    res.json({
+      message: "Đã xoá list và toàn bộ card trong list",
+      listId,
+    });
+  } catch (err) {
+    console.error("deleteList error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};
+export const deleteCard = async (req, res) => {
+  try {
+    const { cardId } = req.params;
+
+    // 1. Tìm card
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ message: "Card không tồn tại" });
+    }
+
+    const listId = card.list;
+
+    // 2. Tìm list để lấy boardId
+    const list = await List.findById(listId);
+    if (!list) {
+      return res.status(404).json({ message: "List không tồn tại" });
+    }
+
+    const boardId = list.board;
+
+    // 3. Xoá card
+    await Card.findByIdAndDelete(cardId);
+
+    // 4. Gỡ card khỏi list.cards
+    await List.findByIdAndUpdate(listId, {
+      $pull: { cards: cardId }
+    });
+
+    // 5. 🔥 REALTIME
+    req.io.to(boardId.toString()).emit("card-deleted", {
+      cardId,
+      listId
+    });
+
+    res.json({
+      message: "Đã xoá card",
+      cardId,
+      listId
+    });
+  } catch (err) {
+    console.error("deleteCard error:", err);
+    res.status(500).json({ message: "Lỗi server" });
+  }
+};

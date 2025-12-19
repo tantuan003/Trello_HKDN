@@ -1,6 +1,7 @@
 
 const WSP_KEY = "wspMenuCollapsed";
 const SEARCH_HISTORY_KEY = "recentBoardSearches";
+import { API_BASE } from "../js/config.js";
 
 let currentWorkspaceId = null;
 let currentVisibility = null;
@@ -13,7 +14,7 @@ export async function loadSidebarWorkspace() {
   list.innerHTML = "<div>Đang tải workspace...</div>";
 
   try {
-    const res = await fetch("http://localhost:8127/v1/workspace", {
+    const res = await fetch(`${API_BASE}/v1/workspace`, {
       credentials: "include",
     });
     if (!res.ok) throw new Error(`Fetch workspace lỗi: ${res.status}`);
@@ -41,7 +42,7 @@ export async function loadSidebarWorkspace() {
       head.innerHTML = `
         <span class="wsp-badge">${firstLetter}</span>
         <span class="wsp-name">${workspace.name}</span>
-        <span class="chev">▼</span>
+        <span class="chev"></span>
       `;
 
       const menu = document.createElement("ul");
@@ -140,12 +141,7 @@ function initActiveMenu() {
 
   if (page === "boards.html") document.getElementById("boardsMenu")?.classList.add("is-active");
   if (page === "templates.html") {
-    const head = document.getElementById("templateMenu");
-    if (head) {
-      head.classList.add("is-active", "active");
-      const section = head.closest(".nav-section");
-      section?.classList.add("open");
-    }
+    document.getElementById("templateMenu")?.classList.add("is-active");
   }
   if (page === "home.html") document.getElementById("homeMenu")?.classList.add("is-active");
 }
@@ -183,7 +179,7 @@ async function fetchBoardsForSearch() {
   if (cachedSearchBoards) return cachedSearchBoards;
 
   try {
-    const res = await fetch("http://localhost:8127/v1/board/myboards", {
+    const res = await fetch(`${API_BASE}/v1/board/myboards`, {
       credentials: "include",
     });
     const data = await res.json();
@@ -226,12 +222,14 @@ function initGlobalSearch() {
     const keyword = normalizeVi(input.value);
     clearTimeout(debounceTimer);
 
+    // Không có keyword → quay lại hiển thị lịch sử
     if (!keyword) {
       const history = loadSearchHistory();
       renderSearchPanel(panel, history, { mode: "history" });
       return;
     }
 
+    // Debounce 200ms rồi search
     debounceTimer = setTimeout(async () => {
       const boards = await fetchBoardsForSearch();
       const matches = boards.filter((b) => {
@@ -280,6 +278,7 @@ function renderSearchPanel(panel, boards, { mode }) {
   panel.appendChild(header);
 
   boards.forEach((board) => {
+    const bg = board.background;
     const item = document.createElement("button");
     item.type = "button";
     item.className = "search-result-item";
@@ -287,13 +286,28 @@ function renderSearchPanel(panel, boards, { mode }) {
     const thumb = document.createElement("div");
     thumb.className = "search-result-thumb";
     if (
-      board.background?.startsWith("/uploads/") ||
-      board.background?.startsWith("/backgrounds/")
+      bg &&
+      (
+        bg.endsWith(".png") ||
+        bg.endsWith(".jpg") ||
+        bg.endsWith(".jpeg") ||
+        bg.includes("/images/") ||
+        bg.startsWith("./images/") ||
+        bg.startsWith("/uploads/") ||
+        bg.startsWith("/backgrounds/")
+      )
     ) {
-      thumb.style.backgroundImage = `url(${board.background})`;
-    } else if (board.background) {
-      thumb.classList.add(board.background);
-    } else {
+      thumb.style.backgroundImage = `url("${bg}")`;
+      thumb.style.backgroundSize = "cover";
+      thumb.style.backgroundPosition = "center";
+      thumb.style.backgroundRepeat = "no-repeat";
+    }
+    // 🔥 MÀU (class gradient,…)
+    else if (bg) {
+      thumb.classList.add(bg);
+    }
+    // fallback
+    else {
       thumb.classList.add("gradient-1");
     }
 
@@ -331,12 +345,8 @@ export function initSidebarHeader() {
 
   loadSidebarWorkspace();
   initWorkspaceToggle();
-  initTemplatesMenuToggle();
   initActiveMenu();
   initGlobalSearch();
 
   document.body.dataset.sidebarHeaderInit = "1";
 }
-
-
-

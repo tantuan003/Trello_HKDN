@@ -27,8 +27,8 @@ router.post("/login", loginUser);
 router.post("/logout", verifyToken, (req, res) => {
   res.clearCookie("token", {
     httpOnly: true,
-    secure: false,
-    sameSite: "lax",
+    secure: true,
+    sameSite: "none",
   });
 
   return res.status(200).json({
