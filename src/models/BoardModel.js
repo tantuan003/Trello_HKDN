@@ -11,8 +11,26 @@ const boardSchema = new mongoose.Schema({
     default: "private"
   },
   lists: [{ type: mongoose.Schema.Types.ObjectId, ref: "List" }],
-  members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-  
+  members: [
+    {
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+      },
+      role: {
+        type: String,
+        enum: ["owner", "admin", "member"],
+        default: "member"
+      },
+      joinedAt: {
+        type: Date,
+        default: Date.now
+      }
+    }
+  ]
+  ,
+
   // ⭐ thêm vào đây
   lastViewedAt: { type: Date, default: null },
 
