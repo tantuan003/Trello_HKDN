@@ -22,8 +22,8 @@ export const getWorkspaceMembers = async (req, res) => {
     const workspaceId = req.params.workspaceId;
 
     const workspace = await Workspace.findById(workspaceId)
-      .populate("owner", "username email")       
-      .populate("members", "username email role"); 
+      .populate("owner", "username email")
+      .populate("members.user", "username email avatar");
 
     if (!workspace) {
       return res.status(404).json({ message: "Workspace không tồn tại" });
@@ -45,18 +45,25 @@ export const getWorkspaceMembers = async (req, res) => {
 
     // Members
     workspace.members.forEach(m => {
-      if (!seen.has(m._id.toString())) {
+      if (!m.user) return; // tránh crash nếu user bị xóa
+      if (!seen.has(m.user._id.toString())) {
         allMembers.push({
-          _id: m._id,
-          username: m.username,
-          email: m.email,
+          _id: m.user._id,
+          username: m.user.username,
+          email: m.user.email,
+          avatar: m.user.avatar,
           role: m.role || "Member"
         });
-        seen.add(m._id.toString());
+        seen.add(m.user._id.toString());
       }
     });
 
-    res.json(allMembers);
+
+    res.json({
+      success: true,
+      data: allMembers
+    });
+
 
   } catch (err) {
     console.error("ERROR getWorkspaceMembers:", err);
@@ -68,7 +75,7 @@ export const getWorkspaceMembers = async (req, res) => {
 export const inviteUserByEmail = async (req, res) => {
   try {
     const { workspaceId } = req.params;
-    const { email } = req.body;
+    const { email, role } = req.body;
 
     if (!workspaceId) return res.status(400).json({ message: "workspaceId thiếu" });
     if (!email) return res.status(400).json({ message: "Email thiếu" });
@@ -80,27 +87,28 @@ export const inviteUserByEmail = async (req, res) => {
     if (!user) return res.status(404).json({ message: "User không tồn tại" });
 
     // Kiểm tra user đã có trong workspace chưa
-    const isMember = workspace.members.some(m => m.toString() === user._id.toString());
+    const isMember = workspace.members.some(
+      m => m.user && m.user.toString() === user._id.toString()
+    );
     if (isMember) return res.status(400).json({ message: "User đã có trong workspace" });
 
-    // Thêm user vào workspace
-    workspace.members.push(user._id);
+    // 🔹 Thêm user đúng schema
+    workspace.members.push({
+      user: user._id,
+      role: role || "member",
+      joinedAt: new Date()
+    });
+
     await workspace.save();
 
-    // Thêm workspace vào user nếu chưa có
-    const hasWorkspace = user.workspaces.some(w => w.toString() === workspace._id.toString());
-    if (!hasWorkspace) {
-      user.workspaces.push(workspace._id);
-      await user.save();
-    }
-
-    res.json({ message: `Đã mời ${user.username} vào workspace` });
+    res.json({ message: `Đã mời ${user.username} vào workspace với vai trò ${role || "member"}` });
 
   } catch (err) {
     console.error("ERROR inviteUserByEmail:", err);
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
+
 
 // 4. Cập nhật tên workspace
 export const updateWorkspaceName = async (req, res) => {
@@ -170,5 +178,48 @@ export const updateWorkspaceVisibility = async (req, res) => {
 };
 
 
+// tạo work mới
 
+export const createWorkspace = async (req, res) => {
+  try {
+    const { name } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) return res.status(401).json({ message: "Unauthorized" });
+    if (!name) return res.status(400).json({ message: "Workspace name is required" });
+
+    // Tạo workspace mới
+    const workspace = new Workspace({
+      name,
+      owner: userId,
+      members: [
+        {
+          user: userId,
+          role: "owner",
+          joinedAt: new Date()
+        }
+      ],
+      visibility: "private"
+    });
+
+    await workspace.save();
+
+    // Cập nhật user để lưu reference workspace
+    const user = await User.findById(userId);
+    if (user) {
+      user.workspaces.push(workspace._id);
+      await user.save();
+    }
+
+    res.status(201).json({
+      success: true,
+      message: "Workspace created successfully",
+      data: workspace
+    });
+
+  } catch (err) {
+    console.error("ERROR createWorkspace:", err);
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
+  }
+};
 

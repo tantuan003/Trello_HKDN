@@ -45,16 +45,20 @@ function renderAssignedMembersinvite(members) {
   const container = document.getElementById("assignedAvatars");
   container.innerHTML = "";
 
-  if (!members || members.length === 0) {
-    container.innerHTML = "";
-    return;
-  }
+  if (!members || members.length === 0) return;
 
   members.forEach(member => {
+    if (!member.user) return; // tránh crash
+
     const avatar = document.createElement("div");
     avatar.className = "assigned-avatar";
-    avatar.textContent = member.username[0].toUpperCase();
-    avatar.title = member.email;
+
+    avatar.textContent = member.user.username
+      ?.charAt(0)
+      .toUpperCase() || "?";
+
+    avatar.title = member.user.email || "";
+
     container.appendChild(avatar);
   });
 }
@@ -99,7 +103,6 @@ async function renderBoardWithLists() {
     }
     // ⬇️ Áp dụng background vào trang
     applyBoardBackground(background);
-
 
     listsContainer.innerHTML = "";
 
@@ -432,26 +435,33 @@ function createListElement(list) {
     membersEl.style.display = "flex";
     membersEl.style.gap = "4px";
 
-    // Giả sử card.members là mảng avatar URL
     (card.assignedTo || []).forEach(userId => {
-      const user = members.find(u => u._id === userId);
-      if (!user) return;
+      const member = members.find(
+        m => String(m.user?._id) === String(userId)
+      );
+      if (!member) return;
+
+      const user = member.user;
 
       const memberEl = document.createElement("div");
       memberEl.className = "card-member";
-      memberEl.title = user.username + `(${user.email})` || "Unknown";
+      memberEl.title = `${user.username} (${user.email})`;
 
-      if (user.avatarUrl) {
+      if (user.avatar) {
         const img = document.createElement("img");
-        img.src = user.avatarUrl;
-        img.alt = user.name || "member";
+        img.src = `${API_BASE}/${user.avatar}`; // nhớ đúng path
+        img.alt = user.username;
+        img.className = "card-member-avatar";
         memberEl.appendChild(img);
       } else {
-        memberEl.textContent = (user.username || "?")[0].toUpperCase();
+        memberEl.textContent = user.username
+          ?.charAt(0)
+          .toUpperCase();
       }
 
       membersEl.appendChild(memberEl);
     });
+
 
     // Thêm due date + members vào footer
     if (dueEl) footerEl.appendChild(dueEl);
@@ -1036,34 +1046,41 @@ function loadAssignList(filter = "") {
   const assignListEl = document.getElementById("assignList");
   assignListEl.innerHTML = "";
 
+  if (!Array.isArray(members)) return;
+
   members
-    .filter(member => member.username.toLowerCase().includes(filter.toLowerCase()))
-    .forEach(member => {
+    .filter(m =>
+      m.user &&
+      m.user.username.toLowerCase().includes(filter.toLowerCase())
+    )
+    .forEach(m => {
       const li = document.createElement("li");
-      li.dataset.id = member._id;
+      li.dataset.id = m.user._id;
       li.className = "assign-member-item";
 
       // Avatar tròn
       const avatar = document.createElement("div");
       avatar.className = "member-avatar";
-      avatar.textContent = member.username[0].toUpperCase();
+      avatar.textContent = m.user.username
+        ?.charAt(0)
+        .toUpperCase() || "?";
 
       // Tên member
       const name = document.createElement("span");
       name.className = "member-name";
-      name.textContent = member.username;
+      name.textContent = m.user.username;
 
       li.appendChild(avatar);
       li.appendChild(name);
 
       // Nếu member đã assign → đánh dấu
-      if (assignedMembers.includes(member._id)) {
+      if (assignedMembers.includes(m.user._id)) {
         li.classList.add("assigned");
       }
 
       // Click assign member
       li.addEventListener("click", () => {
-        assignMemberToCard(member._id);
+        assignMemberToCard(m.user._id);
       });
 
       assignListEl.appendChild(li);
@@ -1101,12 +1118,20 @@ document.getElementById("assignSearch").addEventListener("input", (e) => {
 
 
 function assignMemberToCard(userId) {
-  if (!currentCard || !currentCard._id) return;
+  console.log("assign user:", userId);
+  console.log("currentCard:", currentCard);
+
+  if (!currentCard || !currentCard._id) {
+    console.error("❌ currentCard chưa có");
+    return;
+  }
+
   socket.emit("card:assignMember", {
     cardId: currentCard._id,
     userId
   });
 }
+
 
 function removeMemberFromCard(userId) {
   if (!currentCard || !currentCard._id) return;
@@ -1121,25 +1146,35 @@ function renderAssignedMembers() {
   const cardAssignedEl = document.getElementById("cardAssigned");
   cardAssignedEl.innerHTML = "";
 
-  assignedMembers.forEach(id => {
-    const member = members.find(m => m._id === id);
+  if (!Array.isArray(assignedMembers) || !Array.isArray(members)) return;
+
+  assignedMembers.forEach(userId => {
+    const member = members.find(
+      m => m.user && m.user._id === userId
+    );
+
     if (!member) return;
 
     const li = document.createElement("li");
 
+    // Avatar
     const avatar = document.createElement("div");
     avatar.className = "avatar";
-    avatar.textContent = member.username[0].toUpperCase();
+    avatar.textContent = member.user.username
+      ?.charAt(0)
+      .toUpperCase() || "?";
 
+    // Name
     const name = document.createElement("span");
     name.className = "member-name";
-    name.textContent = member.username;
+    name.textContent = member.user.username;
 
+    // Remove button
     const removeBtn = document.createElement("span");
     removeBtn.className = "remove-member";
     removeBtn.textContent = "×";
     removeBtn.addEventListener("click", () => {
-      removeMemberFromCard(member._id);
+      removeMemberFromCard(member.user._id);
     });
 
     li.appendChild(avatar);
@@ -1148,13 +1183,16 @@ function renderAssignedMembers() {
     cardAssignedEl.appendChild(li);
   });
 }
-function updateBoardViewAssignedUI(cardId, updated) {
 
-  // lấy element của card ngoài board
+function updateBoardViewAssignedUI(cardId, updated) {
+  console.log("🧪 members:", members);
+  console.log("🧪 updated assigned:", updated);
+
   const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
   if (!cardEl) {
-    // nếu DOM chưa render → retry sau 1 frame
-    requestAnimationFrame(() => updateBoardViewAssignedUI(cardId, updated));
+    requestAnimationFrame(() =>
+      updateBoardViewAssignedUI(cardId, updated)
+    );
     return;
   }
 
@@ -1163,24 +1201,39 @@ function updateBoardViewAssignedUI(cardId, updated) {
 
   membersEl.innerHTML = "";
 
-  updated.forEach(uid => {
-    const m = members.find(mem => mem._id === uid);
-    if (!m) return;
+  if (!Array.isArray(updated) || !Array.isArray(members)) return;
+
+  updated.forEach(userId => {
+    const member = members.find(
+      m => String(m.user?._id) === String(userId)
+    );
+    if (!member) return;
 
     const avatar = document.createElement("div");
     avatar.className = "card-member";
-    avatar.title = m.username + `(${m.email})` || "Unknown";
-    avatar.textContent = m.username[0].toUpperCase();
+    avatar.title = `${member.user.username} (${member.user.email})`;
+    avatar.textContent = member.user.username
+      ?.charAt(0)
+      .toUpperCase();
 
     membersEl.appendChild(avatar);
   });
 }
+
+
 function updateAssignedMembersInState(cardId, updated) {
-  boardData.lists.forEach(list => {
-    const c = list.cards.find(c => c._id === cardId);
-    if (c) c.assignedTo = updated;
-  });
+  if (!boardData?.lists || !Array.isArray(updated)) return;
+
+  for (const list of boardData.lists) {
+    const card = list.cards?.find(c => c._id === cardId);
+    console.log("Updated assigned:", cardId, updated);
+    if (card) {
+      card.assignedTo = [...updated]; // clone để tránh reference bug
+      break;
+    }
+  }
 }
+
 
 
 // SOCKET UPDATE

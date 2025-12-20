@@ -5,7 +5,8 @@ import {
     getWorkspaceMembers,
     inviteUserByEmail,
     updateWorkspaceName,
-    updateWorkspaceVisibility } from "../controllers/workspaceController.js";
+    updateWorkspaceVisibility,
+createWorkspace } from "../controllers/workspaceController.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
 
@@ -14,6 +15,10 @@ const router = express.Router();
 
 // Lấy workspace của user
 router.get("/", verifyToken, getUserWorkspaces);
+
+// tạo workspace mới 
+router.post("/create", verifyToken, createWorkspace);
+
 
 // Lấy members theo workspaceId
 router.get("/:workspaceId/members", verifyToken, getWorkspaceMembers);
