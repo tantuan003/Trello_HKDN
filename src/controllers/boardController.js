@@ -253,12 +253,8 @@ export const inviteUser = async (req, res) => {
     const { email } = req.body;
     const inviterId = req.user?.id;
 
-    if (!boardId) {
-      return res.status(400).json({ message: "Board ID không hợp lệ" });
-    }
-
-    if (!email) {
-      return res.status(400).json({ message: "Email không hợp lệ" });
+    if (!boardId || !email) {
+      return res.status(400).json({ message: "Thiếu dữ liệu" });
     }
 
     const board = await Board.findById(boardId);
@@ -266,7 +262,7 @@ export const inviteUser = async (req, res) => {
       return res.status(404).json({ message: "Board không tồn tại" });
     }
 
-    // ✅ Check quyền inviter
+    // 1️⃣ Check quyền inviter trong board
     const inviter = board.members.find(
       m => m.user.toString() === inviterId
     );
@@ -275,21 +271,50 @@ export const inviteUser = async (req, res) => {
       return res.status(403).json({ message: "Không có quyền mời member" });
     }
 
+    // 2️⃣ Lấy workspace
+    const workspace = await Workspace.findById(board.workspace);
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace không tồn tại" });
+    }
+
+    // 3️⃣ Tìm user
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: "User không tồn tại" });
     }
 
-    // ✅ Check user đã là member chưa
-    const existed = board.members.some(
+    // 4️⃣ Check user đã ở workspace chưa
+    const isWorkspaceMember = workspace.members.some(
       m => m.user.toString() === user._id.toString()
     );
 
-    if (existed) {
+    // ⬇️ Nếu chưa → mời vào workspace
+    if (!isWorkspaceMember) {
+      workspace.members.push({
+        user: user._id,
+        role: "member",
+        joinedAt: new Date()
+      });
+
+      await workspace.save();
+
+      // thêm workspace vào user
+      if (!user.workspaces.includes(workspace._id)) {
+        user.workspaces.push(workspace._id);
+        await user.save();
+      }
+    }
+
+    // 5️⃣ Check user đã ở board chưa
+    const isBoardMember = board.members.some(
+      m => m.user.toString() === user._id.toString()
+    );
+
+    if (isBoardMember) {
       return res.status(400).json({ message: "User đã ở trong board" });
     }
 
-    // ✅ Thêm user với role mặc định
+    // 6️⃣ Thêm user vào board
     board.members.push({
       user: user._id,
       role: "member",
@@ -299,7 +324,7 @@ export const inviteUser = async (req, res) => {
     await board.save();
 
     res.status(200).json({
-      message: "Mời user thành công!",
+      message: "Mời user thành công",
       member: {
         user: {
           _id: user._id,
@@ -309,11 +334,13 @@ export const inviteUser = async (req, res) => {
         role: "member"
       }
     });
+
   } catch (err) {
     console.error("❌ inviteUser error:", err);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 
 
 // tải background 

@@ -84,10 +84,31 @@ async function initMembersPage() {
     document.querySelector(".members-list").innerHTML = "<p>Lỗi khi load workspace hoặc members</p>";
   }
 }
+function canEditRole(member) {
+  const currentUserRole = window.currentWorkspaceRole; 
+  // "owner" | "admin" | "member"
+
+  if (!currentUserRole) return false;
+
+  const targetRole = member.role.toLowerCase();
+
+  // ❌ Không ai được sửa Owner
+  if (targetRole === "Owner") return false;
+
+  // ✅ Owner sửa được tất cả
+  if (currentUserRole === "Owner") return true;
+
+  // ✅ Admin chỉ sửa Member
+  if (currentUserRole === "admin" && targetRole === "member") return true;
+
+  return false;
+}
+
 
 // ---------------- Load members ----------------
 async function loadMembers(workspaceId) {
   const membersContainer = document.querySelector(".members-list");
+  
   try {
     const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members`, { credentials: "include" });
     if (!res.ok) throw new Error("Không thể load danh sách members");
@@ -121,16 +142,32 @@ async function loadMembers(workspaceId) {
         avatar.textContent = "?";
       }
 
-      div.innerHTML = `
-        <div class="member-info">
-          <div class="name">${member.username || "Unknown"}</div>
-          <div class="email">${member.email || ""}</div>
-        </div>
-        <div class="role">${member.role || "Member"}</div>
-      `;
-      div.prepend(avatar);
-      membersContainer.appendChild(div);
-    });
+      // 🔽 Role select
+  let roleHTML = `<div class="role-text">${member.role}</div>`;
+  console.log("member:", member);
+console.log("canEditRole:", typeof canEditRole, canEditRole?.(member));
+
+
+  if (canEditRole(member)) {
+    roleHTML = `
+      <select class="role-select" data-user-id="${member._id}">
+        <option value="member" ${member.role === "member" ? "selected" : ""}>Member</option>
+        <option value="admin" ${member.role === "admin" ? "selected" : ""}>Admin</option>
+      </select>
+    `;
+  }
+
+  div.innerHTML = `
+    <div class="member-info">
+      <div class="name">${member.username}</div>
+      <div class="email">${member.email}</div>
+    </div>
+    ${roleHTML}
+  `;
+
+  div.prepend(avatar);
+  membersContainer.appendChild(div);
+});
 
   } catch (err) {
     console.error(err);

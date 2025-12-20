@@ -22,7 +22,7 @@ export const getWorkspaceMembers = async (req, res) => {
     const workspaceId = req.params.workspaceId;
 
     const workspace = await Workspace.findById(workspaceId)
-      .populate("owner", "username email")
+      .populate("owner", "username email avatar ")
       .populate("members.user", "username email avatar");
 
     if (!workspace) {
@@ -38,6 +38,7 @@ export const getWorkspaceMembers = async (req, res) => {
         _id: workspace.owner._id,
         username: workspace.owner.username,
         email: workspace.owner.email,
+        avatar: workspace.owner.avatar,
         role: "Owner"
       });
       seen.add(workspace.owner._id.toString());
