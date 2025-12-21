@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sidebar Header</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../css/sidebar_header.css?v=1" />
 </head>
 
@@ -28,13 +29,20 @@
             <input type="text" placeholder="Search boards..." />
           </div>
 
-          <!-- Panel kết quả search -->
           <div class="search-results" id="globalSearchResults"></div>
         </div>
 
         <div class="actions">
-          <button class="icon-btn" aria-label="Notifications">🔔</button>
-          <div class="avatar"></div>
+          <div class="user-menu" id="userMenu">
+            <button class="avatar" id="avatarBtn" type="button" aria-haspopup="menu" aria-expanded="false"></button>
+
+            <div class="user-dropdown" id="userDropdown" role="menu">
+              <button class="user-dropdown__item" id="profileBtn" type="button" role="menuitem"><i
+                  class="fa-solid fa-address-card"></i> Profile</button>
+              <button class="user-dropdown__item" id="logoutBtn" type="button" role="menuitem"><i
+                  class="fa-solid fa-person-hiking"></i> Logout</button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
@@ -45,9 +53,7 @@
       <aside class="sidebar">
         <nav class="nav" id="sideNav">
           <!-- Boards -->
-          <!-- Boards -->
           <a href="boards.html" class="nav-item" data-target="boards" id="boardsMenu">
-
             <span class="nav-ic">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                 <path d="M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z" fill="none"
@@ -59,7 +65,7 @@
             <span>Boards</span>
           </a>
 
-          <!-- Templates (link + submenu) -->
+          <!-- Templates -->
           <a href="templates.html" class="nav-item" data-target="templates" id="templateMenu">
             <span class="nav-ic">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -70,10 +76,8 @@
             <span>Templates</span>
           </a>
 
-
           <!-- Home -->
           <a href="home.html" class="nav-item" data-target="home" id="homeMenu">
-
             <span class="nav-ic">
               <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
                 <path d="M4 12c2-2 4-3 8-3s6 1 8 3" fill="none" stroke="currentColor" stroke-width="1.8"
@@ -90,12 +94,24 @@
 
         <!-- Workspaces -->
         <section class="workspaces" id="wsp">
-          <h4>Workspaces</h4>
+          <div class="workspace-header">
+            <h4>Workspaces</h4>
+            <button id="addWorkspaceBtn">+</button>
+          </div>
+          <div id="workspaceModal" class="modalworkspace">
+            <div class="modal-content">
+              <span class="close">&times;</span>
+              <h3>Create New Workspace</h3>
+              <form id="workspaceForm">
+                <input type="text" id="workspaceName" placeholder="Workspace name" required />
+                <button type="submit">Create</button>
+              </form>
+            </div>
+          </div>
 
           <div id="workspace-list"></div>
-
         </section>
-      </aside>  
+      </aside>
 
       <!-- Content slot -->
       <main class="content">
@@ -103,8 +119,13 @@
       </main>
     </div>
   </div>
+  <div id="profileModal">
+    <div id="profileContainer">
+      <button class="modal-close">&times;</button>
+    </div>
+  </div>
 
   <script type="module" src="../js/Sidebar_Header.js"></script>
-  
 </body>
+
 </html>

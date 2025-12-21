@@ -16,17 +16,32 @@ export const getUserWorkspaces = async (req, res) => {
   }
 };
 
+// 
+export const getWorkspaceById = async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: "Workspace not found" });
+    }
+    res.json(workspace);
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 // 2. Lấy danh sách thành viên theo workspaceId
 export const getWorkspaceMembers = async (req, res) => {
   try {
     const workspaceId = req.params.workspaceId;
 
     const workspace = await Workspace.findById(workspaceId)
-      .populate("owner", "username email")       
-      .populate("members", "username email role"); 
+      .populate("owner", "username email avatar")        
+      .populate("members", "username email role avatar"); 
 
     if (!workspace) {
-      return res.status(404).json({ message: "Workspace không tồn tại" });
+      return res.status(404).json({ message: "Workspace not found" });
     }
 
     const seen = new Set();
@@ -38,7 +53,8 @@ export const getWorkspaceMembers = async (req, res) => {
         _id: workspace.owner._id,
         username: workspace.owner.username,
         email: workspace.owner.email,
-        role: "Owner"
+        role: "Owner",
+        avatar: workspace.owner.avatar || null
       });
       seen.add(workspace.owner._id.toString());
     }
@@ -50,7 +66,8 @@ export const getWorkspaceMembers = async (req, res) => {
           _id: m._id,
           username: m.username,
           email: m.email,
-          role: m.role || "Member"
+          role: m.role || "Member",
+          avatar: m.avatar || null
         });
         seen.add(m._id.toString());
       }
@@ -60,9 +77,10 @@ export const getWorkspaceMembers = async (req, res) => {
 
   } catch (err) {
     console.error("ERROR getWorkspaceMembers:", err);
-    res.status(500).json({ message: "Lỗi server", error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+
 
 // 3. Mời user vào workspace theo email
 export const inviteUserByEmail = async (req, res) => {
