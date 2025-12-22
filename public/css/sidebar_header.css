@@ -100,13 +100,21 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+
   display: grid;
   place-items: center;
   color: #fff;
   font-size: 12px;
   font-weight: 700;
+
   background: linear-gradient(135deg, #7c3aed, #22c55e);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
+
 
 /* ===== MAIN LAYOUT ===== */
 .main {
@@ -133,16 +141,17 @@ body {
 /* Content chính — xoá hẳn khoảng trắng dư phía trên */
 .content {
   position: absolute;
-  top: var(--header-h);         /* ✅ Bắt đầu ngay dưới header */
+  top: var(--header-h);     
   left: var(--sidebar-w);
   right: 0;
   bottom: 0;
   overflow-y: auto;
   background: #fff;
-  padding: 0 28px 28px;         /* ⚡ Không có padding-top nữa */
+  padding: 0 28px 28px;       
 }
 
 /* ===== SIDEBAR ITEMS ===== */
+/* Link item */
 .nav-item {
   display: flex;
   align-items: center;
@@ -151,28 +160,62 @@ body {
   border-radius: 12px;
   text-decoration: none;
   font-weight: 700;
+
   color: #111827;
-  transition: background .15s, color .15s;
-}
-.nav-ic {
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-  color: #6b7280;
+  transition: background .15s, color .15s; /* thêm color transition */
 }
 
-/* Hover */
-.nav-item:hover { background: #f5f8ff; }
-.nav-item:hover .nav-ic { color: #3b82f6; }
+/* Hover giống cũ + chữ đổi màu */
+.nav-item:hover {
+  background: #f5f8ff;
+  color: #3b82f6; /*chữ đổi màu khi hover */
+}
 
-/* Active giống Trello */
+/* Active giống Trello (bạn có rồi) */
 .nav-item.is-active {
   background: #eaf1ff;
   box-shadow: inset 0 0 0 1px #dbe6ff;
   color: #1c4ce0;
 }
-.nav-item.is-active .nav-ic { color: #1c4ce0; }
+
+/* Icon container dùng mask để đổi màu mượt */
+.nav-ic{
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+
+  /* màu mặc định giống bạn đang dùng */
+  background-color: #6b7280;
+
+  /* giữ animation cũ */
+  transition: background-color .15s;
+}
+
+/* Hover đổi màu icon */
+.nav-item:hover .nav-ic{
+  background-color: #3b82f6;
+}
+
+/* Active đổi màu icon */
+.nav-item.is-active .nav-ic{
+  background-color: #1c4ce0;
+}
+
+/* Mask cho từng icon */
+.icon-boards{
+  -webkit-mask: url("/uploads/icons8-boards.png") no-repeat center / contain;
+  mask: url("/uploads/icons8-boards.png") no-repeat center / contain;
+}
+
+.icon-template{
+  -webkit-mask: url("/uploads/icons8-template.png") no-repeat center / contain;
+  mask: url("/uploads/icons8-template.png") no-repeat center / contain;
+}
+
+.icon-home{
+  -webkit-mask: url("/uploads/icons8-home.png") no-repeat center / contain;
+  mask: url("/uploads/icons8-home.png") no-repeat center / contain;
+}
 
 /* Divider */
 .divider {

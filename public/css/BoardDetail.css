@@ -5,6 +5,8 @@ html, body {
   padding: 10px;
   overflow-x: hidden;  /* tránh bị tràn ngang */
   box-sizing: border-box;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+               "Helvetica Neue", Arial, sans-serif;
 }
 .body-gradient-1{
   background:linear-gradient(135deg, #4facfe, #00f2fe); ;
@@ -238,7 +240,6 @@ html, body {
 .card-complete span {
   font-size: 10px;
   font-weight: 600;
-  font-family: 'Segoe UI', Tahoma, sans-serif;
   color: #28a745;
   font-style: italic;           /* chữ nghiêng */
 }
@@ -655,81 +656,107 @@ html, body {
 }
 
 /* ===== HEADER ===== */
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 18px 22px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #e1e4e8;
+.modal-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 10px 16px;
+  background:#f5f7fa;
+  border-bottom:1px solid #e1e4e8;
 }
 
-#cardTitle {
-  font-size: 22px;
-  font-weight: 600;
-  outline: none;
-  padding: 4px 8px;
-  border-radius: 6px;
-  transition: 0.2s;
+#cardTitle{
+  margin:0;
+  font-size:18px;
+  font-weight:700;
+  line-height:1.2;
+  padding: 2px 6px;
+}
+
+#closeModal{
+  font-size:20px;
+  line-height:1;
+  padding:6px 10px;
+  border:none;
+  background:transparent;
+  cursor:pointer;
 }
 
 #cardTitle:focus {
   background: #fff;
   box-shadow: 0 0 0 2px rgba(76,140,245,0.25);
 }
-
-#closeModal {
-  font-size: 26px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #444;
-  transition: 0.2s;
-}
 #closeModal:hover {
   color: #ff4d4d;
 }
 
 /* ===== BODY ===== */
-.modal-body {
-  padding: 22px;
-  background: #fafbfc;
+.modal-body{
+  background:#fafbfc;
+  padding: 16px;
 }
 
 /* ===== COLUMNS ===== */
-.modal-columns {
-  display: flex;
-  gap: 22px;
+.modal-columns{
+  display:flex;
+  gap:16px;
+  align-items: stretch; 
 }
 
-/* ===== LEFT SECTION ===== */
+/* ===== SECTION   ===== */
 .left-section,
-.right-section {
-  background: #fff;
-  border-radius: 14px;
-  padding: 20px;
-  box-shadow: 0 3px 12px rgba(0,0,0,0.06);
-  max-height: 60vh;
-  overflow-y: auto;
-  scroll-behavior: smooth;
+.right-section{
+  background: #fff;                         /* ✅ trả lại nền */
+  border: 1px solid rgba(0,0,0,0.10);       /* ✅ đường viền chia section */
+  border-radius: 14px;                      /* ✅ bo góc */
+  box-shadow: 0 3px 12px rgba(0,0,0,0.06);  /* ✅ bóng nhẹ */
+
+  height: min(62vh, 520px);                 /* ✅ 2 cột cân nhau */
+  padding: 16px;
+  padding-right: 20px;
+  box-sizing: border-box;
+
+  overflow-y: auto;                         /* ✅ vẫn scroll */
+  overflow-x: hidden;
+
+  /* ✅ ẩn scrollbar đa trình duyệt */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-.left-section {
-  width: 60%;
-  scroll-behavior: smooth;
+.left-section::-webkit-scrollbar,
+.right-section::-webkit-scrollbar{
+  display: none;
 }
 
-.right-section {
-  width: 40%;
+/* widths */
+.left-section{ width: 60%; }
+.right-section{ width: 40%; }
+
+/* spacing trong left */
+.left-section{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
+
+.assigned-member-box{ margin-top: 0; }
+.labels-wrapper{ gap: 8px; }
 
 /* HEADINGS */
 .left-section h4,
 .right-section h4 {
-  margin-bottom: 12px;
+  margin: 0 0 8px;
   font-weight: 600;
   color: #222;
 }
+/* reset margin mặc định trong left-section để spacing đều bằng gap */
+.left-section p,
+.left-section ul{
+  margin: 0;
+  padding: 0;
+}
+
 
 /* ===== DESCRIPTION ===== */
 #cardDescription {
@@ -747,30 +774,41 @@ html, body {
   border-color: #4c8cf5;
   box-shadow: 0 0 0 2px rgba(76,140,245,0.25);
 }
+/*BUTTON*/
+.icon-btn{
+  border: none;
+  background: #4c8cf5;
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+  transition: 0.2s;
+}
+
+.icon-btn:hover{
+  background: #3a74d4;
+  transform: translateY(-1px);
+}
+
+.icon-btn:active{
+  transform: translateY(0);
+}
 
 /* ===== ASSIGNED MEMBERS ===== */
 .assigned-member-box {
-  margin-top: 20px;
+  margin-top: 0;
 }
 
 .assigned-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-}
-
-#AssignedMember-btn {
-  border: none;
-  background: #4c8cf5;
-  color: #fff;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-#AssignedMember-btn:hover {
-  background: #3a74d4;
 }
 
 /* ===== ASSIGN POPUP ===== */
@@ -794,37 +832,27 @@ html, body {
 }
 
 /* ===== LABELS ===== */
-.labels-wrapper {
-  margin-top: 20px;
+.labels-wrapper{
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.labels-container {
+.labels-header{
   display: flex;
-  gap: 10px;
+  align-items: center;
+  justify-content: space-between; /* title trái - nút phải */
+  gap: 12px;
+}
+
+.labels{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px; /* khoảng cách giữa các label */
   align-items: center;
 }
 
-.labels .label {
-  padding: 5px 12px;
-  border-radius: 8px;
-  font-size: 13px;
-  color: #fff;
-  font-weight: 600;
-}
 
-.add-label-btn {
-  border: none;
-  background: #00b894;
-  color: white;
-  padding: 6px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: 0.2s;
-}
-
-.add-label-btn:hover {
-  background: #009a7b;
-}
 .color-options {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
@@ -843,6 +871,13 @@ html, body {
 #cardAttachments li {
   padding: 6px 0;
   border-bottom: 1px solid #eee;
+}
+#cardAttachments{
+  padding-left: 18px;   /* thụt list vừa phải */
+  margin: 0;
+}
+#attachmentInput{
+  margin-top: 8px;
 }
 
 /* ===== COMMENTS ===== */
@@ -872,15 +907,13 @@ html, body {
   border-radius: 8px;
 }
 
-#addCommentBtn {
-  background: #4c8cf5;
-  border: none;
-  padding: 10px 18px;
-  color: white;
+#addCommentBtn{
+  width: auto;
+  min-width: 110px;
+  align-self: flex-end;   /* ✅ đứng gọn bên trái */
+  padding: 8px 14px;
   border-radius: 10px;
-  cursor: pointer;
-  font-size: 15px;
-  transition: 0.2s;
+  font-size: 14px;
 }
 #addCommentBtn:hover {
   background: #3b75d0;
@@ -1189,11 +1222,11 @@ html, body {
 #cardAssigned li .remove-member:hover {
   color: #f11109;
 }
-.due-date-container {
+.due-date-container{
   display: flex;
   flex-direction: column;
-  margin-bottom: 12px;
-  font-family: Arial, sans-serif;
+  margin-bottom: 0;     /* bỏ để spacing đều */
+  gap: 6px;             /* khoảng cách label - inputs */
 }
 
 .due-date-container label {
@@ -1284,8 +1317,7 @@ html, body {
 
 .list-menu-item:hover {
   background: #828283;
-    border-radius: 6px;
-
+  border-radius: 6px;
 }
 
 .list-menu-item.danger {
@@ -1308,4 +1340,112 @@ html, body {
 /* Hover icon */
 .card-delete-btn:hover {
   background: rgba(0,0,0,0.1);
+}
+
+/* =========================================================
+   ✅ CONFIRM DELETE MODAL (DÙNG CHO XOÁ CARD/LIST/CLEAR CARDS)
+   Fix xung đột với .modal fullscreen card detail
+   ========================================================= */
+
+/* Overlay */
+#confirmActionModal.modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;            /* JS sẽ set thành flex */
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(3px);
+  z-index: 10000;           /* cao hơn list/menu/card */
+  padding: 16px;
+}
+
+/* Hộp confirm: override class .modal fullscreen ở trên */
+#confirmActionModal .modal {
+  position: relative !important;
+  inset: auto !important;
+  top: auto !important;
+  left: auto !important;
+  width: min(420px, 92vw) !important;
+  height: auto !important;
+
+  display: block !important;
+  background: #ffffff !important;
+  border-radius: 14px !important;
+  box-shadow: 0 14px 38px rgba(0,0,0,0.28) !important;
+  padding: 18px 18px 14px !important;
+
+  animation: fadeIn 0.18s ease;
+}
+
+/* Title/desc */
+#confirmActionModal .modal h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111;
+}
+
+#confirmActionModal .delete-desc {
+  margin: 0 0 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #444;
+}
+
+/* Actions row */
+#confirmActionModal .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Buttons */
+#confirmActionModal .btn-outline,
+#confirmActionModal .btn-danger,
+#confirmActionModal .btn-primary {
+  border: none;
+  padding: 9px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 13px;
+  transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease;
+}
+
+#confirmActionModal .btn-outline {
+  background: #e9edf3;
+  color: #1f2a37;
+}
+
+#confirmActionModal .btn-outline:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+#confirmActionModal .btn-danger {
+  background: #e53935;
+  color: #fff;
+}
+
+#confirmActionModal .btn-danger:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+#confirmActionModal .btn-primary {
+  background: #4c8cf5;
+  color: #fff;
+}
+
+#confirmActionModal .btn-primary:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+}
+
+#confirmActionModal button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
 }
