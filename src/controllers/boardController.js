@@ -10,62 +10,83 @@ import { io } from "../server.js";
 
 export const createBoard = async (req, res) => {
   try {
-    const { name, workspaceId, visibility } = req.body;
-    const userId = req.user?.id; // lấy từ token
+    const { name, workspaceId, visibility, background } = req.body;
+    const userId = req.user?.id;
 
-    if (!name || !workspaceId) return res.status(400).json({ message: "Thiếu dữ liệu!" });
-    if (!userId) return res.status(401).json({ message: "User chưa xác thực" });
+    if (!userId) return res.status(401).json({ message: "Chưa xác thực" });
+    if (!name?.trim()) return res.status(400).json({ message: "Tên board không hợp lệ" });
+    if (!mongoose.Types.ObjectId.isValid(workspaceId))
+      return res.status(400).json({ message: "workspaceId không hợp lệ" });
 
     const workspace = await Workspace.findById(workspaceId);
-    if (!workspace) return res.status(404).json({ message: "Workspace không tồn tại" });
+    if (!workspace)
+      return res.status(404).json({ message: "Workspace không tồn tại" });
 
-    const board = new Board({
-      name,
+    // (tuỳ chọn) check user là member workspace
+    // if (!workspace.members.includes(userId)) return res.status(403)...
+
+    const board = await Board.create({
+      name: name.trim(),
       workspace: workspaceId,
-      createdBy: new mongoose.Types.ObjectId(userId),
-      background: req.body.background || "gradient-1",
-      visibility: visibility || "workspace"
+      createdBy: userId,
+      background: background || "gradient-1",
+      visibility: visibility || "workspace",
+      members: [
+        {
+          user: userId,
+          role: "owner"
+        }
+      ]
     });
 
-    await board.save();
-
-    workspace.boards = workspace.boards || [];
     workspace.boards.push(board._id);
     await workspace.save();
 
     const io = req.app.get("socketio");
-    if (io) io.to(workspaceId).emit("board:new", board);
+    io?.to(`workspace:${workspaceId}`).emit("board:new", board);
 
-    res.status(201).json({ success: true, message: "Tạo board thành công!", board });
+    res.status(201).json({
+      success: true,
+      message: "Tạo board thành công",
+      board
+    });
   } catch (error) {
-    console.error("❌ Lỗi khi tạo board:", error);
-    res.status(500).json({ success: false, message: "Lỗi server" });
+    console.error("❌ createBoard error:", error);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };
 
 export const getBoardsByCurrentUser = async (req, res) => {
   try {
-    const userId = req.user?.id; // lấy trực tiếp từ middleware
+    const userId = req.user?.id;
     console.log("UserId từ token:", userId);
 
     const boards = await Board.find({
       $or: [
         { createdBy: userId },
-        { members: userId }  // members là mảng lưu ObjectId của các user
+        { "members.user": userId } // ✅ sửa ở đây
       ]
     })
-      .populate("workspace", "name")       // lấy tên workspace
-      .populate("createdBy", "username email") // thông tin người tạo
+      .populate("workspace", "name")
+      .populate("createdBy", "username email")
       .sort({ createdAt: -1 });
 
     if (!boards.length) {
-      return res.status(404).json({ message: "Bạn chưa tạo board nào." });
+      return res.status(404).json({
+        message: "Bạn chưa tham gia hoặc tạo board nào."
+      });
     }
 
-    res.status(200).json(boards);
+    res.status(200).json({
+      success: true,
+      data: boards
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Lỗi khi lấy danh sách board." });
+    console.error("❌ getBoardsByCurrentUser error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi khi lấy danh sách board."
+    });
   }
 };
 
@@ -73,25 +94,40 @@ export const getBoardById = async (req, res) => {
   try {
     const { boardId } = req.params;
 
-    // Populate lists + cards + members
     const board = await Board.findById(boardId)
       .populate({
         path: "lists",
-        populate: { path: "cards" },  // nested populate cards trong list
+        populate: {
+          path: "cards"
+        }
       })
-      .populate("members", "username email"); // populate member info
+      .populate({
+        path: "members.user",
+        select: "username email avatar"
+      });
 
-    // Cập nhật lastViewedAt
-    await Board.findByIdAndUpdate(boardId, { lastViewedAt: new Date() });
+    if (!board) {
+      return res.status(404).json({ message: "Board không tồn tại" });
+    }
 
-    if (!board) return res.status(404).json({ message: "Board không tồn tại" });
+    // update lastViewedAt (không cần await cũng được)
+    Board.findByIdAndUpdate(boardId, {
+      lastViewedAt: new Date()
+    }).catch(() => {});
 
-    res.status(200).json({ success: true, board });
+    res.status(200).json({
+      success: true,
+      board
+    });
   } catch (error) {
-    console.error("Lỗi getBoardById:", error);
-    res.status(500).json({ success: false, message: "Lỗi server" });
+    console.error("❌ getBoardById error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Lỗi server"
+    });
   }
 };
+
 
 export const getBoardsByWorkspace = async (req, res) => {
   try {
@@ -222,33 +258,97 @@ export const getCardById = async (req, res) => {
 export const inviteUser = async (req, res) => {
   try {
     const { boardId } = req.params;
-    if (!boardId) return res.status(400).json({ message: "Board ID không hợp lệ" });
+    const { email } = req.body;
+    const inviterId = req.user?.id;
+
+    if (!boardId || !email) {
+      return res.status(400).json({ message: "Thiếu dữ liệu" });
+    }
 
     const board = await Board.findById(boardId);
-    if (!board) return res.status(404).json({ message: "Board không tồn tại" });
+    if (!board) {
+      return res.status(404).json({ message: "Board không tồn tại" });
+    }
 
-    // ✅ Khai báo email từ body trước khi dùng
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Email không hợp lệ" });
+    // 1️⃣ Check quyền inviter trong board
+    const inviter = board.members.find(
+      m => m.user.toString() === inviterId
+    );
 
+    if (!inviter || !["owner", "admin"].includes(inviter.role)) {
+      return res.status(403).json({ message: "Không có quyền mời member" });
+    }
+
+    // 2️⃣ Lấy workspace
+    const workspace = await Workspace.findById(board.workspace);
+    if (!workspace) {
+      return res.status(404).json({ message: "Workspace không tồn tại" });
+    }
+
+    // 3️⃣ Tìm user
     const user = await User.findOne({ email });
-    if (!user) return res.status(404).json({ message: "User không tồn tại" });
+    if (!user) {
+      return res.status(404).json({ message: "User không tồn tại" });
+    }
 
-    // Kiểm tra user đã là member chưa
-    if (board.members.includes(user._id) || board.createdBy.equals(user._id)) {
+    // 4️⃣ Check user đã ở workspace chưa
+    const isWorkspaceMember = workspace.members.some(
+      m => m.user.toString() === user._id.toString()
+    );
+
+    // ⬇️ Nếu chưa → mời vào workspace
+    if (!isWorkspaceMember) {
+      workspace.members.push({
+        user: user._id,
+        role: "member",
+        joinedAt: new Date()
+      });
+
+      await workspace.save();
+
+      // thêm workspace vào user
+      if (!user.workspaces.includes(workspace._id)) {
+        user.workspaces.push(workspace._id);
+        await user.save();
+      }
+    }
+
+    // 5️⃣ Check user đã ở board chưa
+    const isBoardMember = board.members.some(
+      m => m.user.toString() === user._id.toString()
+    );
+
+    if (isBoardMember) {
       return res.status(400).json({ message: "User đã ở trong board" });
     }
 
-    // Thêm user vào board
-    board.members.push(user._id);
+    // 6️⃣ Thêm user vào board
+    board.members.push({
+      user: user._id,
+      role: "member",
+      joinedAt: new Date()
+    });
+
     await board.save();
 
-    res.status(200).json({ message: "Mời user thành công!", user });
+    res.status(200).json({
+      message: "Mời user thành công",
+      member: {
+        user: {
+          _id: user._id,
+          username: user.username,
+          email: user.email
+        },
+        role: "member"
+      }
+    });
+
   } catch (err) {
-    console.error(err);
+    console.error("❌ inviteUser error:", err);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 
 
 // tải background 
@@ -282,10 +382,8 @@ export const uploadBackground = [
 
 // GET /api/boards/recent
 export const getBoardsrecent = async (req, res) => {
- try {
-    // 🔐 đảm bảo có user từ token
-    if (!req.user || !req.user.id) {
-      console.log("Không tìm thấy user trong req.user:", req.user);
+  try {
+    if (!req.user?.id) {
       return res.status(401).json({
         success: false,
         message: "Không tìm thấy thông tin user từ token."
@@ -293,37 +391,37 @@ export const getBoardsrecent = async (req, res) => {
     }
 
     const userId = req.user.id;
-    console.log("UserId từ token:", userId);
 
     const boards = await Board.find({
       $or: [
         { createdBy: userId },
-        { members: userId }
+        { "members.user": userId }
       ]
     })
       .populate("workspace", "name")
-      .populate("createdBy", "username email")
+      .populate("createdBy", "username email avatar")
+      .populate({
+        path: "members.user",
+        select: "username email avatar"
+      })
       .sort({
-        lastViewedAt: -1, // ⭐ sắp xếp theo xem gần nhất
+        lastViewedAt: -1,
         createdAt: -1
       });
 
-    // KHÔNG trả 404 nữa, cứ trả mảng rỗng cho dễ xử lý phía client
     return res.status(200).json({
       success: true,
       data: boards
     });
   } catch (error) {
-    console.error("getBoardsByCurrentUser error:", error);
-
+    console.error("getBoardsrecent error:", error);
     return res.status(500).json({
       success: false,
-      message: "Lỗi server",
-      // ⚠ chỉ để tạm debug, sau này xoá đi
-      error: error.message
+      message: "Lỗi server"
     });
   }
 };
+
 
 // update card
 export const updateCard = async (req, res) => {
@@ -518,5 +616,67 @@ export const deleteCard = async (req, res) => {
   } catch (err) {
     console.error("deleteCard error:", err);
     res.status(500).json({ message: "Lỗi server" });
+  }
+};
+export const deleteBoard = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+
+    const board = await Board.findById(boardId);
+    if (!board) {
+      return res.status(404).json({ success: false, message: "Board không tồn tại" });
+    }
+
+    const workspace = await Workspace.findById(board.workspace);
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: "Workspace không tồn tại" });
+    }
+
+    const isBoardOwner =
+      board.createdBy?.toString() === userId.toString();
+
+    const isWorkspaceOwner =
+      workspace.owner?.toString() === userId.toString();
+
+    if (!isBoardOwner && !isWorkspaceOwner) {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền xoá board này"
+      });
+    }
+
+    // 🧹 Xoá cards & lists
+    const lists = await List.find({ board: boardId }).select("_id");
+    const listIds = lists.map(l => l._id);
+
+    if (listIds.length) {
+      await Card.deleteMany({ list: { $in: listIds } });
+      await List.deleteMany({ _id: { $in: listIds } });
+    }
+
+    // 🧹 Gỡ board khỏi workspace
+    await Workspace.findByIdAndUpdate(board.workspace, {
+      $pull: { boards: board._id }
+    });
+
+    // 🗑️ Xoá board
+    await Board.deleteOne({ _id: boardId });
+
+    const io = req.app.get("socketio");
+    io?.emit("board:deleted", { boardId });
+
+    return res.status(200).json({
+      success: true,
+      message: "Xoá board thành công"
+    });
+
+  } catch (error) {
+    console.error("❌ deleteBoard error:", error);
+    return res.status(500).json({ success: false, message: "Lỗi server" });
   }
 };

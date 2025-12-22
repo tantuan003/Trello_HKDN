@@ -93,6 +93,18 @@ export function getCurrentWorkspaceId() {
   const wsFromUrl = new URLSearchParams(window.location.search).get("ws");
   return wsFromUrl || currentWorkspaceId;
 }
+// ================= BRAND =================
+function initBrandHome() {
+  const brand = document.getElementById("brandHome");
+  if (!brand) return;
+
+  brand.style.cursor = "pointer";
+  brand.addEventListener("click", () => {
+    // về boards chính, không kèm ws
+    window.location.href = "boards.html";
+  });
+}
+
 
 // ================= TOGGLE WORKSPACE =================
 function initWorkspaceToggle() {
@@ -187,18 +199,25 @@ async function fetchBoardsForSearch() {
     const res = await fetch(`${API_BASE}/v1/board/myboards`, {
       credentials: "include",
     });
-    const data = await res.json();
-    if (!res.ok || !Array.isArray(data)) {
-      console.error("Không thể load boards cho search:", data);
+
+    const result = await res.json();
+
+    // ❌ res.ok nhưng data sai format
+    if (!res.ok || !result.success || !Array.isArray(result.data)) {
+      console.error("Không thể load boards cho search:", result);
       return [];
     }
-    cachedSearchBoards = data;
+
+    // ✅ LẤY ĐÚNG ARRAY
+    cachedSearchBoards = result.data;
     return cachedSearchBoards;
+
   } catch (err) {
     console.error("Lỗi fetch boards cho search:", err);
     return [];
   }
 }
+
 
 function normalizeVi(str = "") {
   return str
@@ -475,15 +494,56 @@ function clearClientStateOnLogout() {
   // Xóa session storage nếu có
   sessionStorage.clear();
 }
+// ================= CURRENT USER AVATAR =================
+// Load avatar from backend and render it on the header button (#avatarBtn)
+async function loadCurrentUserAvatar() {
+  const avatarBtn = document.getElementById("avatarBtn");
+  if (!avatarBtn) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/v1/User/me`, {
+      credentials: "include",
+    });
+
+    // Not logged in / token expired → keep default avatar UI
+    if (!res.ok) return;
+
+    const user = await res.json();
+
+    // If avatar is stored as a relative path like "uploads/xxx.jpg"
+    // it should be accessible via: http://localhost:8127/uploads/xxx.jpg
+    if (user?.avatar) {
+      const isAbsolute = /^https?:\/\//i.test(user.avatar);
+      const rel = user.avatar.startsWith("/") ? user.avatar : `/${user.avatar}`;
+      const avatarUrl = isAbsolute ? user.avatar : `${API_BASE}${rel}`;
+
+      avatarBtn.style.backgroundImage = `url("${avatarUrl}")`;
+      avatarBtn.textContent = "";
+      avatarBtn.title = user.username || "User";
+      avatarBtn.setAttribute("aria-label", user.username || "User");
+      return;
+    }
+
+    // Fallback: show first letter of username
+    const letter = (user?.username || "U").charAt(0).toUpperCase();
+    avatarBtn.style.backgroundImage = "";
+    avatarBtn.textContent = letter;
+  } catch (err) {
+    console.error("Load current user avatar error:", err);
+  }
+}
 
 export function initSidebarHeader() {
   if (document.body.dataset.sidebarHeaderInit === "1") return;
+  initBrandHome();
 
   loadSidebarWorkspace();
   initWorkspaceToggle();
   initActiveMenu();
   initGlobalSearch();
   initUserMenu();
+  loadCurrentUserAvatar();
+
 
   document.body.dataset.sidebarHeaderInit = "1";
 }
@@ -512,29 +572,29 @@ window.addEventListener("click", e => {
 
 // Xử lý submit form
 form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const name = input.value.trim();
-  if (!name) return alert("Vui lòng nhập tên workspace");
+    e.preventDefault();
+    const name = input.value.trim();
+    if (!name) return alert("Vui lòng nhập tên workspace");
 
-  try {
-    const res = await fetch(`${API_BASE}/v1/workspace/create`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      credentials: "include", // gửi cookie token nếu có
-      body: JSON.stringify({ name })
-    });
+    try {
+      const res = await fetch(`${API_BASE}/v1/workspace/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // gửi cookie token nếu có
+        body: JSON.stringify({ name })
+      });
 
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Lỗi tạo workspace");
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Lỗi tạo workspace");
 
-    alert(data.message);
-    modal.style.display = "none";
+      alert(data.message);
+      modal.style.display = "none";
 
-    // reload danh sách workspace
-    loadSidebarWorkspace();
+      // reload danh sách workspace
+      loadSidebarWorkspace();
 
-  } catch (err) {
-    console.error(err);
-    alert("Error: " + err.message);
-  }
-});
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + err.message);
+    }
+  });

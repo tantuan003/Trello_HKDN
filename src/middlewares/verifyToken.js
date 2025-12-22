@@ -3,7 +3,9 @@ import User from "../models/UserModel.js";
 
 export const verifyToken = async (req, res, next) => {
   try {
-    const token = req.cookies.token;
+    const COOKIE_NAME = process.env.COOKIE_NAME || "token";
+    const token = req.cookies?.[COOKIE_NAME];
+
 
     if (!token) {
       return res.status(401).json({
@@ -26,7 +28,7 @@ export const verifyToken = async (req, res, next) => {
     req.user = user;
 
     next();
-    
+
   } catch (err) {
     console.error("Token lỗi:", err);
 
