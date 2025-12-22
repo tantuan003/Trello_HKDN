@@ -1,10 +1,11 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Sidebar Header</title>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <link rel="stylesheet" href="../css/sidebar_header.css?v=1" />
 </head>
 
@@ -28,7 +29,6 @@
             <input type="text" placeholder="Search boards..." />
           </div>
 
-          <!-- Panel kết quả search -->
           <div class="search-results" id="globalSearchResults"></div>
         </div>
 
@@ -37,9 +37,10 @@
             <button class="avatar" id="avatarBtn" type="button" aria-haspopup="menu" aria-expanded="false"></button>
 
             <div class="user-dropdown" id="userDropdown" role="menu">
-              <button class="user-dropdown__item" id="logoutBtn" type="button" role="menuitem">
-                🚪 Logout
-              </button>
+              <button class="user-dropdown__item" id="profileBtn" type="button" role="menuitem"><i
+                  class="fa-solid fa-address-card"></i> Profile</button>
+              <button class="user-dropdown__item" id="logoutBtn" type="button" role="menuitem"><i
+                  class="fa-solid fa-person-hiking"></i> Logout</button>
             </div>
           </div>
         </div>
@@ -77,25 +78,29 @@
             <button id="addWorkspaceBtn">+</button>
           </div>
           <div id="workspaceModal" class="modalworkspace">
-          <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Tạo Workspace mới</h3>
-            <form id="workspaceForm">
-              <input type="text" id="workspaceName" placeholder="name" required />
-              <button type="submit">Tạo</button>
-            </form>
+            <div class="modal-content">
+              <span class="close">&times;</span>
+              <h3>Create New Workspace</h3>
+              <form id="workspaceForm">
+                <input type="text" id="workspaceName" placeholder="Workspace name" required />
+                <button type="submit">Create</button>
+              </form>
+            </div>
           </div>
-        </div>
 
           <div id="workspace-list"></div>
         </section>
-
       </aside>
 
       <!-- Content slot -->
       <main class="content">
         <div class="empty-state"></div>
       </main>
+    </div>
+  </div>
+  <div id="profileModal">
+    <div id="profileContainer">
+      <button class="modal-close">&times;</button>
     </div>
   </div>
 

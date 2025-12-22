@@ -2,6 +2,7 @@
 const WSP_KEY = "wspMenuCollapsed";
 const SEARCH_HISTORY_KEY = "recentBoardSearches";
 import { API_BASE } from "../js/config.js";
+import { initProfile } from "../js/profile.js"
 
 let currentWorkspaceId = null;
 let currentVisibility = null;
@@ -363,14 +364,20 @@ function renderSearchPanel(panel, boards, { mode }) {
 }
 
 // ================= INIT =================
-function initUserMenu() {
+export function initUserMenu() {
   const avatarBtn = document.getElementById("avatarBtn");
   const dropdown = document.getElementById("userDropdown");
   const logoutBtn = document.getElementById("logoutBtn");
+  const profileBtn = document.getElementById("profileBtn");
   const userMenu = document.getElementById("userMenu");
 
-  if (!avatarBtn || !dropdown || !logoutBtn || !userMenu) return;
+  const profileModal = document.getElementById("profileModal");
+  const profileContainer = document.getElementById("profileContainer");
+  const modalClose = profileContainer.querySelector(".modal-close");
 
+  if (!avatarBtn || !dropdown || !logoutBtn || !profileBtn || !userMenu || !profileModal) return;
+
+  // Mở/đóng dropdown avatar
   avatarBtn.addEventListener("click", () => {
     const open = dropdown.classList.toggle("is-open");
     avatarBtn.setAttribute("aria-expanded", open ? "true" : "false");
@@ -383,21 +390,96 @@ function initUserMenu() {
     }
   });
 
+  // Logout
   logoutBtn.addEventListener("click", async () => {
     try {
-      await fetch(`${API_BASE}/v1/User/logout`, {
-        method: "POST",
-        credentials: "include",
-      });
+      await fetch("/v1/User/logout", { method: "POST", credentials: "include" });
     } catch (err) {
-      console.error("Logout error:", err);
+      console.error(err);
     } finally {
-      clearClientStateOnLogout(); // ✅ CHỈ THÊM DÒNG NÀY
+      clearClientStateOnLogout();
       window.location.href = "/login.html";
     }
   });
 
+  // Mở modal profile
+  profileBtn.addEventListener("click", async () => {
+    dropdown.classList.remove("is-open");
+    avatarBtn.setAttribute("aria-expanded", "false");
+
+    profileModal.style.display = "flex";
+
+    try {
+      // Load profile.html
+      const resHtml = await fetch("/profile.html");
+      if (!resHtml.ok) throw new Error("Không load được profile.html");
+      const html = await resHtml.text();
+      profileContainer.innerHTML = `<button class="modal-close">&times;</button>${html}`;
+
+      // Load CSS nếu cần
+      if (!document.getElementById("profileCSS")) {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        link.href = "/css/profile.css";
+        link.id = "profileCSS";
+        document.head.appendChild(link);
+      }
+      if (!document.getElementById("faCSS")) {
+        const link = document.createElement("link");
+        link.id = "faCSS";
+        link.rel = "stylesheet";
+        link.href = "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css";
+        document.head.appendChild(link);
+      }
+
+      // Load JS profile
+      initProfile();
+
+      // Fetch dữ liệu user hiện tại từ API
+      const resUser = await fetch("/v1/User/me", { credentials: "include" });
+      if (!resUser.ok) throw new Error("Không lấy được thông tin user");
+      const user = await resUser.json();
+
+      // Set username & email từ DB
+      const usernameInput = profileContainer.querySelector("#username");
+      const emailInput = profileContainer.querySelector("#email");
+      if (usernameInput) usernameInput.value = user.username || "";
+      if (emailInput) emailInput.value = user.email || "";
+
+      // Reset avatar về default
+      const avatarWrapper = profileContainer.querySelector(".avatar-wrapper img");
+      if (avatarWrapper) {
+        avatarWrapper.src = user.avatar || "/images/default-avatar.png";
+        avatarWrapper.style.display = "block"; // hiện avatar gốc
+      }
+
+      // Reset password fields
+      profileContainer.querySelectorAll("#password, #retype-password").forEach(i => i.value = "");
+
+      // Ẩn cảnh báo small
+      profileContainer.querySelectorAll("small").forEach(s => s.style.display = "none");
+
+      profileContainer.dataset.loaded = "1";
+
+    } catch (err) {
+      profileContainer.innerHTML = `<button class="modal-close">&times;</button>
+      <div style="color:red">Lỗi load profile: ${err.message}</div>`;
+    }
+  });
+
+  // Đóng modal khi click ×
+  profileContainer.addEventListener("click", (e) => {
+    if (e.target.classList.contains("modal-close")) {
+      profileModal.style.display = "none";
+    }
+  });
+
+  // Đóng modal khi click ra ngoài
+  window.addEventListener("click", (e) => {
+    if (e.target === profileModal) profileModal.style.display = "none";
+  });
 }
+
 function clearClientStateOnLogout() {
   // Xóa history search (nguyên nhân chính gây dính board cũ)
   localStorage.removeItem(SEARCH_HISTORY_KEY);

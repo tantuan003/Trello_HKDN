@@ -90,10 +90,10 @@ router.put("/change-password", verifyToken, async (req, res) => {
     const { oldPassword, newPassword } = req.body;
     const user = await User.findById(req.user._id);
 
-    if (!user) return res.status(404).json({ message: "User không tồn tại" });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(400).json({ message: "Mật khẩu cũ không đúng" });
+    if (!isMatch) return res.status(400).json({ message: "Current password is incorrect!" });
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);

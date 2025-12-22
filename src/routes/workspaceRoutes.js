@@ -1,6 +1,7 @@
 // routes/workspaceRoutes.js
 import express from "express";
 import { 
+    getWorkspaceById,
     getUserWorkspaces, 
     getWorkspaceMembers,
     inviteUserByEmail,
@@ -17,6 +18,8 @@ const router = express.Router();
 // Lấy workspace của user
 router.get("/", verifyToken, getUserWorkspaces);
 
+// Lấy thông tin workspace
+router.get("/:workspaceId", verifyToken, getWorkspaceById);
 // tạo workspace mới 
 router.post("/create", verifyToken, createWorkspace);
 

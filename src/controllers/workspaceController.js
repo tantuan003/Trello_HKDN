@@ -16,6 +16,21 @@ export const getUserWorkspaces = async (req, res) => {
   }
 };
 
+// 
+export const getWorkspaceById = async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: "Workspace not found" });
+    }
+    res.json(workspace);
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+
 // 2. Lấy danh sách thành viên theo workspaceId
 export const getWorkspaceMembers = async (req, res) => {
   try {
@@ -27,7 +42,7 @@ export const getWorkspaceMembers = async (req, res) => {
       .populate("members.user", "username email avatar");
 
     if (!workspace) {
-      return res.status(404).json({ message: "Workspace không tồn tại" });
+      return res.status(404).json({ message: "Workspace not found" });
     }
 
     const seen = new Set();
@@ -91,7 +106,7 @@ export const getWorkspaceMembers = async (req, res) => {
 
   } catch (err) {
     console.error("ERROR getWorkspaceMembers:", err);
-    res.status(500).json({ message: "Lỗi server", error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 

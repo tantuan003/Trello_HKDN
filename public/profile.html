@@ -1,83 +1,61 @@
-<!DOCTYPE html>
-<html lang="vi">
+<div class="profile-wrapper">
+  <h2 class="section-title">Manage your personal information</h2>
+  <hr/>
 
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile Settings</title>
-  <link rel="stylesheet" href="css/profile.css">
-  <link rel="stylesheet" href="css/nav.css">
-</head>
+  <div class="form-row">
+    <div class="left-panel">
+      <div class="avatar-wrapper">
+        <div class="profile-photo" id="profile-photo">
+          <span id="default-initial">?</span>
+          <img id="profile-img" alt="Profile Photo" />
+        </div>
 
-<body>
-  <div id="app">
-    <!-- Sidebar -->
-    <div id="nav-container"></div>
+        <div id="dropdown-menu" class="photo-dropdown">
+          <div class="dropdown-arrow"></div>
+          <button id="upload-avatar" class="photo-dropdown__item"><i class="fa-solid fa-upload"></i> Upload
+            Photo</button>
+          <button id="delete-avatar" class="photo-dropdown__item"><i class="fa-solid fa-delete-left"></i> Delete
+            Photo</button>
+        </div>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <div class="profile-wrapper">
-
-        <img src="uploads/banner.jpg" alt="Profile Banner" class="banner-img">
-
-        <h2>Manage your personal information</h2>
-        <hr>
-        <section class="form-section">
-
-          <form class="profile-form">
-
-            <div class="form-row">
-
-              <!-- Left side -->
-              <div class="left-panel">
-                <div class="profile-photo" id="profile-photo">
-                  <span id="default-initial">G</span>
-                  <img id="profile-img" alt="Profile Photo" />
-                  <button type="button" class="cancel-btn" id="cancel-photo">×</button>
-                </div>
-                <input type="file" id="upload-photo" hidden />
-                <label for="upload-photo" class="btn-upload">Upload photo</label>
-
-                <div class="form-group">
-                  <label for="old-password">Old Password</label>
-                  <input type="password" id="old-password" />
-                </div>
-                <div class="form-group">
-                  <label for="new-password">New Password</label>
-                  <input type="password" id="new-password" />
-                </div>
-                <button type="button" class="btn-change">Change password</button>
-              </div>
-
-              <!-- Right side -->
-              <div class="right-panel">
-                <div class="form-group">
-                  <label for="username">Username <span>*</span></label>
-                  <input type="text" id="username" />
-                </div>
-
-                <div class="form-group">
-                  <label for="email">Email</label>
-                  <input type="email" id="email" readonly />
-                </div>
-
-                <div class="form-group">
-                  <label for="bio">Bio</label>
-                  <textarea id="bio" placeholder="Write something about yourself..."></textarea>
-                </div>
-
-                <button type="submit" class="btn-save">Save</button>
-              </div>
-            </div>
-          </form>
-        </section>
+        <input type="file" id="upload-photo" accept="image/*" style="display:none;" />
       </div>
-    </main>
+    </div>
+
+    <div class="right-panel">
+      <form class="profile-form">
+        <section id="About" class="form-block">
+          <h3>About</h3>
+          <div class="form-group">
+            <label for="username">Username <span>*</span></label>
+            <input type="text" id="username" />
+          </div>
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" readonly />
+          </div>
+        </section>
+      </form>
+
+      <form class="security-form">
+        <section id="Security" class="form-block">
+          <h3>Security</h3>
+          <div class="form-group">
+            <label for="current-password">Current Password <span>*</span></label>
+            <input type="password" id="current-password" />
+          </div>
+          <div class="form-group">
+            <label for="new-password">New Password</label>
+            <input type="password" id="new-password" />
+          </div>
+          <div class="form-group">
+            <label for="retype-password">Retype Password</label>
+            <input type="password" id="retype-password" />
+            <small id="retype-warning" style="color:red; display:none;">Passwords do not match!</small>
+          </div>
+        </section>
+      </form>
+      <button type="button" id="save-all" class="btn-save">Save</button>
+    </div>
   </div>
-
-  <script src="js/nav.js"></script>
-  <script src="js/profile.js"></script>
-
-</body>
-
-</html>
+</div>

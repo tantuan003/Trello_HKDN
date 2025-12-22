@@ -2,61 +2,71 @@
 <html lang="vi">
 
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Trello – Workspace Settings</title>
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
 
     <!-- CSS FILES -->
-    <link rel="stylesheet" href="css/nav.css">
-    <link rel="stylesheet" href="css/settings-wsp.css">
+    <link rel="stylesheet" href="css/nav.css" />
+    <link rel="stylesheet" href="css/settings-wsp.css" />
 </head>
 
 <body>
-
     <div id="app">
-
         <!-- SIDEBAR -->
         <div id="nav-container"></div>
 
         <!-- MAIN CONTENT -->
         <main class="main-content">
+            <h2 class="page-title">Workspace settings</h2>
 
-            <!-- Header -->
-            <div class="settings-header">
+            <div class="banner"></div>
 
-                <h2>Workspace settings</h2>
-
-                <div class="workspace-name">
-                    <span class="ws-icon" id="ws-logo">T</span>
-                    <span id="ws-name">ws-name</span>
-                    <i id="editWorkspaceName" class="fas fa-pen-to-square edit-icon"></i>
+            <div class="workspace-info">
+                <div class="ws-icon" id="ws-logo">T</div>
+                <div class="ws-details">
+                    <div class="ws-name-wrapper">
+                        <div id="ws-name">ws-name</div>
+                        <button class="edit-icon-btn" id="editWorkspaceName">
+                            <i class="fas fa-pen-to-square"></i>
+                        </button>
+                    </div>
+                    <div class="ws-visibility">
+                        <i class="fa-solid fa-question"></i>
+                        <span>Default</span>
+                    </div>
                 </div>
-
             </div>
 
-            <!-- Description -->
-            <div class="settings-desc">
-                Manage general settings for your workspace.
-            </div>
+
+            <div class="divider"></div>
 
             <div class="workspace-visibility">
                 <h3>Workspace visibility</h3>
-
-                <div class="line"></div>
-                
                 <div class="visibility-status">
-                     <div id="visibility-icon"><i class="fas fa-lock"></i></div>
-                     <div id="visibility-text">
-                        <strong>Private</strong> – This Workspace is private. It's not indexed or visible to those outside the Workspace.
+                    <div id="visibility-icon"><i class="fas fa-lock"></i></div>
+                    <div id="visibility-text">
+                        <strong id="current-visibility">Default</strong> – Text Default.
+                    </div>
+                    <!-- Dropdown container -->
+                    <div class="dropdown">
+                        <button id="change-visibility-btn" class="btn change-btn">Change <i class="fas fa-caret-down"></i></button>
+                        <div class="dropdown-content">
+                            <div class="dropdown-title">Set workspace visibility</div>
+                            <div class="dropdown-item" data-value="Public"><i class="fas fa-globe"></i>Public</div>
+                            <div class="dropdown-item" data-value="Private"><i class="fas fa-lock"></i>Private</div>
+                        </div>
                     </div>
                 </div>
+            </div>
 
-                <button id="change-visibility-btn">Change</button>
+            <div class="workspace-delete">
+                <span class="delete-workspace">Delete this Workspace?</span>
             </div>
         </main>
-
     </div>
+
     <script src="js/nav.js"></script>
     <script src="js/settings-wsp.js"></script>
 </body>
