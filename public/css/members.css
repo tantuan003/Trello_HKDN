@@ -65,19 +65,33 @@
     box-sizing: border-box;
     margin-bottom: 20px;
 }
+.member-row .role-text{
+    margin-left: auto;
+}
 
 .avatar {
-    width: 40px;
-    height: 40px;
-    background: #0c66e4;
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: bold;
-    margin-right: 12px;
+  width: 40px;
+  height: 40px;
+  background: #0c66e4;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  margin-right: 12px;
+  overflow: hidden; /* ✅ BẮT BUỘC để ảnh không tràn */
 }
+
+/* Ảnh bên trong avatar */
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* ✅ ảnh phủ kín khung, không méo */
+  border-radius: 50%; /* an toàn thêm */
+  display: block;
+}
+
 
 .member-info .name {
     font-size: 15px;
@@ -146,4 +160,59 @@
 
 #sendInvite:hover {
     background-color: #45a049;
+}
+.role-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  padding: 6px 28px 6px 10px;
+  font-size: 14px;
+  font-weight: 500;
+
+  border-radius: 6px;
+  border: 1px solid #dfe1e6;
+  background-color: #fff;
+
+  cursor: pointer;
+  outline: none;
+
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5' stroke='%236b778c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  margin-left: auto;
+}
+
+/* Hover & focus */
+.role-select:hover {
+  background-color: #f4f5f7;
+}
+
+.role-select:focus {
+  border-color: #4c9aff;
+  box-shadow: 0 0 0 2px rgba(76, 154, 255, 0.3);
+}
+
+/* Role text (khi không edit được) */
+.role-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #5e6c84;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: #ebecf0;
+}
+
+/* Mobile responsive */
+@media (max-width: 600px) {
+  .member-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .role-select,
+  .role-text {
+    width: 100%;
+  }
 }

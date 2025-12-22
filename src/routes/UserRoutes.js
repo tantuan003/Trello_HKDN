@@ -25,10 +25,12 @@ const upload = multer({ storage });
 router.post("/register", CreateUser_validation, registerUser);
 router.post("/login", loginUser);
 router.post("/logout", verifyToken, (req, res) => {
-  res.clearCookie("token", {
+  // Must match cookie options used during login, otherwise cookie may not be cleared
+  const COOKIE_NAME = process.env.COOKIE_NAME || "token";
+  res.clearCookie(COOKIE_NAME, {
     httpOnly: true,
-    secure: true,
-    sameSite: "none",
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
   });
 
   return res.status(200).json({
@@ -36,6 +38,7 @@ router.post("/logout", verifyToken, (req, res) => {
     message: "Đăng xuất thành công!",
   });
 });
+
 router.get("/checkToken", verifyToken, (req, res) => {
   res.json({ success: true, user: req.user });
 });

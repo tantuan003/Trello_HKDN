@@ -100,13 +100,21 @@ body {
   width: 28px;
   height: 28px;
   border-radius: 50%;
+  border: 0;
+  cursor: pointer;
+
   display: grid;
   place-items: center;
   color: #fff;
   font-size: 12px;
   font-weight: 700;
+
   background: linear-gradient(135deg, #7c3aed, #22c55e);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
 }
+
 
 /* ===== MAIN LAYOUT ===== */
 .main {
@@ -133,16 +141,17 @@ body {
 /* Content chính — xoá hẳn khoảng trắng dư phía trên */
 .content {
   position: absolute;
-  top: var(--header-h);         /* ✅ Bắt đầu ngay dưới header */
+  top: var(--header-h);     
   left: var(--sidebar-w);
   right: 0;
   bottom: 0;
   overflow-y: auto;
   background: #fff;
-  padding: 0 28px 28px;         /* ⚡ Không có padding-top nữa */
+  padding: 0 28px 28px;       
 }
 
 /* ===== SIDEBAR ITEMS ===== */
+/* Link item */
 .nav-item {
   display: flex;
   align-items: center;
@@ -151,28 +160,62 @@ body {
   border-radius: 12px;
   text-decoration: none;
   font-weight: 700;
+
   color: #111827;
-  transition: background .15s, color .15s;
-}
-.nav-ic {
-  width: 18px;
-  height: 18px;
-  display: grid;
-  place-items: center;
-  color: #6b7280;
+  transition: background .15s, color .15s; /* thêm color transition */
 }
 
-/* Hover */
-.nav-item:hover { background: #f5f8ff; }
-.nav-item:hover .nav-ic { color: #3b82f6; }
+/* Hover giống cũ + chữ đổi màu */
+.nav-item:hover {
+  background: #f5f8ff;
+  color: #3b82f6; /*chữ đổi màu khi hover */
+}
 
-/* Active giống Trello */
+/* Active giống Trello (bạn có rồi) */
 .nav-item.is-active {
   background: #eaf1ff;
   box-shadow: inset 0 0 0 1px #dbe6ff;
   color: #1c4ce0;
 }
-.nav-item.is-active .nav-ic { color: #1c4ce0; }
+
+/* Icon container dùng mask để đổi màu mượt */
+.nav-ic{
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+
+  /* màu mặc định giống bạn đang dùng */
+  background-color: #6b7280;
+
+  /* giữ animation cũ */
+  transition: background-color .15s;
+}
+
+/* Hover đổi màu icon */
+.nav-item:hover .nav-ic{
+  background-color: #3b82f6;
+}
+
+/* Active đổi màu icon */
+.nav-item.is-active .nav-ic{
+  background-color: #1c4ce0;
+}
+
+/* Mask cho từng icon */
+.icon-boards{
+  -webkit-mask: url("/uploads/icons8-boards.png") no-repeat center / contain;
+  mask: url("/uploads/icons8-boards.png") no-repeat center / contain;
+}
+
+.icon-template{
+  -webkit-mask: url("/uploads/icons8-template.png") no-repeat center / contain;
+  mask: url("/uploads/icons8-template.png") no-repeat center / contain;
+}
+
+.icon-home{
+  -webkit-mask: url("/uploads/icons8-home.png") no-repeat center / contain;
+  mask: url("/uploads/icons8-home.png") no-repeat center / contain;
+}
 
 /* Divider */
 .divider {
@@ -440,3 +483,93 @@ body {
 }
 
 .user-dropdown__item:hover { background: var(--hover); }
+.workspace-header {
+  display: flex;
+  align-items: center; /* căn theo chiều dọc */
+  justify-content: space-between; /* h4 bên trái, nút + bên phải */
+  gap: 8px; /* khoảng cách giữa h4 và nút nếu muốn */
+}
+
+#addWorkspaceBtn {
+  font-size: 18px;
+  padding: 2px 8px; /* nhỏ gọn */
+  cursor: pointer;
+  border: none;
+  color: black;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+#addWorkspaceBtn:hover {
+  color: #009efd;
+}
+
+/* Nền mờ toàn màn hình */
+#workspaceModal{
+  display: none;
+}
+.modalworkspace {
+  display: none; /* ẩn mặc định */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 50%;
+  z-index: 1000;
+  display: flex;
+  border-radius: 5px;
+  justify-content: center;
+  align-items: flex-start; /* hiển thị gần header hơn */
+}
+
+/* Nội dung modal */
+.modalworkspace .modal-content {
+  background-color: #fff;
+  padding: 16px 20px;
+  width: 300px; /* nhỏ gọn */
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  text-align: center;
+  position: relative;
+  font-size: 14px;
+  border-radius: 10px;
+}
+.modal-content h3{
+  font-size: 13px;
+}
+
+/* Close button */
+.modalworkspace .close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  font-size: 18px;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Form input và button */
+#workspaceForm input[type="text"] {
+  width: calc(100% - 60px); /* giảm chiều rộng vừa button */
+  height: 20px;
+  padding: 6px 8px;
+  margin-right: 6px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+#workspaceForm input::placeholder{
+  font-size: 10px;
+}
+
+#workspaceForm button {
+  padding: 6px 12px;
+  font-size: 10px;
+  cursor: pointer;
+  border: none;
+  background-color: #007bff;
+  color: #fff;
+  border-radius: 4px;
+}
+
+#workspaceForm button:hover {
+  background-color: #0056b3;
+}

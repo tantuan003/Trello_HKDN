@@ -5,15 +5,21 @@ import {
     getWorkspaceMembers,
     inviteUserByEmail,
     updateWorkspaceName,
-    updateWorkspaceVisibility } from "../controllers/workspaceController.js";
+    updateWorkspaceVisibility,
+createWorkspace,updateMemberRole } from "../controllers/workspaceController.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
+import { checkOwnerWorkspace } from "../middlewares/checkowner.js";
 
 
 const router = express.Router();
 
 // Lấy workspace của user
 router.get("/", verifyToken, getUserWorkspaces);
+
+// tạo workspace mới 
+router.post("/create", verifyToken, createWorkspace);
+
 
 // Lấy members theo workspaceId
 router.get("/:workspaceId/members", verifyToken, getWorkspaceMembers);
@@ -26,6 +32,11 @@ router.put("/:workspaceId/update-name", verifyToken, updateWorkspaceName);
 
 // Cập nhật trạng thái công khai/riêng tư của workspace
 router.put("/:workspaceId/update-visibility", verifyToken, updateWorkspaceVisibility);
+
+// chỉnh sửa role cho member trong workspace
+
+router.put("/:workspaceId/members/:memberId/role",  verifyToken,checkOwnerWorkspace,updateMemberRole);
+
 
 export default router;
 
