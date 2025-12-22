@@ -198,18 +198,25 @@ async function fetchBoardsForSearch() {
     const res = await fetch(`${API_BASE}/v1/board/myboards`, {
       credentials: "include",
     });
-    const data = await res.json();
-    if (!res.ok || !Array.isArray(data)) {
-      console.error("Không thể load boards cho search:", data);
+
+    const result = await res.json();
+
+    // ❌ res.ok nhưng data sai format
+    if (!res.ok || !result.success || !Array.isArray(result.data)) {
+      console.error("Không thể load boards cho search:", result);
       return [];
     }
-    cachedSearchBoards = data;
+
+    // ✅ LẤY ĐÚNG ARRAY
+    cachedSearchBoards = result.data;
     return cachedSearchBoards;
+
   } catch (err) {
     console.error("Lỗi fetch boards cho search:", err);
     return [];
   }
 }
+
 
 function normalizeVi(str = "") {
   return str

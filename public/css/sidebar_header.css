@@ -495,14 +495,13 @@ body {
   padding: 2px 8px; /* nhỏ gọn */
   cursor: pointer;
   border: none;
-  background-color: #007bff;
-  color: #fff;
+  color: black;
   border-radius: 4px;
   line-height: 1;
 }
 
 #addWorkspaceBtn:hover {
-  background-color: #0056b3;
+  color: #009efd;
 }
 
 /* Nền mờ toàn màn hình */
