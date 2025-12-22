@@ -2,6 +2,90 @@ import { socket } from "../js/socket.js";
 import { API_BASE } from "../js/config.js";
 
 // ===================================================================
+// ✅ GLOBAL CONFIRM MODAL (DÙNG CHUNG) — thay cho confirm() browser
+// ===================================================================
+function ensureConfirmModal() {
+  if (document.getElementById("confirmActionModal")) return;
+
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.id = "confirmActionModal";
+  overlay.style.display = "none";
+
+  overlay.innerHTML = `
+    <div class="modal delete-modal">
+      <h3 id="confirmModalTitle">Confirm?</h3>
+      <p class="delete-desc" id="confirmModalDesc">Bạn chắc chắn chứ?</p>
+      <div class="modal-actions">
+        <button id="confirmModalOk" class="btn-danger">Delete</button>
+        <button id="confirmModalCancel" class="btn-outline">Cancel</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(overlay);
+
+  // click ra ngoài overlay để đóng
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) overlay.style.display = "none";
+  });
+}
+
+let pendingConfirm = {
+  onConfirm: null,
+  onCancel: null,
+};
+
+function openConfirmModal({
+  title = "Confirm?",
+  desc = "Bạn chắc chắn chứ?",
+  okText = "Delete",
+  cancelText = "Cancel",
+  danger = true,
+  onConfirm,
+  onCancel,
+}) {
+  ensureConfirmModal();
+  pendingConfirm = { onConfirm, onCancel };
+
+  const overlay = document.getElementById("confirmActionModal");
+  const titleEl = document.getElementById("confirmModalTitle");
+  const descEl = document.getElementById("confirmModalDesc");
+  const btnOk = document.getElementById("confirmModalOk");
+  const btnCancel = document.getElementById("confirmModalCancel");
+
+  titleEl.textContent = title;
+  descEl.textContent = desc;
+
+  btnOk.textContent = okText;
+  btnCancel.textContent = cancelText;
+
+  // đổi style OK button nếu không danger
+  btnOk.className = danger ? "btn-danger" : "btn-primary";
+
+  overlay.style.display = "flex";
+
+  btnCancel.onclick = () => {
+    overlay.style.display = "none";
+    if (typeof pendingConfirm.onCancel === "function") pendingConfirm.onCancel();
+    pendingConfirm = { onConfirm: null, onCancel: null };
+  };
+
+  btnOk.onclick = async () => {
+    btnOk.disabled = true;
+    try {
+      if (typeof pendingConfirm.onConfirm === "function") {
+        await pendingConfirm.onConfirm();
+      }
+      overlay.style.display = "none";
+    } finally {
+      btnOk.disabled = false;
+      pendingConfirm = { onConfirm: null, onCancel: null };
+    }
+  };
+}
+
+// ===================================================================
 // Lấy boardId từ URL
 // ===================================================================
 const urlParams = new URLSearchParams(window.location.search);
@@ -9,15 +93,14 @@ let boardId = urlParams.get("id");
 let members = [];
 const attachmentInput = document.getElementById("attachmentInput");
 let currentCardId = null;
-let assignedMembers = [];  // chứa array ID user
-let currentCard = []
+let assignedMembers = []; // chứa array ID user
+let currentCard = [];
 let boardData = {
-  lists: [],   // array of lists, mỗi list có cards
-  members: []  // array of members
+  lists: [], // array of lists, mỗi list có cards
+  members: [], // array of members
 };
 // Map lưu các hàm render UI của từng card
 const cardUIActions = {};
-
 
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
@@ -25,22 +108,23 @@ if (!boardId) {
   alert("Board không tồn tại!");
   window.location.href = "./Boards.html";
 }
-document.addEventListener('DOMContentLoaded', async () => {
-  activateBoardsMenu();
 
+document.addEventListener("DOMContentLoaded", async () => {
+  activateBoardsMenu();
 });
+
 function activateBoardsMenu() {
-  const links = document.querySelectorAll('.nav .nav-item');
-  links.forEach(a => a.classList.remove('is-active'));
-  const boardsLink = [...links].find(a => /boards/i.test(a.textContent.trim()));
-  if (boardsLink) boardsLink.classList.add('is-active');
+  const links = document.querySelectorAll(".nav .nav-item");
+  links.forEach((a) => a.classList.remove("is-active"));
+  const boardsLink = [...links].find((a) => /boards/i.test(a.textContent.trim()));
+  if (boardsLink) boardsLink.classList.add("is-active");
 }
-// ===================================================================
 
 // ===================================================================
 // RENDER BOARD + LIST + CARD
 // ===================================================================
 const listsContainer = document.getElementById("listsContainer");
+
 function renderAssignedMembersinvite(members) {
   const container = document.getElementById("assignedAvatars");
   container.innerHTML = "";
@@ -50,7 +134,7 @@ function renderAssignedMembersinvite(members) {
     return;
   }
 
-  members.forEach(member => {
+  members.forEach((member) => {
     const avatar = document.createElement("div");
     avatar.className = "assigned-avatar";
     avatar.textContent = member.username[0].toUpperCase();
@@ -73,7 +157,7 @@ async function renderBoardWithLists() {
     members = data.board.members;
     boardData.lists = data.board.lists;
     boardData.members = data.board.members;
-    renderAssignedMembersinvite(members)
+    renderAssignedMembersinvite(members);
 
     socket.emit("joinBoard", currentBoardId);
     socket.on("connect", () => {
@@ -89,29 +173,28 @@ async function renderBoardWithLists() {
     // Reset layout khi không có sidebar
     const shell = document.getElementById("app-shell");
     if (shell) {
-      shell.style.display = "block";         // không còn flex/grid
-      shell.style.gridTemplateColumns = "";  // xoá cột sidebar
+      shell.style.display = "block"; // không còn flex/grid
+      shell.style.gridTemplateColumns = ""; // xoá cột sidebar
       shell.style.width = "100%";
     }
     const boardTitle = document.getElementById("boardTitle");
     if (boardTitle) {
-      boardTitle.textContent = data.board.name
+      boardTitle.textContent = data.board.name;
     }
     // ⬇️ Áp dụng background vào trang
     applyBoardBackground(background);
 
-
     listsContainer.innerHTML = "";
 
-    lists.forEach(list => {
+    lists.forEach((list) => {
       const listEl = createListElement(list);
       listsContainer.appendChild(listEl);
     });
-
   } catch (err) {
     console.error("Error loading board:", err);
   }
 }
+
 function applyBoardBackground(bg) {
   const boardPage = document.body;
   if (!boardPage) return;
@@ -134,19 +217,14 @@ function applyBoardBackground(bg) {
   }
 }
 
-
-
 // ===================================================================
 // Tạo LIST
-
 // ===================================================================
-
 function createListElement(list) {
   const listEl = document.createElement("div");
   listEl.className = "list";
   listEl.dataset.id = list._id;
 
-  // Title
   // ===== LIST HEADER =====
   const header = document.createElement("div");
   header.className = "list-header";
@@ -167,55 +245,97 @@ function createListElement(list) {
   menu.style.display = "none";
 
   menu.innerHTML = `
-  <div class="list-menu-item" data-action="clear-cards">Xoá tất cả card trong list</div>
-  <div class="list-menu-item danger" data-action="delete-list">Xoá list</div>
-`;
+    <div class="list-menu-item" data-action="clear-cards">Xoá tất cả card trong list</div>
+    <div class="list-menu-item danger" data-action="delete-list">Xoá list</div>
+  `;
+
+  // CARD container (cần tạo trước để dùng trong clear-cards)
+  const cardsContainer = document.createElement("div");
+  cardsContainer.className = "cards-container";
+
   menuBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     menu.style.display = menu.style.display === "none" ? "block" : "none";
   });
+
   menu.addEventListener("click", async (e) => {
     const action = e.target.dataset.action;
     if (!action) return;
 
     // === XOÁ TẤT CẢ CARD TRONG LIST ===
     if (action === "clear-cards") {
-      const ok = confirm("Xoá TẤT CẢ card trong list này?");
-      if (!ok) return;
+      openConfirmModal({
+        title: "Clear cards?",
+        desc: "Bạn chắc chắn muốn xoá TẤT CẢ card trong list này? Hành động này không thể hoàn tác.",
+        okText: "Delete",
+        cancelText: "Cancel",
+        danger: true,
+        onConfirm: async () => {
+          try {
+            // UI: xoá card trước
+            cardsContainer.innerHTML = "";
 
-      try {
-        // UI: xoá card trước
-        cardsContainer.innerHTML = "";
+            // Backend
+            const res = await fetch(`${API_BASE}/v1/board/${list._id}/clear-cards`, {
+              method: "DELETE",
+              credentials: "include",
+            });
 
-        // Backend
-        await fetch(`/v1/board/${list._id}/clear-cards`, {
-          method: "DELETE",
-        });
+            if (!res.ok) throw new Error("Clear cards failed");
 
-      } catch (err) {
-        alert("Xoá card thất bại");
-        console.error(err);
-      }
+            // Nếu backend có emit socket "cards-cleared" thì người khác sẽ tự update
+            // Còn nếu bạn muốn chủ động báo:
+            socket.emit("cards-cleared", { listId: list._id });
+          } catch (err) {
+            Toastify({
+              text: "❌ Xoá card thất bại!",
+              duration: 2000,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "#F44336",
+              close: true,
+            }).showToast();
+            console.error(err);
+          }
+        },
+      });
     }
 
     // === XOÁ LIST ===
     if (action === "delete-list") {
-      const ok = confirm("Xoá list này? Tất cả card sẽ mất!");
-      if (!ok) return;
+      openConfirmModal({
+        title: "Delete list?",
+        desc: "Bạn chắc chắn muốn xoá list này? Tất cả card sẽ mất và không thể hoàn tác.",
+        okText: "Delete",
+        cancelText: "Cancel",
+        danger: true,
+        onConfirm: async () => {
+          try {
+            // UI: xoá list
+            listEl.remove();
 
-      try {
-        // UI: xoá list
-        listEl.remove();
+            // Backend
+            const res = await fetch(`${API_BASE}/v1/board/${list._id}`, {
+              method: "DELETE",
+              credentials: "include",
+            });
 
-        // Backend
-        await fetch(`/v1/board/${list._id}`, {
-          method: "DELETE",
-        });
+            if (!res.ok) throw new Error("Delete list failed");
 
-      } catch (err) {
-        alert("Xoá list thất bại");
-        console.error(err);
-      }
+            socket.emit("list-deleted", { listId: list._id });
+          } catch (err) {
+            Toastify({
+              text: "❌ Xoá list thất bại!",
+              duration: 2000,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "#F44336",
+              close: true,
+            }).showToast();
+            console.error(err);
+          }
+        },
+      });
     }
 
     menu.style.display = "none";
@@ -226,47 +346,43 @@ function createListElement(list) {
     menu.style.display = "none";
   });
 
-
   header.appendChild(h3);
   header.appendChild(menuBtn);
   header.appendChild(menu);
-
   listEl.appendChild(header);
 
-  // CARD container
-  const cardsContainer = document.createElement("div");
-  cardsContainer.className = "cards-container";
   listEl.appendChild(cardsContainer);
 
   // Render các card
-  (list.cards || []).forEach(card => {
+  (list.cards || []).forEach((card) => {
     const cardEl = document.createElement("div");
     cardEl.className = "card";
     cardEl.dataset.id = card._id;
 
-    // Tạo topBar (luôn có)
+    // Tạo topBar
     const topBar = document.createElement("div");
     topBar.className = "card-topbar";
-    // --- LABELS (nếu có) ---
+
+    // --- LABELS ---
     if (Array.isArray(card.labels) && card.labels.length > 0) {
       const labelsEl = document.createElement("div");
       labelsEl.className = "card-labels";
 
-      card.labels.forEach(color => {
+      card.labels.forEach((color) => {
         const labelColor = document.createElement("div");
         labelColor.className = "card-label";
         labelColor.style.background = color;
         labelsEl.appendChild(labelColor);
       });
 
-      topBar.appendChild(labelsEl); // thêm labels vào topBar
+      topBar.appendChild(labelsEl);
     }
 
-    // --- CHECKBOX (luôn tạo) ---
+    // --- FOOTER ---
     const footerEl = document.createElement("div");
     footerEl.className = "card-footer";
 
-    // --- COMPLETE FOOTER (luôn có, nhưng rỗng) ---
+    // --- COMPLETE FOOTER ---
     const completeFooter = document.createElement("div");
     completeFooter.className = "card-complete-footer";
     footerEl.appendChild(completeFooter);
@@ -282,30 +398,67 @@ function createListElement(list) {
 
     // Icon thùng rác
     const deleteBtn = document.createElement("img");
-    deleteBtn.src = "uploads/icons8-delete-128.png"; // sửa đúng path của bạn
+    deleteBtn.src = "/uploads/icons8-delete-128.png";
     deleteBtn.className = "card-delete-btn";
-    deleteBtn.alt = "Delete card"
-    deleteBtn.addEventListener("click", async (e) => {
-      // ⛔ chặn bubble lên card
+    deleteBtn.alt = "Delete card";
+
+    // ✅ THAY confirm() BROWSER BẰNG MODAL
+    deleteBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       e.preventDefault();
 
-      if (!confirm("Xoá card này?")) return;
+      openConfirmModal({
+        title: "Delete card?",
+        desc: "Bạn chắc chắn muốn xoá card này? Hành động này không thể hoàn tác.",
+        okText: "Delete",
+        cancelText: "Cancel",
+        danger: true,
+        onConfirm: async () => {
+          try {
+            // UI trước
+            cardEl.remove();
 
-      try {
-        // UI trước
-        cardEl.remove();
+            // Backend
+            const res = await fetch(`${API_BASE}/v1/board/delete/${card._id}`, {
+              method: "DELETE",
+              credentials: "include",
+            });
 
-        // Backend
-        await fetch(`/v1/board/delete/${card._id}`, {
-          method: "DELETE",
-        });
-      } catch (err) {
-        alert("Xoá card thất bại");
-        console.error(err);
-      }
+            // safe parse (DELETE đôi khi không trả body)
+            let data = null;
+            try {
+              data = await res.json();
+            } catch {}
+
+            if (!res.ok || (data && data.success === false)) {
+              Toastify({
+                text: `❌ ${(data && data.message) || "Xoá card thất bại!"}`,
+                duration: 2000,
+                gravity: "top",
+                position: "right",
+                backgroundColor: "#F44336",
+                close: true,
+              }).showToast();
+              return;
+            }
+
+            // nếu backend có broadcast card-deleted thì ok
+            // nếu không, bạn vẫn có listener card-deleted ở dưới:
+            socket.emit("card-deleted", { cardId: card._id });
+          } catch (err) {
+            Toastify({
+              text: "❌ Xoá card thất bại!",
+              duration: 2000,
+              gravity: "top",
+              position: "right",
+              backgroundColor: "#F44336",
+              close: true,
+            }).showToast();
+            console.error(err);
+          }
+        },
+      });
     });
-
 
     // Gộp vào wrapper
     actionsWrap.appendChild(deleteBtn);
@@ -313,16 +466,16 @@ function createListElement(list) {
 
     function renderCompleteElement() {
       completeFooter.innerHTML = `
-    <div class="card-complete">
-      <img src="uploads/checks (2).svg" width="16" height="16">
-      <span style="margin-left:4px">Complete</span>
-    </div>
-  `;
+        <div class="card-complete">
+          <img src="uploads/checks (2).svg" width="16" height="16">
+          <span style="margin-left:4px">Complete</span>
+        </div>
+      `;
     }
 
     cardUIActions[card._id] = {
       render: renderCompleteElement,
-      checkboxEl
+      checkboxEl,
     };
 
     // LOAD LẦN ĐẦU
@@ -330,11 +483,7 @@ function createListElement(list) {
       renderCompleteElement();
     }
 
-
-    // Thêm checkbox vào topBar
     topBar.appendChild(actionsWrap);
-    cardEl.appendChild(topBar);
-
     cardEl.appendChild(topBar);
 
     // Tên card
@@ -342,12 +491,13 @@ function createListElement(list) {
     titleEl.className = "card-title";
     titleEl.textContent = card.name;
     cardEl.appendChild(titleEl);
-    // --- Due date (trái) ---
+
+    // --- Due date ---
     let dueEl = null;
     const leftEl = document.createElement("div");
     leftEl.style.display = "flex";
     leftEl.style.alignItems = "center";
-    leftEl.style.gap = "4px"
+    leftEl.style.gap = "4px";
 
     if (card.dueDate) {
       const date = new Date(card.dueDate).toLocaleDateString("vi-VN");
@@ -358,40 +508,38 @@ function createListElement(list) {
       dueEl.style.alignItems = "center";
       dueEl.style.gap = "4px";
 
-      // Icon calendar
       const icon = document.createElement("img");
       icon.src = "uploads/clock-countdown-black.svg";
       icon.alt = "calendar";
       icon.style.width = "16px";
       icon.style.height = "16px";
 
-      // Text date
       const dateText = document.createTextNode(` ${date}`);
 
       dueEl.appendChild(icon);
       dueEl.appendChild(dateText);
       leftEl.appendChild(dueEl);
+
       const now = new Date();
-      now.setHours(0, 0, 0, 0); // bỏ giờ phút giây
+      now.setHours(0, 0, 0, 0);
 
       const due = new Date(card.dueDate);
-      due.setHours(0, 0, 0, 0); // bỏ giờ phút giây
+      due.setHours(0, 0, 0, 0);
 
       const diffDays = (due - now) / (1000 * 60 * 60 * 24);
 
-      if (diffDays < 0) dueEl.style.backgroundColor = "#ff4d4f"; // đỏ quá hạn
-      else if (diffDays <= 2) dueEl.style.backgroundColor = "#f2d600"; // vàng gần hạn
-      else dueEl.style.backgroundColor = "#61bd4f"; // xanh còn nhiều thời gian
+      if (diffDays < 0) dueEl.style.backgroundColor = "#ff4d4f";
+      else if (diffDays <= 2) dueEl.style.backgroundColor = "#f2d600";
+      else dueEl.style.backgroundColor = "#61bd4f";
     }
+
     // --- Middle (attachments + comments) ---
     const midEl = document.createElement("div");
-    midEl.className = "mid-footer"
+    midEl.className = "mid-footer";
     midEl.style.display = "flex";
     midEl.style.alignItems = "center";
     midEl.style.gap = "6px";
 
-
-    // --- Attachments count ---
     if (card.attachments && card.attachments.length > 0) {
       const iconAttachments = document.createElement("img");
       iconAttachments.src = "uploads/attachments-icon.svg";
@@ -405,8 +553,6 @@ function createListElement(list) {
       midEl.appendChild(attText);
     }
 
-
-    // --- Comments count ---
     if (card.comments && card.comments.length > 0) {
       const commentBox = document.createElement("div");
       commentBox.className = "comment-info";
@@ -426,15 +572,14 @@ function createListElement(list) {
       midEl.appendChild(commentBox);
     }
 
-    // --- Members (phải) ---
+    // --- Members ---
     const membersEl = document.createElement("div");
     membersEl.className = "card-members";
     membersEl.style.display = "flex";
     membersEl.style.gap = "4px";
 
-    // Giả sử card.members là mảng avatar URL
-    (card.assignedTo || []).forEach(userId => {
-      const user = members.find(u => u._id === userId);
+    (card.assignedTo || []).forEach((userId) => {
+      const user = members.find((u) => u._id === userId);
       if (!user) return;
 
       const memberEl = document.createElement("div");
@@ -453,43 +598,39 @@ function createListElement(list) {
       membersEl.appendChild(memberEl);
     });
 
-    // Thêm due date + members vào footer
     if (dueEl) footerEl.appendChild(dueEl);
     footerEl.appendChild(midEl);
     footerEl.appendChild(membersEl);
-    // Thêm footer vào card
+
     cardEl.appendChild(footerEl);
     cardEl.appendChild(completeFooter);
 
-    //checkbox render   
     // --- CLICK CHECKBOX ---
     checkboxEl.addEventListener("click", async (e) => {
       e.stopPropagation();
 
       const isComplete = checkboxEl.checked;
 
-      // UI local (client A)
       if (isComplete) renderCompleteElement();
       else completeFooter.innerHTML = "";
 
-      // Emit realtime
       socket.emit("card:completeToggle", {
         cardId: card._id,
-        complete: isComplete
+        complete: isComplete,
       });
 
-      // Update DB
       try {
         await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ complete: isComplete })
+          body: JSON.stringify({ complete: isComplete }),
         });
       } catch (err) {
         console.error("Error updating card complete:", err);
       }
     });
-    // ⭐ Sự kiện mở chi tiết
+
+    // ⭐ mở chi tiết
     cardEl.addEventListener("click", () => {
       openCardDetail(card._id);
     });
@@ -497,13 +638,15 @@ function createListElement(list) {
     cardsContainer.appendChild(cardEl);
   });
 
-
   // Nút Add card
   attachAddCard(listEl, list._id);
 
   return listEl;
 }
-//socket xoá 
+
+// ===================================================================
+// SOCKET realtime xoá/clear/list
+// ===================================================================
 socket.on("cards-cleared", ({ listId }) => {
   const listEl = document.querySelector(`.list[data-id="${listId}"]`);
   if (!listEl) return;
@@ -511,42 +654,30 @@ socket.on("cards-cleared", ({ listId }) => {
   const cardsContainer = listEl.querySelector(".cards-container");
   cardsContainer.innerHTML = "";
 });
+
 socket.on("list-deleted", ({ listId }) => {
   const listEl = document.querySelector(`.list[data-id="${listId}"]`);
   if (listEl) listEl.remove();
 });
+
 socket.on("card-deleted", ({ cardId }) => {
-  const cardEl = document.querySelector(
-    `.card[data-id="${cardId}"]`
-  );
+  const cardEl = document.querySelector(`.card[data-id="${cardId}"]`);
   if (cardEl) cardEl.remove();
 });
-
 
 socket.on("card:completeUpdated", ({ cardId, complete }) => {
   const ui = cardUIActions[cardId];
   if (!ui) return;
 
-  // Cập nhật checkbox
   ui.checkboxEl.checked = complete;
 
-  // Cập nhật UI
   if (complete) {
-    ui.render();      // ✔ gọi hàm render đúng
+    ui.render();
   } else {
-    const footer = ui.checkboxEl
-      .closest(".card")
-      .querySelector(".card-complete-footer");
+    const footer = ui.checkboxEl.closest(".card").querySelector(".card-complete-footer");
     if (footer) footer.innerHTML = "";
   }
 });
-
-
-
-
-
-
-
 
 // ===================================================================
 // Thêm card vào list
@@ -568,6 +699,7 @@ function attachAddCard(listEl, listId) {
   const saveBtn = document.createElement("button");
   saveBtn.className = "save-card-btn";
   saveBtn.textContent = "Add";
+
   const cancelBtn = document.createElement("button");
   cancelBtn.className = "cancel-card-btn";
   cancelBtn.textContent = "Cancel";
@@ -578,7 +710,6 @@ function attachAddCard(listEl, listId) {
 
   listEl.appendChild(addCardBtn);
 
-  // mở form
   addCardBtn.addEventListener("click", () => {
     addCardBtn.classList.add("hidden");
 
@@ -593,12 +724,11 @@ function attachAddCard(listEl, listId) {
     setTimeout(() => {
       cardsContainer.scrollTo({
         top: cardsContainer.scrollHeight,
-        behavior: "smooth"
+        behavior: "smooth",
       });
     }, 100);
   });
 
-  // hủy
   cancelBtn.addEventListener("click", () => {
     inputContainer.classList.remove("show");
     setTimeout(() => {
@@ -608,7 +738,6 @@ function attachAddCard(listEl, listId) {
     input.value = "";
   });
 
-  // thêm card
   saveBtn.addEventListener("click", async () => {
     const cardName = input.value.trim();
     if (!cardName) return alert("Vui lòng nhập tên thẻ!");
@@ -625,11 +754,9 @@ function attachAddCard(listEl, listId) {
 
       if (!res.ok) throw new Error("Không thể thêm thẻ");
 
-
       input.value = "";
       inputContainer.remove();
       addCardBtn.classList.remove("hidden");
-
     } catch (err) {
       console.error(err);
     } finally {
@@ -645,15 +772,18 @@ socket.on("newCard", (card) => {
   const listId = card.list._id ? card.list._id : card.list; // nếu populate
   const listEl = document.querySelector(`.list[data-id="${listId}"] .cards-container`);
   if (!listEl) return;
+
   const cardEl = document.createElement("div");
   cardEl.className = "card";
   cardEl.textContent = card.name;
   cardEl.addEventListener("click", () => {
     openCardDetail(card._id);
   });
+
   listEl.appendChild(cardEl);
   renderBoardWithLists();
 });
+
 // ===================================================================
 // Tạo LIST mới
 // ===================================================================
@@ -668,31 +798,28 @@ addListBtn.addEventListener("click", async () => {
     await fetch(`${API_BASE}/v1/board/create-list/${currentBoardId}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: title })
+      body: JSON.stringify({ name: title }),
     });
     newListTitle.value = "";
-
   } catch (err) {
     console.error(err);
     alert("Failed to add list");
   }
-
 });
 
 // ===================================================================
 // REALTIME LIST
 // ===================================================================
-
 socket.on("newList", (list) => {
   console.log("📩 Received new list:", list);
 
-  const listEl = createListElement(list); // dùng lại function
+  const listEl = createListElement(list);
   listsContainer.appendChild(listEl);
   renderBoardWithLists();
 });
+
 // ===================================================================
 // Invite user
-
 // ===================================================================
 const inviteForm = document.getElementById("inviteForm");
 
@@ -701,7 +828,6 @@ inviteForm.addEventListener("submit", async (e) => {
   const boardId = currentBoardId;
   const email = inviteForm.querySelector("input").value.trim();
 
-  // Kiểm tra rỗng
   if (!email) {
     Toastify({
       text: "⚠️ Vui lòng nhập email!",
@@ -710,7 +836,7 @@ inviteForm.addEventListener("submit", async (e) => {
       position: "right",
       backgroundColor: "#FF9800",
       close: true,
-      stopOnFocus: true
+      stopOnFocus: true,
     }).showToast();
     return;
   }
@@ -720,7 +846,7 @@ inviteForm.addEventListener("submit", async (e) => {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email }),
     });
 
     const data = await res.json();
@@ -733,19 +859,19 @@ inviteForm.addEventListener("submit", async (e) => {
         position: "right",
         backgroundColor: "linear-gradient(to right, #00b09b, #96c93d)",
         close: true,
-        stopOnFocus: true
+        stopOnFocus: true,
       }).showToast();
 
-      inviteForm.reset(); // Xóa giá trị input sau khi gửi
+      inviteForm.reset();
     } else {
       Toastify({
         text: `❌ ${data.message || "Mời thất bại!"}`,
         duration: 3000,
         gravity: "top",
         position: "right",
-        backgroundColor: "#F44336", // đỏ báo lỗi
+        backgroundColor: "#F44336",
         close: true,
-        stopOnFocus: true
+        stopOnFocus: true,
       }).showToast();
     }
   } catch (err) {
@@ -755,25 +881,24 @@ inviteForm.addEventListener("submit", async (e) => {
       duration: 3000,
       gravity: "top",
       position: "right",
-      backgroundColor: "#9C27B0", // tím báo lỗi hệ thống
+      backgroundColor: "#9C27B0",
       close: true,
-      stopOnFocus: true
+      stopOnFocus: true,
     }).showToast();
   }
 });
 
-//bật tắt invite
+// bật tắt invite
 document.addEventListener("DOMContentLoaded", () => {
   const inviteIcon = document.getElementById("invite-icon");
   const inviteFormContainer = document.getElementById("inviteFormContainer");
 
   inviteIcon.addEventListener("click", (e) => {
-    e.stopPropagation(); // tránh click ra ngoài tự ẩn form ngay
+    e.stopPropagation();
     inviteFormContainer.classList.toggle("hidden");
     inviteIcon.style.display = "none";
   });
 
-  // Click ra ngoài sẽ ẩn form
   document.addEventListener("click", (e) => {
     if (!inviteFormContainer.contains(e.target) && e.target !== inviteIcon) {
       inviteIcon.style.display = "block";
@@ -781,6 +906,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
 const showAddListBtn = document.getElementById("showAddListBtn");
 const addListForm = document.getElementById("addListForm");
 const cancelAddListBtn = document.getElementById("cancelAddListBtn");
@@ -796,11 +922,13 @@ cancelAddListBtn.addEventListener("click", () => {
   newListTitle.value = "";
 });
 
-// card detail
+// ===================================================================
+// CARD DETAIL
+// ===================================================================
 async function openCardDetail(cardId) {
-  currentCardId = cardId; // lưu id card hiện tại
+  currentCardId = cardId;
   const res = await fetch(`${API_BASE}/v1/board/get-card/cards/${cardId}`, {
-    credentials: "include"
+    credentials: "include",
   });
   const result = await res.json();
   if (!result.success) return alert(result.message || "Lỗi khi tải chi tiết card");
@@ -812,16 +940,14 @@ async function openCardDetail(cardId) {
 
 function showCardDetailModal(card) {
   const modal = document.getElementById("cardDetailModal");
-  // Assigned members
-  assignedMembers = (card.assignedTo || []).map(m => m._id);
-  // Render assigned member đầy đủ
+
+  assignedMembers = (card.assignedTo || []).map((m) => m._id);
   renderAssignedMembers();
-  // Labels - gắn 1 lần duy nhất
+
   const labelsEl = document.getElementById("cardLabels");
   labelsEl.innerHTML = "";
 
-  // render tất cả label đã có
-  (card.labels || []).forEach(color => {
+  (card.labels || []).forEach((color) => {
     addLabelToCard(color);
   });
 
@@ -829,9 +955,8 @@ function showCardDetailModal(card) {
   addLabelBtn.removeEventListener("click", addLabelBtn._listener);
   addLabelBtn._listener = () => openLabelPopup(currentCard._id);
   addLabelBtn.addEventListener("click", addLabelBtn._listener);
-  renderLabelsFromCard(card)
+  renderLabelsFromCard(card);
 
-  // Title
   const cardTitleEl = document.getElementById("cardTitle");
   cardTitleEl.contentEditable = true;
   cardTitleEl.textContent = currentCard.name;
@@ -841,12 +966,9 @@ function showCardDetailModal(card) {
     if (!newName || newName === currentCard.name) return;
 
     currentCard.name = newName;
-
     socket.emit("card:updateName", { cardId: currentCard._id, name: newName });
-
   });
 
-  // Description
   const cardDescriptionEl = document.getElementById("cardDescription");
   cardDescriptionEl.contentEditable = true;
   cardDescriptionEl.textContent = card.description || "";
@@ -855,6 +977,7 @@ function showCardDetailModal(card) {
     currentCard.description = newDescription;
     socket.emit("card:updateDescription", { cardId: card._id, description: newDescription });
   });
+
   socket.off("card:descriptionUpdated");
   socket.on("card:descriptionUpdated", ({ description }) => {
     if (document.activeElement !== cardDescriptionEl) {
@@ -871,12 +994,12 @@ function showCardDetailModal(card) {
     const due = new Date(card.dueDate);
 
     const yyyy = due.getFullYear();
-    const mm = String(due.getMonth() + 1).padStart(2, '0');
-    const dd = String(due.getDate()).padStart(2, '0');
+    const mm = String(due.getMonth() + 1).padStart(2, "0");
+    const dd = String(due.getDate()).padStart(2, "0");
     dateInput.value = `${yyyy}-${mm}-${dd}`;
 
-    const hh = String(due.getHours()).padStart(2, '0');
-    const min = String(due.getMinutes()).padStart(2, '0');
+    const hh = String(due.getHours()).padStart(2, "0");
+    const min = String(due.getMinutes()).padStart(2, "0");
     timeInput.value = `${hh}:${min}`;
 
     statusEl.textContent = formatDateDMY(due) + " đến hạn";
@@ -888,18 +1011,20 @@ function showCardDetailModal(card) {
 
   updateDueStatus();
 
-  // Lắng nghe khi người dùng chỉnh
-  dateInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
-  timeInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
-  // Comments
-  renderComments(card.comments || []);
+  dateInput.addEventListener("change", () => {
+    updateDueStatus();
+    saveDueDate();
+  });
+  timeInput.addEventListener("change", () => {
+    updateDueStatus();
+    saveDueDate();
+  });
 
-  // Attachments
+  renderComments(card.comments || []);
   renderAttachments(card);
 
-  // Hiển thị modal
   modal.style.display = "flex";
-  document.getElementById("closeModal").onclick = () => modal.style.display = "none";
+  document.getElementById("closeModal").onclick = () => (modal.style.display = "none");
   window.onclick = (event) => {
     if (event.target === modal) modal.style.display = "none";
   };
@@ -913,7 +1038,7 @@ function fileToBase64(file) {
     reader.readAsDataURL(file);
   });
 }
-// Hàm hiển thị attachments hiện có
+
 function renderAttachments(card) {
   const attachmentsEl = document.getElementById("cardAttachments");
   attachmentsEl.innerHTML = "";
@@ -922,27 +1047,24 @@ function renderAttachments(card) {
     const { name, data } = fileObj;
     const li = document.createElement("li");
 
-    // Preview ảnh
     if (data.startsWith("data:image")) {
       const img = document.createElement("img");
       img.src = data;
       img.style.maxWidth = "150px";
       img.style.display = "block";
       img.style.marginBottom = "5px";
-      img.onclick = e => e.stopPropagation();
+      img.onclick = (e) => e.stopPropagation();
       li.appendChild(img);
     } else {
-      // Hiển thị tên file
       const nameSpan = document.createElement("span");
       nameSpan.textContent = name;
       nameSpan.style.marginRight = "10px";
       li.appendChild(nameSpan);
     }
 
-    // Nút mở/download
     const openBtn = document.createElement("button");
     openBtn.textContent = "Mở / Download";
-    openBtn.onclick = e => {
+    openBtn.onclick = (e) => {
       e.stopPropagation();
       const [header, base64] = data.split(",");
       const mime = header.match(/data:(.*?);base64/)[1];
@@ -966,11 +1088,10 @@ function renderAttachments(card) {
     };
     li.appendChild(openBtn);
 
-    // Nút xóa
     const removeBtn = document.createElement("button");
     removeBtn.textContent = "x";
     removeBtn.style.marginLeft = "5px";
-    removeBtn.onclick = e => {
+    removeBtn.onclick = (e) => {
       e.stopPropagation();
       removeAttachment(index);
     };
@@ -981,13 +1102,11 @@ function renderAttachments(card) {
 }
 
 socket.on("card:nameUpdated", ({ cardId, name }) => {
-  // 1️⃣ Update state
-  boardData.lists.forEach(list => {
-    const c = (list.cards || []).find(c => c._id === cardId);
+  boardData.lists.forEach((list) => {
+    const c = (list.cards || []).find((c) => c._id === cardId);
     if (c) c.name = name;
   });
 
-  // 2️⃣ Update list view
   const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
   if (cardEl) {
     const nameEl = cardEl.querySelector(".card-title");
@@ -1000,35 +1119,28 @@ socket.on("card:nameUpdated", ({ cardId, name }) => {
   }
 });
 
-
-
-
-//thêm file attachments
 attachmentInput.onchange = async () => {
   const files = Array.from(attachmentInput.files);
 
   for (let file of files) {
-    if (!currentCard.attachments?.some(f => f.name === file.name && f.size === file.size)) {
+    if (!currentCard.attachments?.some((f) => f.name === file.name && f.size === file.size)) {
       const fileObj = { name: file.name, data: await fileToBase64(file) };
       currentCard.attachments ??= [];
       currentCard.attachments.push(fileObj);
 
       socket.emit("card:updateAttachments", {
         cardId: currentCardId,
-        file: fileObj
+        file: fileObj,
       });
     }
   }
-  console.log("render from onchange");
 
   attachmentInput.value = "";
 };
 
-
 function removeAttachment(index) {
   const file = currentCard.attachments[index];
   currentCard.attachments.splice(index, 1);
-  // Gửi sự kiện xóa file
   socket.emit("card:removeAttachment", { cardId: currentCard._id, fileName: file.name });
 }
 
@@ -1037,18 +1149,16 @@ function loadAssignList(filter = "") {
   assignListEl.innerHTML = "";
 
   members
-    .filter(member => member.username.toLowerCase().includes(filter.toLowerCase()))
-    .forEach(member => {
+    .filter((member) => member.username.toLowerCase().includes(filter.toLowerCase()))
+    .forEach((member) => {
       const li = document.createElement("li");
       li.dataset.id = member._id;
       li.className = "assign-member-item";
 
-      // Avatar tròn
       const avatar = document.createElement("div");
       avatar.className = "member-avatar";
       avatar.textContent = member.username[0].toUpperCase();
 
-      // Tên member
       const name = document.createElement("span");
       name.className = "member-name";
       name.textContent = member.username;
@@ -1056,12 +1166,10 @@ function loadAssignList(filter = "") {
       li.appendChild(avatar);
       li.appendChild(name);
 
-      // Nếu member đã assign → đánh dấu
       if (assignedMembers.includes(member._id)) {
         li.classList.add("assigned");
       }
 
-      // Click assign member
       li.addEventListener("click", () => {
         assignMemberToCard(member._id);
       });
@@ -1070,17 +1178,12 @@ function loadAssignList(filter = "") {
     });
 }
 
-
-// Hiển thị popup
 document.getElementById("AssignedMember-btn").addEventListener("click", () => {
   const popup = document.getElementById("assignPopup");
 
-  popup.style.display =
-    (popup.style.display === "none" || popup.style.display === "")
-      ? "flex"
-      : "none";
+  popup.style.display = popup.style.display === "none" || popup.style.display === "" ? "flex" : "none";
 
-  loadAssignList(); // load member
+  loadAssignList();
 });
 
 document.getElementById("assign-close").addEventListener("click", () => {
@@ -1092,19 +1195,15 @@ window.addEventListener("click", (e) => {
   if (e.target === popup) popup.style.display = "none";
 });
 
-
-
-// Tìm kiếm member
 document.getElementById("assignSearch").addEventListener("input", (e) => {
   loadAssignList(e.target.value);
 });
-
 
 function assignMemberToCard(userId) {
   if (!currentCard || !currentCard._id) return;
   socket.emit("card:assignMember", {
     cardId: currentCard._id,
-    userId
+    userId,
   });
 }
 
@@ -1112,17 +1211,16 @@ function removeMemberFromCard(userId) {
   if (!currentCard || !currentCard._id) return;
   socket.emit("card:removeMember", {
     cardId: currentCard._id,
-    userId
+    userId,
   });
 }
 
-// Render assigned
 function renderAssignedMembers() {
   const cardAssignedEl = document.getElementById("cardAssigned");
   cardAssignedEl.innerHTML = "";
 
-  assignedMembers.forEach(id => {
-    const member = members.find(m => m._id === id);
+  assignedMembers.forEach((id) => {
+    const member = members.find((m) => m._id === id);
     if (!member) return;
 
     const li = document.createElement("li");
@@ -1148,12 +1246,10 @@ function renderAssignedMembers() {
     cardAssignedEl.appendChild(li);
   });
 }
-function updateBoardViewAssignedUI(cardId, updated) {
 
-  // lấy element của card ngoài board
+function updateBoardViewAssignedUI(cardId, updated) {
   const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
   if (!cardEl) {
-    // nếu DOM chưa render → retry sau 1 frame
     requestAnimationFrame(() => updateBoardViewAssignedUI(cardId, updated));
     return;
   }
@@ -1163,8 +1259,8 @@ function updateBoardViewAssignedUI(cardId, updated) {
 
   membersEl.innerHTML = "";
 
-  updated.forEach(uid => {
-    const m = members.find(mem => mem._id === uid);
+  updated.forEach((uid) => {
+    const m = members.find((mem) => mem._id === uid);
     if (!m) return;
 
     const avatar = document.createElement("div");
@@ -1175,15 +1271,14 @@ function updateBoardViewAssignedUI(cardId, updated) {
     membersEl.appendChild(avatar);
   });
 }
+
 function updateAssignedMembersInState(cardId, updated) {
-  boardData.lists.forEach(list => {
-    const c = list.cards.find(c => c._id === cardId);
+  boardData.lists.forEach((list) => {
+    const c = list.cards.find((c) => c._id === cardId);
     if (c) c.assignedTo = updated;
   });
 }
 
-
-// SOCKET UPDATE
 socket.off("card:assignedMembersUpdated");
 socket.on("card:assignedMembersUpdated", ({ cardId, assignedMembers: updated }) => {
   if (currentCard && currentCard._id === cardId) {
@@ -1191,22 +1286,15 @@ socket.on("card:assignedMembersUpdated", ({ cardId, assignedMembers: updated }) 
     renderAssignedMembers();
   }
 
-  // đồng thời cập nhật state trong boardData
   updateAssignedMembersInState(cardId, updated);
-
-  // và update UI ngoài board
   updateBoardViewAssignedUI(cardId, updated);
 });
 
-
-
-
-
-// Nhận realtime
+// labels realtime
 socket.off("card:labelAdded");
 socket.on("card:labelAdded", ({ cardId, color }) => {
-  boardData.lists.forEach(list => {
-    const card = list.cards.find(c => c._id === cardId);
+  boardData.lists.forEach((list) => {
+    const card = list.cards.find((c) => c._id === cardId);
     if (card && !card.labels.includes(color)) {
       card.labels.push(color);
     }
@@ -1215,21 +1303,18 @@ socket.on("card:labelAdded", ({ cardId, color }) => {
   if (currentCard && currentCard._id === cardId) {
     currentCard.labels.push(color);
 
-    // Nếu popup đang mở
     const labelsEl = document.getElementById("cardLabels");
     if (labelsEl) {
-      addLabelToCard(color); // thêm trực tiếp vào popup DOM
+      addLabelToCard(color);
     }
   }
 });
 
-// Mảng màu
 const colors = ["#61bd4f", "#f2d600", "#ff9f1a", "#eb5a46", "#c377e0"];
 
-// Thêm label vào DOM
 function addLabelToCard(color) {
   const labelsEl = document.getElementById("cardLabels");
-  if (Array.from(labelsEl.children).some(span => span.dataset.color === color)) return;
+  if (Array.from(labelsEl.children).some((span) => span.dataset.color === color)) return;
 
   const span = document.createElement("span");
   span.classList.add("card-label");
@@ -1237,13 +1322,11 @@ function addLabelToCard(color) {
   span.style.backgroundColor = color;
   span.style.width = "30px";
   span.style.height = "30px";
-  span.style.gap = "10px"
+  span.style.gap = "10px";
   span.dataset.color = color;
   labelsEl.appendChild(span);
-
 }
 
-// Popup chọn màu
 function openLabelPopup(cardId) {
   const popup = document.getElementById("labelPopup");
   const colorsContainer = document.getElementById("labelColors");
@@ -1251,7 +1334,7 @@ function openLabelPopup(cardId) {
 
   const currentLabels = currentCard.labels || [];
 
-  colors.forEach(color => {
+  colors.forEach((color) => {
     const wrapper = document.createElement("div");
     wrapper.classList.add("color-item");
     wrapper.style.backgroundColor = color;
@@ -1261,7 +1344,6 @@ function openLabelPopup(cardId) {
     checkbox.classList.add("color-checkbox");
     checkbox.checked = currentLabels.includes(color);
 
-    // Click checkbox để chọn/bỏ
     checkbox.addEventListener("change", () => {
       if (checkbox.checked) {
         addLabelToCard(color);
@@ -1278,77 +1360,69 @@ function openLabelPopup(cardId) {
 
   popup.style.display = "flex";
 }
+
 function removeLabelFromCard(color) {
   const labelsEl = document.getElementById("cardLabels");
 
-  Array.from(labelsEl.children).forEach(span => {
+  Array.from(labelsEl.children).forEach((span) => {
     if (span.dataset.color === color) {
       span.remove();
     }
   });
 
-  // remove trong client copy
-  currentCard.labels = currentCard.labels.filter(c => c !== color);
+  currentCard.labels = currentCard.labels.filter((c) => c !== color);
 }
 
 socket.on("card:labelRemoved", ({ cardId, color }) => {
-  boardData.lists.forEach(list => {
-    const card = list.cards.find(c => c._id === cardId);
+  boardData.lists.forEach((list) => {
+    const card = list.cards.find((c) => c._id === cardId);
     if (card) {
-      card.labels = card.labels.filter(c => c !== color);
+      card.labels = card.labels.filter((c) => c !== color);
     }
   });
   renderBoardWithLists();
 
   if (currentCard && currentCard._id === cardId) {
-    currentCard.labels = currentCard.labels.filter(c => c !== color);
+    currentCard.labels = currentCard.labels.filter((c) => c !== color);
     const labelsEl = document.getElementById("cardLabels");
     if (labelsEl) removeLabelFromCard(color);
   }
 });
 
-
-// Nút tắt popup
 document.getElementById("closeLabelPopup").onclick = () => {
   document.getElementById("labelPopup").style.display = "none";
 };
-// Khi mở modal, render label từ DB
+
 function renderLabelsFromCard(card) {
   const labelsEl = document.getElementById("cardLabels");
   labelsEl.innerHTML = "";
-  (card.labels || []).forEach(color => addLabelToCard(color));
+  (card.labels || []).forEach((color) => addLabelToCard(color));
 }
 
-//socket attackment
+// attachments socket
 socket.on("card:attachmentsUpdated", ({ cardId, attachments }) => {
   if (currentCardId !== cardId) return;
 
-  currentCard.attachments = attachments; // luôn đồng bộ DB
-
-  console.log("render from socket");
+  currentCard.attachments = attachments;
   renderAttachments(currentCard);
 });
-
 
 socket.on("card:attachmentRemoved", ({ fileName }) => {
-  currentCard.attachments = currentCard.attachments.filter(f => f.name !== fileName);
+  currentCard.attachments = currentCard.attachments.filter((f) => f.name !== fileName);
   renderAttachments(currentCard);
-  renderBoardWithLists()
+  renderBoardWithLists();
 });
 
-// due date
-// Cập nhật giá trị khi mở card
-// Format hiển thị DD/MM/YYYY HH:MM
+// due date helpers
 function formatDateDMY(date) {
-  const d = String(date.getDate()).padStart(2, '0');
-  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, "0");
+  const m = String(date.getMonth() + 1).padStart(2, "0");
   const y = date.getFullYear();
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, "0");
+  const min = String(date.getMinutes()).padStart(2, "0");
   return `${d}/${m}/${y} ${h}:${min}`;
 }
 
-// Lấy giá trị từ input date + time
 function getDueDateTime() {
   const dateInput = document.getElementById("cardDueDate").value;
   const timeInput = document.getElementById("cardDueTime").value || "00:00";
@@ -1362,7 +1436,6 @@ function getDueDateTime() {
   return due;
 }
 
-// Cập nhật trạng thái hiển thị
 function updateDueStatus() {
   const due = getDueDateTime();
   const statusEl = document.getElementById("dueDateStatus");
@@ -1382,7 +1455,6 @@ function updateDueStatus() {
   else statusEl.className = "due-status normal";
 }
 
-// Gửi lên server + realtime
 function saveDueDate() {
   const due = getDueDateTime();
   if (!due) return;
@@ -1391,39 +1463,36 @@ function saveDueDate() {
 
   socket.emit("card:updateDueDate", {
     cardId: currentCard._id,
-    dueDate: due
+    dueDate: due,
   });
 }
 
-// Lắng nghe realtime
 socket.on("card:dueDateUpdated", ({ dueDate }) => {
   const due = new Date(dueDate);
   const dateInput = document.getElementById("cardDueDate");
   const timeInput = document.getElementById("cardDueTime");
 
-  // Hiển thị input theo local
   const yyyy = due.getFullYear();
-  const mm = String(due.getMonth() + 1).padStart(2, '0');
-  const dd = String(due.getDate()).padStart(2, '0');
+  const mm = String(due.getMonth() + 1).padStart(2, "0");
+  const dd = String(due.getDate()).padStart(2, "0");
   dateInput.value = `${yyyy}-${mm}-${dd}`;
 
-  const hh = String(due.getHours()).padStart(2, '0');
-  const min = String(due.getMinutes()).padStart(2, '0');
+  const hh = String(due.getHours()).padStart(2, "0");
+  const min = String(due.getMinutes()).padStart(2, "0");
   timeInput.value = `${hh}:${min}`;
 
   updateDueStatus();
-  renderBoardWithLists()
+  renderBoardWithLists();
 });
 
-//comment
-// Khi mở card, render comment
-let commentsCache = []; // lưu comment để khỏi render lại toàn bộ
+// comments
+let commentsCache = [];
 
 function renderComments(comments = []) {
   commentsCache = comments;
   const el = document.getElementById("cardComments");
   el.innerHTML = "";
-  comments.forEach(c => appendComment(c));
+  comments.forEach((c) => appendComment(c));
 }
 
 function appendComment(comment) {
@@ -1436,7 +1505,6 @@ function appendComment(comment) {
   el.appendChild(li);
 }
 
-
 document.getElementById("addCommentBtn").addEventListener("click", () => {
   const text = document.getElementById("commentInput").innerText.trim();
   const input = document.getElementById("commentInput");
@@ -1447,22 +1515,21 @@ document.getElementById("addCommentBtn").addEventListener("click", () => {
   input.innerText = "";
 });
 
-
 socket.on("card:commentAdded", ({ cardId, comment }) => {
   if (currentCardId !== cardId) return;
 
   commentsCache.push(comment);
   appendComment(comment);
 });
+
 socket.on("board:commentAdded", ({ cardId, comment }) => {
   updateCardCommentCount(cardId, comment);
 });
 
 function updateCardCommentCount(cardId, comment) {
-  // 1. Tìm card trong boardData
   let card = null;
   for (const list of boardData.lists) {
-    const found = (list.cards || []).find(c => c._id === cardId);
+    const found = (list.cards || []).find((c) => c._id === cardId);
     if (found) {
       card = found;
       break;
@@ -1471,18 +1538,13 @@ function updateCardCommentCount(cardId, comment) {
 
   if (!card) return console.log("Không thấy card trong boardData");
 
-  // 2. Tăng số comment trong boardData
   card.comments.push(comment);
 
-  // 3. Lấy element card ngoài board
   const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
   if (!cardEl) return console.log("Không thấy cardEL");
 
   const countEl = cardEl.querySelector(".comment-count");
   if (!countEl) return console.log("Không thấy comment-count");
 
-  // 4. Cập nhật lại số
   countEl.textContent = card.comments.length;
 }
-
-

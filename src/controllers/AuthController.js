@@ -44,7 +44,7 @@ export const loginUser = async (req, res) => {
         // maxAge bằng mili giây; mapping đơn giản với JWT_EXPIRES_IN nếu là "1d"
         // ta dùng 24h khi JWT_EXPIRES_IN chứa "d"
         if (JWT_EXPIRES_IN.endsWith("d")) {
-          const days = parseInt(JWT_EXPIRES_IN.replace("d","")) || 1;
+          const days = parseInt(JWT_EXPIRES_IN.replace("d", "")) || 1;
           return days * 24 * 60 * 60 * 1000;
         }
         // mặc định 1 ngày
@@ -58,7 +58,10 @@ export const loginUser = async (req, res) => {
       user: {
         id: user._id,
         username: user.username,
-        email: user.email
+        email: user.email,
+        avatar: user.avatar,
+        workspaces: user.workspaces
+
       }
     });
   } catch (error) {
