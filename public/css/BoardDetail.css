@@ -100,14 +100,12 @@ html, body {
   right: -5px;
   width: 16px;
   height: 16px;
-  background: red;
+  background: #0079bf;
   border-radius: 50%;
-  color: white;
   font-size: 11px;
   display: flex;
   justify-content: center;
   align-items: center;
-  opacity: 0;
   transition: 0.2s;
 }
 
@@ -1217,12 +1215,12 @@ html, body {
   margin-left: 6px;
   font-weight: bold;
   cursor: pointer;
-  color: #555;
+  color: black;
   transition: color 0.2s;
 }
 
 #cardAssigned li .remove-member:hover {
-  color: #d9534f;
+  color: #f11109;
 }
 .due-date-container{
   display: flex;

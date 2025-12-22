@@ -458,3 +458,54 @@ export function initSidebarHeader() {
 
   document.body.dataset.sidebarHeaderInit = "1";
 }
+
+// tạo mới workspace
+const addBtn = document.getElementById("addWorkspaceBtn");
+const modal = document.getElementById("workspaceModal");
+const closeBtn = modal.querySelector(".close");
+const form = document.getElementById("workspaceForm");
+const input = document.getElementById("workspaceName");
+
+// Mở modal khi bấm "+"
+addBtn.addEventListener("click", () => {
+  modal.style.display = "flex";
+  input.value = "";
+  input.focus();
+});
+
+// Đóng modal khi bấm dấu ×
+closeBtn.addEventListener("click", () => modal.style.display = "none");
+
+// Đóng modal khi click ra ngoài
+window.addEventListener("click", e => {
+  if (e.target === modal) modal.style.display = "none";
+});
+
+// Xử lý submit form
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const name = input.value.trim();
+    if (!name) return alert("Vui lòng nhập tên workspace");
+
+    try {
+      const res = await fetch(`${API_BASE}/v1/workspace/create`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // gửi cookie token nếu có
+        body: JSON.stringify({ name })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Lỗi tạo workspace");
+
+      alert(data.message);
+      modal.style.display = "none";
+
+      // reload danh sách workspace
+      loadSidebarWorkspace();
+
+    } catch (err) {
+      console.error(err);
+      alert("Error: " + err.message);
+    }
+  });

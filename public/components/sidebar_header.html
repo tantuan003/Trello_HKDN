@@ -72,11 +72,24 @@
 
         <!-- Workspaces -->
         <section class="workspaces" id="wsp">
-          <h4>Workspaces</h4>
+          <div class="workspace-header">
+            <h4>Workspaces</h4>
+            <button id="addWorkspaceBtn">+</button>
+          </div>
+          <div id="workspaceModal" class="modalworkspace">
+          <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Tạo Workspace mới</h3>
+            <form id="workspaceForm">
+              <input type="text" id="workspaceName" placeholder="name" required />
+              <button type="submit">Tạo</button>
+            </form>
+          </div>
+        </div>
 
           <div id="workspace-list"></div>
-
         </section>
+
       </aside>
 
       <!-- Content slot -->
