@@ -13,17 +13,26 @@ const workspaceSchema = new mongoose.Schema({
     default: []
   },
 
-    members: [
-    {
-      user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-      role: {
-        type: String,
-        enum: ["owner", "admin", "member"],
-        default: "member"
-      },
-      joinedAt: { type: Date, default: Date.now }
-    }
-  ],
+  members: { 
+    type: [
+      { 
+        user: { 
+          type: mongoose.Schema.Types.ObjectId, 
+          ref: "User", 
+          required: true 
+        }, 
+        role: { 
+          type: String, 
+          enum: ["owner", "admin", "member"], 
+          default: "member" 
+        }, 
+        joinedAt: { 
+          type: Date, 
+          default: Date.now 
+        }
+      }], 
+      default: [] 
+    },
   visibility: {
     type: String,
     enum: ["private", "public"],

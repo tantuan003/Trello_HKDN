@@ -50,9 +50,9 @@ export async function loadSidebarWorkspace() {
       menu.className = "wsp-menu";
       menu.style.display = "none";
       menu.innerHTML = `
-        <li><a href="boards.html?ws=${workspace._id}">Boards</a></li>
-        <li><a href="members.html?ws=${workspace._id}">Members</a></li>
-        <li><a href="settings-wsp.html?ws=${workspace._id}">Settings</a></li>
+        <li><a href="boards.html?ws=${workspace._id}"><i class="fa-solid fa-briefcase"></i>Boards</a></li>
+        <li><a href="members.html?ws=${workspace._id}"><i class="fa-solid fa-user-group"></i>Members</a></li>
+        <li><a href="settings-wsp.html?ws=${workspace._id}"><i class="fa-solid fa-gear"></i>Settings</a></li>
       `;
 
       // **Chỉ mở menu và set currentWorkspaceId nếu URL match**
