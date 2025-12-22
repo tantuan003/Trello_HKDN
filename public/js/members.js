@@ -84,37 +84,91 @@ async function initMembersPage() {
     document.querySelector(".members-list").innerHTML = "<p>Lỗi khi load workspace hoặc members</p>";
   }
 }
+
+
 function canEditRole(member) {
-  const currentUserRole = window.currentWorkspaceRole; 
-  // "owner" | "admin" | "member"
+  if (!window.currentWorkspaceRole) return false;
 
-  if (!currentUserRole) return false;
-
+  const currentUserRole = window.currentWorkspaceRole.toLowerCase();
   const targetRole = member.role.toLowerCase();
 
   // ❌ Không ai được sửa Owner
-  if (targetRole === "Owner") return false;
+  if (targetRole === "owner") return false;
 
-  // ✅ Owner sửa được tất cả
-  if (currentUserRole === "Owner") return true;
-
-  // ✅ Admin chỉ sửa Member
-  if (currentUserRole === "admin" && targetRole === "member") return true;
+  // ✅ Chỉ Owner mới được sửa role
+  if (currentUserRole === "owner") return true;
 
   return false;
 }
+function attachRoleChangeEvents(workspaceId) {
+  const selects = document.querySelectorAll(".role-select");
+
+  selects.forEach(select => {
+    select.addEventListener("change", async (e) => {
+      const memberId = e.target.dataset.userId;
+      const newRole = e.target.value;
+
+      const oldRole = e.target.getAttribute("data-old-role");
+
+      // UI optimistic
+      e.target.disabled = true;
+
+      try {
+        const res = await fetch(
+          `${API_BASE}/v1/workspace/${workspaceId}/members/${memberId}/role`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({ role: newRole })
+          }
+        );
+
+        if (!res.ok) {
+          throw new Error("Update role failed");
+        }
+
+        // cập nhật old role
+        e.target.setAttribute("data-old-role", newRole);
+
+        console.log(`✅ Role updated: ${memberId} → ${newRole}`);
+
+      } catch (err) {
+        console.error(err);
+
+        // rollback UI nếu lỗi
+        if (oldRole) {
+          e.target.value = oldRole;
+        }
+
+        alert("Không thể cập nhật role. Vui lòng thử lại.");
+      } finally {
+        e.target.disabled = false;
+      }
+    });
+
+    // lưu role cũ để rollback
+    select.setAttribute("data-old-role", select.value);
+  });
+}
+
 
 
 // ---------------- Load members ----------------
 async function loadMembers(workspaceId) {
   const membersContainer = document.querySelector(".members-list");
-  
+
   try {
     const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members`, { credentials: "include" });
     if (!res.ok) throw new Error("Không thể load danh sách members");
 
     const response = await res.json();
-    const members = response.data || []; // Lấy đúng mảng từ backend
+
+    window.currentWorkspaceRole = response.data.currentUserRole;
+    const members = response.data.members;
+    // Lấy đúng mảng từ backend
     console.log("members của workspace", members);
 
     membersContainer.innerHTML = "";
@@ -143,31 +197,31 @@ async function loadMembers(workspaceId) {
       }
 
       // 🔽 Role select
-  let roleHTML = `<div class="role-text">${member.role}</div>`;
-  console.log("member:", member);
-console.log("canEditRole:", typeof canEditRole, canEditRole?.(member));
+      let roleHTML = `<div class="role-text">${member.role}</div>`;
+      console.log("member:", member);
+      console.log("canEditRole:", typeof canEditRole, canEditRole?.(member));
 
 
-  if (canEditRole(member)) {
-    roleHTML = `
-      <select class="role-select" data-user-id="${member._id}">
+      if (canEditRole(member)) {
+        roleHTML = `
+      <select class="role-select" data-user-id="${member._id}" data-old-role="${member.role}">
         <option value="member" ${member.role === "member" ? "selected" : ""}>Member</option>
         <option value="admin" ${member.role === "admin" ? "selected" : ""}>Admin</option>
       </select>
     `;
-  }
+      }
 
-  div.innerHTML = `
+      div.innerHTML = `
     <div class="member-info">
       <div class="name">${member.username}</div>
       <div class="email">${member.email}</div>
     </div>
     ${roleHTML}
   `;
-
-  div.prepend(avatar);
-  membersContainer.appendChild(div);
-});
+      div.prepend(avatar);
+      membersContainer.appendChild(div);
+    });
+    attachRoleChangeEvents(workspaceId);
 
   } catch (err) {
     console.error(err);

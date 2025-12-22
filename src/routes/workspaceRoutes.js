@@ -6,9 +6,10 @@ import {
     inviteUserByEmail,
     updateWorkspaceName,
     updateWorkspaceVisibility,
-createWorkspace } from "../controllers/workspaceController.js";
+createWorkspace,updateMemberRole } from "../controllers/workspaceController.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
+import { checkOwnerWorkspace } from "../middlewares/checkowner.js";
 
 
 const router = express.Router();
@@ -31,6 +32,11 @@ router.put("/:workspaceId/update-name", verifyToken, updateWorkspaceName);
 
 // Cập nhật trạng thái công khai/riêng tư của workspace
 router.put("/:workspaceId/update-visibility", verifyToken, updateWorkspaceVisibility);
+
+// chỉnh sửa role cho member trong workspace
+
+router.put("/:workspaceId/members/:memberId/role",  verifyToken,checkOwnerWorkspace,updateMemberRole);
+
 
 export default router;
 

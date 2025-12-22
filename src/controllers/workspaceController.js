@@ -20,9 +20,10 @@ export const getUserWorkspaces = async (req, res) => {
 export const getWorkspaceMembers = async (req, res) => {
   try {
     const workspaceId = req.params.workspaceId;
+    const userId = req.user.id; // 🔥 user đang đăng nhập (verifyToken)
 
     const workspace = await Workspace.findById(workspaceId)
-      .populate("owner", "username email avatar ")
+      .populate("owner", "username email avatar")
       .populate("members.user", "username email avatar");
 
     if (!workspace) {
@@ -31,46 +32,69 @@ export const getWorkspaceMembers = async (req, res) => {
 
     const seen = new Set();
     const allMembers = [];
+    let currentUserRole = null;
 
-    // Owner
-    if (workspace.owner && !seen.has(workspace.owner._id.toString())) {
-      allMembers.push({
-        _id: workspace.owner._id,
-        username: workspace.owner.username,
-        email: workspace.owner.email,
-        avatar: workspace.owner.avatar,
-        role: "Owner"
-      });
-      seen.add(workspace.owner._id.toString());
+    // 👑 Owner
+    if (workspace.owner) {
+      const ownerId = workspace.owner._id.toString();
+
+      if (ownerId === userId) {
+        currentUserRole = "owner"; // 🔥 QUAN TRỌNG
+      }
+
+      if (!seen.has(ownerId)) {
+        allMembers.push({
+          _id: workspace.owner._id,
+          username: workspace.owner.username,
+          email: workspace.owner.email,
+          avatar: workspace.owner.avatar,
+          role: "owner"
+        });
+        seen.add(ownerId);
+      }
     }
 
-    // Members
+    // 👥 Members
     workspace.members.forEach(m => {
-      if (!m.user) return; // tránh crash nếu user bị xóa
-      if (!seen.has(m.user._id.toString())) {
+      if (!m.user) return;
+
+      const memberId = m.user._id.toString();
+
+      if (memberId === userId) {
+        currentUserRole = m.role?.toLowerCase() || "member"; // 🔥
+      }
+
+      if (!seen.has(memberId)) {
         allMembers.push({
           _id: m.user._id,
           username: m.user.username,
           email: m.user.email,
           avatar: m.user.avatar,
-          role: m.role || "Member"
+          role: m.role?.toLowerCase() || "member"
         });
-        seen.add(m.user._id.toString());
+        seen.add(memberId);
       }
     });
 
+    // ❌ Không phải member
+    if (!currentUserRole) {
+      return res.status(403).json({ message: "Bạn không thuộc workspace này" });
+    }
 
     res.json({
       success: true,
-      data: allMembers
+      data: {
+        currentUserRole, // 🔥 FRONTEND CẦN
+        members: allMembers
+      }
     });
-
 
   } catch (err) {
     console.error("ERROR getWorkspaceMembers:", err);
     res.status(500).json({ message: "Lỗi server", error: err.message });
   }
 };
+
 
 // 3. Mời user vào workspace theo email
 export const inviteUserByEmail = async (req, res) => {
@@ -224,3 +248,34 @@ export const createWorkspace = async (req, res) => {
   }
 };
 
+// edit role cho workspace owner
+
+export const updateMemberRole = async (req, res) => {
+  try {
+    const { workspaceId, memberId } = req.params;
+    const { role } = req.body;
+
+    if (!["admin", "member"].includes(role)) {
+      return res.status(400).json({ message: "Role không hợp lệ" });
+    }
+
+    const workspace = req.workspace; // từ middleware checkOwnerWorkspace
+
+    const member = workspace.members.find(
+      m => m.user.toString() === memberId
+    );
+
+    if (!member) {
+      return res.status(404).json({ message: "Member không tồn tại" });
+    }
+
+    member.role = role;
+    await workspace.save();
+
+    res.json({ success: true, message: "Cập nhật role thành công" });
+
+  } catch (err) {
+    console.error("updateMemberRole error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
