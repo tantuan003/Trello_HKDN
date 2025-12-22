@@ -1,31 +1,42 @@
-
 .main-content {
     flex: 1;
     padding: 25px;
     box-sizing: border-box;
     height: calc(100vh - 0px);
-        background: #fff;
+    background: #fff;
 
-        margin-left: 240px;
+    margin-left: 240px;
 
-        max-width: calc(100vw - 240px);
+    max-width: calc(100vw - 240px);
     margin-right: auto;
     margin-left: 240px;
 
     display: flex;
     flex-direction: column;
     align-items: center;
-    }
+}
 
 .banner {
     width: 100%;
     max-width: 900px;
-    height: 140px;
-    background-image: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1400&q=80');
-    background-position: center;
-    background-size: cover;
-    border-radius: 1px;
+    /* dài bằng các item bên dưới */
+    height: 220px;
+    /* tăng chiều cao cho ảnh to hơn */
     margin-bottom: 30px;
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid #ccc
+}
+
+.banner img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    /* căn chữ ở giữa hoặc trên */
 }
 
 .workspace-info {
@@ -58,19 +69,19 @@
     justify-content: center;
     gap: 5px;
     text-align: left;
-    }
+}
 
 .ws-name-wrapper {
     display: flex;
     align-items: center;
-        gap: 6px;
-    }
+    gap: 6px;
+}
 
 #ws-name {
     font-size: 20px;
     font-weight: 600;
     line-height: 1.2;
-    }
+}
 
 .edit-icon-btn {
     background: none;
@@ -78,16 +89,16 @@
     color: #555;
     cursor: pointer;
     font-size: 18px;
-        line-height: 1;
-        display: flex;
+    line-height: 1;
+    display: flex;
     align-items: center;
-        padding: 0;
-        transition: color 0.2s ease;
+    padding: 0;
+    transition: color 0.2s ease;
 }
 
 .edit-icon-btn:hover {
     color: #0c66e4;
-    }
+}
 
 .ws-visibility {
     font-size: 14px;
@@ -105,8 +116,8 @@
 .divider {
     width: 900px;
     height: 1px;
-        background-color: #000;
-        margin: 30px 0;
+    background-color: #000;
+    margin: 30px 0;
 }
 
 .workspace-visibility {
@@ -133,6 +144,7 @@
 #visibility-icon {
     font-size: 18px;
 }
+
 .visibility-status {
     display: flex;
     align-items: center;
@@ -166,7 +178,7 @@
     display: none;
     position: absolute;
     top: calc(100% + 10px);
-        right: 0;
+    right: 0;
     background: #fff;
     border: 1px solid #ccc;
     border-radius: 6px;
@@ -185,7 +197,7 @@
     position: absolute;
     top: -8px;
     right: 20px;
-        border-width: 0 8px 8px 8px;
+    border-width: 0 8px 8px 8px;
     border-style: solid;
     border-color: transparent transparent #fff transparent;
     filter: drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.1));
@@ -198,7 +210,7 @@
     padding: 8px 14px;
     border-bottom: 1px solid #eee;
     text-align: center;
-        cursor: default;
+    cursor: default;
 }
 
 .dropdown-item {
@@ -216,10 +228,10 @@
 
 .dropdown-item i {
     margin-right: 8px;
-        font-size: 15px;
-        color: #555;
-        flex-shrink: 0;
-    }
+    font-size: 15px;
+    color: #555;
+    flex-shrink: 0;
+}
 
 .dropdown-item:hover i {
     color: #0c66e4;
@@ -243,7 +255,7 @@
 .delete-workspace {
     display: block;
     max-width: 900px;
-        width: 100%;
+    width: 100%;
     color: #ef4444;
     font-weight: 600;
     cursor: pointer;
@@ -251,9 +263,9 @@
     font-size: 14px;
     transition: color 0.2s ease;
     text-decoration: underline;
-        text-align: left;
-        margin: 0 0 0 0;
-    }
+    text-align: left;
+    margin: 0 0 0 0;
+}
 
 .delete-workspace:hover {
     color: #b91c1c;
@@ -343,14 +355,14 @@
     position: relative;
     background: #fff;
     padding: 16px 20px;
-        border-radius: 6px;
+    border-radius: 6px;
     width: 100%;
     max-width: 360px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
     flex-direction: column;
     gap: 12px;
-        transform: translateY(-15px);
+    transform: translateY(-15px);
     transition: transform 0.25s ease;
 }
 

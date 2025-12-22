@@ -40,6 +40,5 @@ router.put("/:workspaceId/update-visibility", verifyToken, updateWorkspaceVisibi
 // chỉnh sửa role cho member trong workspace
 router.put("/:workspaceId/members/:memberId/role",  verifyToken,checkOwnerWorkspace,updateMemberRole);
 
-
 export default router;
 
