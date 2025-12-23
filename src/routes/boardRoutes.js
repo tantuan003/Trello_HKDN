@@ -8,10 +8,10 @@ router.get("/myboards",verifyToken, getBoardsByCurrentUser);
 router.get("/workspace/:workspaceId",verifyToken, getBoardsByWorkspace);
 
 //xoá 
+router.delete("/delete/:cardId",verifyToken, deleteCard);
 router.delete("/delete/:boardId", verifyToken, deleteBoard);
 router.delete("/:listId/clear-cards", clearCardsInList);
 router.delete("/:listId", deleteList);
-router.delete("/delete/:cardId", deleteCard);
 //board recent
 router.get("/recent", verifyToken, getBoardsrecent);
 

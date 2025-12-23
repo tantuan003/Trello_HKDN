@@ -616,47 +616,64 @@ export const deleteList = async (req, res) => {
 export const deleteCard = async (req, res) => {
   try {
     const { cardId } = req.params;
+    const userId = req.user.id;
 
-    // 1. Tìm card
+    /* 1️⃣ Tìm card */
     const card = await Card.findById(cardId);
     if (!card) {
       return res.status(404).json({ message: "Card không tồn tại" });
     }
 
-    const listId = card.list;
-
-    // 2. Tìm list để lấy boardId
-    const list = await List.findById(listId);
+    /* 2️⃣ Tìm list */
+    const list = await List.findById(card.list);
     if (!list) {
       return res.status(404).json({ message: "List không tồn tại" });
     }
 
-    const boardId = list.board;
+    /* 3️⃣ Tìm board */
+    const board = await Board.findById(list.board);
+    if (!board) {
+      return res.status(404).json({ message: "Board không tồn tại" });
+    }
 
-    // 3. Xoá card
+    /* 4️⃣ Kiểm tra quyền */
+    const member = board.members.find(
+      m => m.user.toString() === userId
+    );
+
+    if (!member || !["owner", "admin"].includes(member.role)) {
+      return res.status(403).json({
+        message: "Bạn không có quyền xoá card này"
+      });
+    }
+
+    /* 5️⃣ Xoá card */
     await Card.findByIdAndDelete(cardId);
 
-    // 4. Gỡ card khỏi list.cards
-    await List.findByIdAndUpdate(listId, {
+    /* 6️⃣ Gỡ card khỏi list */
+    await List.findByIdAndUpdate(list._id, {
       $pull: { cards: cardId }
     });
 
-    // 5. 🔥 REALTIME
-    req.io.to(boardId.toString()).emit("card-deleted", {
+    /* 7️⃣ Realtime */
+    req.io.to(board._id.toString()).emit("card-deleted", {
       cardId,
-      listId
+      listId: list._id
     });
 
     res.json({
+      success: true,
       message: "Đã xoá card",
       cardId,
-      listId
+      listId: list._id
     });
   } catch (err) {
-    console.error("deleteCard error:", err);
+    console.error("❌ deleteCard error:", err);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+
 export const deleteBoard = async (req, res) => {
   try {
     const { boardId } = req.params;

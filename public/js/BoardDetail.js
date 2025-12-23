@@ -302,26 +302,33 @@ function createListElement(list) {
     deleteBtn.src = "uploads/icons8-delete-128.png"; // sửa đúng path của bạn
     deleteBtn.className = "card-delete-btn";
     deleteBtn.alt = "Delete card"
+    
     deleteBtn.addEventListener("click", async (e) => {
-      // ⛔ chặn bubble lên card
-      e.stopPropagation();
-      e.preventDefault();
+  e.stopPropagation();
+  e.preventDefault();
 
-      if (!confirm("Xoá card này?")) return;
+  if (!confirm("Xoá card này?")) return;
 
-      try {
-        // UI trước
-        cardEl.remove();
-
-        // Backend
-        await fetch(`/v1/board/delete/${card._id}`, {
-          method: "DELETE",
-        });
-      } catch (err) {
-        alert("Xoá card thất bại");
-        console.error(err);
-      }
+  try {
+    const res = await fetch(`${API_BASE}/v1/board/delete/${card._id}`, {
+      method: "DELETE",
+      credentials: "include"
     });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Bạn không có quyền xoá card này");
+      return;
+    }
+
+    // ✅ Xoá thành công → UI sẽ được socket xử lý
+  } catch (err) {
+    alert("Xoá card thất bại");
+    console.error(err);
+  }
+});
+
 
 
     // Gộp vào wrapper
