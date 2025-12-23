@@ -7,6 +7,8 @@
   <title>Board Detail</title>
   <link rel="stylesheet" href="./css/BoardDetail.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+
 </head>
 
 <body>
@@ -21,8 +23,53 @@
 
         <div class="invite-right">
           <div id="assignedAvatars"></div>
-          <img src="../uploads/add-member-icon.png" id="invite-icon" alt="Invite" />
+          <i class="fa-solid fa-user-plus" id="invite-icon"></i>
+          <span id="moreBtn">⋯</span>
+          <div id="moreMenu" class="dropdown-menu hidden">
+            <label>Menu</label>
+            <div class="menu-item"><i class="fa-solid fa-pen-to-square"></i> Rename board</div>
+            <div class="menu-item"><i class="fa-solid fa-share"></i> Share</div>
+            <div class="menu-item"><i class="fa-solid fa-eye-slash"></i> Visibility</div>
+            <div id="settingMenu" class="menu-item"><i class="fa-solid fa-gear"></i> Setting</div>
+            <div class="menu-divider"></div>
+            <div class="menu-item danger"><i class="fa-regular fa-trash-can"></i> Delete board</div>
+          </div>
+          <div id="settingOpen" class="dropdown-menu hidden">
+            <label>
+              <i class="fa-solid fa-arrow-left back-btn"></i>
+              Setting
+            </label>
+
+            <div class="manager-member" id="Manage-members">
+              <i class="fa-solid fa-users"></i> Manage members
+            </div>
+
+            <div class="menu-item">
+              <i class="fa-solid fa-lock"></i> Privacy
+            </div>
+
+            <div class="menu-item">
+              <i class="fa-solid fa-palette"></i> Background
+            </div>
+          </div>
         </div>
+        <!-- Overlay -->
+        <div id="memberModal" class="modal-overlay hidden">
+          <div class="modal-box">
+            <!-- Header -->
+            <div class="modal-header">
+              <h3>Member</h3>
+              <i class="fa-solid fa-xmark close-modal"></i>
+            </div>
+
+            <!-- Form -->
+           <div id="memberForm">
+
+           </div>
+          </div>
+        </div>
+
+
       </div>
 
       <div id="inviteFormContainer" class="hidden">

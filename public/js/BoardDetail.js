@@ -78,39 +78,47 @@ async function renderBoardWithLists() {
 
   try {
     const res = await fetch(`${API_BASE}/v1/board/${currentBoardId}`);
-    const data = await res.json();
-    members = data.board.members;
-    boardData.lists = data.board.lists;
-    boardData.members = data.board.members;
-    renderAssignedMembersinvite(members)
+    const result = await res.json();
 
+    if (!result.success) return;
+
+    // ✅ LẤY ĐÚNG DATA
+    const { board, currentUserRole } = result.data;
+
+    window.currentboardRole = currentUserRole;
+
+    members = board.members;
+    boardData.lists = board.lists;
+    boardData.members = board.members;
+
+    renderAssignedMembersinvite(members);
+
+    // socket
     socket.emit("joinBoard", currentBoardId);
     socket.on("connect", () => {
       socket.emit("joinBoard", currentBoardId);
     });
 
-    if (!data.board) return;
+    const { background, lists } = board;
 
-    const { background, lists } = data.board;
     const sidebar = document.querySelector(".sidebar");
     if (sidebar) sidebar.style.display = "none";
 
-    // Reset layout khi không có sidebar
     const shell = document.getElementById("app-shell");
     if (shell) {
-      shell.style.display = "block";         // không còn flex/grid
-      shell.style.gridTemplateColumns = "";  // xoá cột sidebar
+      shell.style.display = "block";
+      shell.style.gridTemplateColumns = "";
       shell.style.width = "100%";
     }
+
     const boardTitle = document.getElementById("boardTitle");
     if (boardTitle) {
-      boardTitle.textContent = data.board.name
+      boardTitle.textContent = board.name;
     }
-    // ⬇️ Áp dụng background vào trang
+
     applyBoardBackground(background);
 
     listsContainer.innerHTML = "";
-
     lists.forEach(list => {
       const listEl = createListElement(list);
       listsContainer.appendChild(listEl);
@@ -120,6 +128,7 @@ async function renderBoardWithLists() {
     console.error("Error loading board:", err);
   }
 }
+
 function applyBoardBackground(bg) {
   const boardPage = document.body;
   if (!boardPage) return;
@@ -212,19 +221,30 @@ function createListElement(list) {
       if (!ok) return;
 
       try {
-        // UI: xoá list
-        listEl.remove();
+        const res = await fetch(
+          `${API_BASE}/v1/board/${list._id}`,
+          {
+            method: "DELETE",
+            credentials: "include"
+          }
+        );
 
-        // Backend
-        await fetch(`/v1/board/${list._id}`, {
-          method: "DELETE",
-        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Bạn không có quyền xoá list");
+          return;
+        }
+
+        // ✅ KHÔNG xoá UI ở đây
+        // UI sẽ xoá khi socket "list-deleted" bắn về
 
       } catch (err) {
         alert("Xoá list thất bại");
         console.error(err);
       }
     }
+
 
     menu.style.display = "none";
   });
@@ -293,26 +313,33 @@ function createListElement(list) {
     deleteBtn.src = "uploads/icons8-delete-128.png"; // sửa đúng path của bạn
     deleteBtn.className = "card-delete-btn";
     deleteBtn.alt = "Delete card"
+
     deleteBtn.addEventListener("click", async (e) => {
-      // ⛔ chặn bubble lên card
       e.stopPropagation();
       e.preventDefault();
 
       if (!confirm("Xoá card này?")) return;
 
       try {
-        // UI trước
-        cardEl.remove();
-
-        // Backend
-        await fetch(`/v1/board/delete/${card._id}`, {
+        const res = await fetch(`${API_BASE}/v1/board/delete/${card._id}`, {
           method: "DELETE",
+          credentials: "include"
         });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Bạn không có quyền xoá card này");
+          return;
+        }
+
+        // ✅ Xoá thành công → UI sẽ được socket xử lý
       } catch (err) {
         alert("Xoá card thất bại");
         console.error(err);
       }
     });
+
 
 
     // Gộp vào wrapper
@@ -785,8 +812,8 @@ document.addEventListener("DOMContentLoaded", () => {
   inviteIcon.addEventListener("click", (e) => {
     e.stopPropagation(); // tránh click ra ngoài tự ẩn form ngay
     inviteFormContainer.classList.toggle("hidden");
-    inviteIcon.style.display = "none";
   });
+
 
   // Click ra ngoài sẽ ẩn form
   document.addEventListener("click", (e) => {
@@ -796,6 +823,184 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// menu
+const moreBtn = document.getElementById("moreBtn");
+const moreMenu = document.getElementById("moreMenu");
+const settingOpen = document.getElementById("settingOpen");
+
+moreBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  moreMenu.classList.toggle("hidden");
+});
+
+// click ngoài → đóng menu
+document.addEventListener("click", () => {
+  moreMenu.classList.add("hidden");
+});
+
+// click trong menu không đóng
+moreMenu.addEventListener("click", (e) => {
+  e.stopPropagation();
+  if (e.target.closest("#settingMenu")) {
+    moreMenu.classList.add("hidden");
+    settingOpen.classList.remove("hidden");
+  }
+});
+const memberModal = document.getElementById("memberModal");
+function renderMembersboard(members) {
+  const container = document.getElementById("memberForm");
+  container.innerHTML = "";
+
+  if (!members || members.length === 0) {
+    container.innerHTML = "<p>Không có thành viên</p>";
+    return;
+  }
+
+  members.forEach(member => {
+    const row = document.createElement("div");
+    row.className = "member-row";
+
+    /* ===== Avatar ===== */
+    const avatar = document.createElement("div");
+    avatar.className = "member-avatar";
+
+    if (member.user.avatar) {
+      avatar.style.backgroundImage = `url('${member.user.avatar}')`;
+      avatar.style.backgroundSize = "cover";
+      avatar.style.backgroundPosition = "center";
+    } else {
+      avatar.textContent =
+        member.user.username?.charAt(0).toUpperCase() || "?";
+    }
+
+    /* ===== Info ===== */
+    const info = document.createElement("div");
+    info.className = "member-info";
+    info.innerHTML = `
+      <div class="member-name">${member.user.username}</div>
+      <div class="member-email">${member.user.email}</div>
+    `;
+
+    /* ===== Role ===== */
+    const roleWrap = document.createElement("div");
+    roleWrap.className = "member-role";
+
+    // OWNER hiển thị text
+    if (member.role === "owner") {
+      const ownerLabel = document.createElement("span");
+      ownerLabel.className = "owner-badge";
+      ownerLabel.textContent = "Owner";
+      roleWrap.appendChild(ownerLabel);
+    } else {
+      const select = document.createElement("select");
+      select.dataset.userId = member.user._id; // ✅ FIX
+
+      ["member", "admin"].forEach(r => {
+        const option = document.createElement("option");
+        option.value = r;
+        option.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+        if (member.role === r) option.selected = true;
+        select.appendChild(option);
+      });
+
+      // 🔒 CHỈ OWNER ĐƯỢC CHỈNH
+      select.disabled = currentboardRole !== "owner";
+
+      roleWrap.appendChild(select);
+    }
+
+    row.appendChild(avatar);
+    row.appendChild(info);
+    row.appendChild(roleWrap);
+
+    container.appendChild(row);
+  });
+}
+
+//chỉnh role
+document.getElementById("memberForm").addEventListener("change", async (e) => {
+  const select = e.target.closest("select");
+  if (!select) return;
+
+  // 🔒 chỉ owner mới được chỉnh (phòng hờ)
+  if (window.currentboardRole !== "owner") {
+    alert("Bạn không có quyền chỉnh role");
+    return;
+  }
+
+  const userId = select.dataset.userId;
+  const newRole = select.value;
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/v1/board/${currentBoardId}/member-role`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId,
+          role: newRole
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Không thể cập nhật role");
+      return;
+    }
+
+    // ✅ cập nhật local state
+    const member = members.find(m => m.user._id === userId);
+    if (member) member.role = newRole;
+
+    // (optional) re-render nếu muốn
+    renderMembersboard(members);
+
+  } catch (err) {
+    console.error("Update role error:", err);
+    alert("Lỗi server");
+  }
+});
+
+
+settingOpen.addEventListener("click", (e) => {
+  e.stopPropagation();
+
+  if (e.target.closest(".back-btn")) {
+    settingOpen.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  }
+  const manageMemberItem = e.target.closest(".manager-member");
+  if (manageMemberItem) {
+    settingOpen.classList.add("hidden");
+    memberModal.classList.remove("hidden");
+    renderMembersboard(members);
+  }
+});
+
+// click ngoài → đóng tất cả
+document.addEventListener("click", () => {
+  moreMenu.classList.add("hidden");
+  settingOpen.classList.add("hidden");
+});
+
+// đóng modal
+memberModal.addEventListener("click", (e) => {
+  if (
+    e.target.classList.contains("modal-overlay") ||
+    e.target.classList.contains("close-modal") ||
+    e.target.classList.contains("cancel")
+  ) {
+    memberModal.classList.add("hidden");
+  }
+});
+
+
 const showAddListBtn = document.getElementById("showAddListBtn");
 const addListForm = document.getElementById("addListForm");
 const cancelAddListBtn = document.getElementById("cancelAddListBtn");
