@@ -50,9 +50,9 @@ export async function loadSidebarWorkspace() {
       menu.className = "wsp-menu";
       menu.style.display = "none";
       menu.innerHTML = `
-        <li><a href="boards.html?ws=${workspace._id}">Boards</a></li>
-        <li><a href="members.html?ws=${workspace._id}">Members</a></li>
-        <li><a href="settings-wsp.html?ws=${workspace._id}">Settings</a></li>
+        <li><a href="boards.html?ws=${workspace._id}"><i class="fa-solid fa-briefcase"></i>Boards</a></li>
+        <li><a href="members.html?ws=${workspace._id}"><i class="fa-solid fa-user-group"></i>Members</a></li>
+        <li><a href="settings-wsp.html?ws=${workspace._id}"><i class="fa-solid fa-gear"></i>Settings</a></li>
       `;
 
       // **Chỉ mở menu và set currentWorkspaceId nếu URL match**
@@ -373,11 +373,10 @@ export function initUserMenu() {
 
   const profileModal = document.getElementById("profileModal");
   const profileContainer = document.getElementById("profileContainer");
-  const modalClose = profileContainer.querySelector(".modal-close");
+  const modalClose = profileContainer.querySelector(".profile-modal-close");
 
   if (!avatarBtn || !dropdown || !logoutBtn || !profileBtn || !userMenu || !profileModal) return;
 
-  // Mở/đóng dropdown avatar
   avatarBtn.addEventListener("click", () => {
     const open = dropdown.classList.toggle("is-open");
     avatarBtn.setAttribute("aria-expanded", open ? "true" : "false");
@@ -390,7 +389,6 @@ export function initUserMenu() {
     }
   });
 
-  // Logout
   logoutBtn.addEventListener("click", async () => {
     try {
       await fetch("/v1/User/logout", { method: "POST", credentials: "include" });
@@ -402,7 +400,6 @@ export function initUserMenu() {
     }
   });
 
-  // Mở modal profile
   profileBtn.addEventListener("click", async () => {
     dropdown.classList.remove("is-open");
     avatarBtn.setAttribute("aria-expanded", "false");
@@ -410,13 +407,11 @@ export function initUserMenu() {
     profileModal.style.display = "flex";
 
     try {
-      // Load profile.html
       const resHtml = await fetch("/profile.html");
       if (!resHtml.ok) throw new Error("Không load được profile.html");
       const html = await resHtml.text();
-      profileContainer.innerHTML = `<button class="modal-close">&times;</button>${html}`;
+      profileContainer.innerHTML = `<button class="profile-modal-close">&times;</button>${html}`;
 
-      // Load CSS nếu cần
       if (!document.getElementById("profileCSS")) {
         const link = document.createElement("link");
         link.rel = "stylesheet";
@@ -432,70 +427,57 @@ export function initUserMenu() {
         document.head.appendChild(link);
       }
 
-      // Load JS profile
       initProfile();
 
-      // Fetch dữ liệu user hiện tại từ API
       const resUser = await fetch("/v1/User/me", { credentials: "include" });
       if (!resUser.ok) throw new Error("Không lấy được thông tin user");
       const user = await resUser.json();
 
-      // Set username & email từ DB
       const usernameInput = profileContainer.querySelector("#username");
       const emailInput = profileContainer.querySelector("#email");
       if (usernameInput) usernameInput.value = user.username || "";
       if (emailInput) emailInput.value = user.email || "";
 
-      // Reset avatar về default
       const avatarWrapper = profileContainer.querySelector(".avatar-wrapper img");
       if (avatarWrapper) {
         avatarWrapper.src = user.avatar || "/images/default-avatar.png";
-        avatarWrapper.style.display = "block"; // hiện avatar gốc
+        avatarWrapper.style.display = "block"; 
       }
 
-      // Reset password fields
       profileContainer.querySelectorAll("#password, #retype-password").forEach(i => i.value = "");
 
-      // Ẩn cảnh báo small
       profileContainer.querySelectorAll("small").forEach(s => s.style.display = "none");
 
       profileContainer.dataset.loaded = "1";
 
     } catch (err) {
-      profileContainer.innerHTML = `<button class="modal-close">&times;</button>
+      profileContainer.innerHTML = `<button class="profile-modal-close">&times;</button>
       <div style="color:red">Lỗi load profile: ${err.message}</div>`;
     }
   });
 
-  // Đóng modal khi click ×
   profileContainer.addEventListener("click", (e) => {
-    if (e.target.classList.contains("modal-close")) {
+    if (e.target.classList.contains("profile-modal-close")) {
       profileModal.style.display = "none";
     }
   });
 
-  // Đóng modal khi click ra ngoài
   window.addEventListener("click", (e) => {
     if (e.target === profileModal) profileModal.style.display = "none";
   });
 }
 
 function clearClientStateOnLogout() {
-  // Xóa history search (nguyên nhân chính gây dính board cũ)
   localStorage.removeItem(SEARCH_HISTORY_KEY);
 
-  // Reset cache search trong memory
   cachedSearchBoards = null;
 
-  // Reset workspace state
   currentWorkspaceId = null;
   currentVisibility = null;
 
-  // Xóa session storage nếu có
   sessionStorage.clear();
 }
-// ================= CURRENT USER AVATAR =================
-// Load avatar from backend and render it on the header button (#avatarBtn)
+
 async function loadCurrentUserAvatar() {
   const avatarBtn = document.getElementById("avatarBtn");
   if (!avatarBtn) return;
@@ -505,13 +487,10 @@ async function loadCurrentUserAvatar() {
       credentials: "include",
     });
 
-    // Not logged in / token expired → keep default avatar UI
     if (!res.ok) return;
 
     const user = await res.json();
 
-    // If avatar is stored as a relative path like "uploads/xxx.jpg"
-    // it should be accessible via: http://localhost:8127/uploads/xxx.jpg
     if (user?.avatar) {
       const isAbsolute = /^https?:\/\//i.test(user.avatar);
       const rel = user.avatar.startsWith("/") ? user.avatar : `/${user.avatar}`;

@@ -674,7 +674,7 @@ body {
   background-color: #0056b3;
 }
 
-.modal {
+.profile-modal {
   display: none;
   /* ẩn mặc định */
   position: fixed;
@@ -687,7 +687,7 @@ body {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-.modal-content {
+.profile-modal-content {
   background-color: #fff;
   margin: 50px auto;
   padding: 20px;
@@ -697,11 +697,32 @@ body {
   position: relative;
 }
 
-.modal-close {
+.profile-modal-close {
   position: absolute;
   top: 10px;
   right: 15px;
-  font-size: 24px;
+
+  width: 32px;
+  height: 32px;
+  line-height: 32px;
+  text-align: center;
+
+  font-size: 20px;
+  font-weight: bold;
+
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+
   cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.profile-modal-close:hover {
+  background: #f0f0f0;
+}
+
+.profile-modal-close:focus {
+  outline: none;
 }
 
