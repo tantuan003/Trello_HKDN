@@ -785,8 +785,8 @@ document.addEventListener("DOMContentLoaded", () => {
   inviteIcon.addEventListener("click", (e) => {
     e.stopPropagation(); // tránh click ra ngoài tự ẩn form ngay
     inviteFormContainer.classList.toggle("hidden");
-    inviteIcon.style.display = "none";
   });
+  
 
   // Click ra ngoài sẽ ẩn form
   document.addEventListener("click", (e) => {
@@ -796,6 +796,129 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
+// menu
+const moreBtn = document.getElementById("moreBtn");
+const moreMenu = document.getElementById("moreMenu");
+const settingOpen = document.getElementById("settingOpen");
+
+moreBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  moreMenu.classList.toggle("hidden");
+});
+
+// click ngoài → đóng menu
+document.addEventListener("click", () => {
+  moreMenu.classList.add("hidden");
+});
+
+// click trong menu không đóng
+moreMenu.addEventListener("click", (e) => {
+  e.stopPropagation();
+   if (e.target.closest("#settingMenu")) {
+    moreMenu.classList.add("hidden");
+    settingOpen.classList.remove("hidden");
+  }
+});
+const memberModal = document.getElementById("memberModal");
+function renderMembersboard(members) {
+  const container = document.getElementById("memberForm");
+  container.innerHTML = "";
+
+  if (!members || members.length === 0) {
+    container.innerHTML = "<p>Không có thành viên</p>";
+    return;
+  }
+
+  members.forEach(member => {
+    const row = document.createElement("div");
+    row.className = "member-row";
+
+    // Avatar
+    const avatar = document.createElement("div");
+    avatar.className = "member-avatar";
+
+   if (member.user.avatar) {
+      avatar.style.backgroundImage = `url('${member.user.avatar}')`;
+      avatar.style.backgroundSize = "cover";
+      avatar.style.backgroundPosition = "center";
+      avatar.textContent = ""; // có ảnh thì không cần chữ
+    } else {
+      avatar.textContent =
+        member.user.username?.charAt(0).toUpperCase() || "?";
+    }
+
+    // Info
+    const info = document.createElement("div");
+    info.className = "member-info";
+    info.innerHTML = `
+      <div class="member-name">${member.user.username}</div>
+      <div class="member-email">${member.user.email}</div>
+    `;
+
+    const roleWrap = document.createElement("div");
+    roleWrap.className = "member-role";
+
+    const select = document.createElement("select");
+    select.dataset.id = member._id;
+
+    ["member", "admin", "owner"].forEach(r => {
+      const option = document.createElement("option");
+      option.value = r;
+      option.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+      if (member.role === r) option.selected = true;
+      select.appendChild(option);
+    });
+
+    // 🔒 LOGIC DISABLE
+    const isOwner = member.role === "owner";
+    const canEdit = currentUserRole === "owner" && !isOwner;
+
+    select.disabled = !canEdit;
+
+    roleWrap.appendChild(select);
+
+    row.appendChild(avatar);
+    row.appendChild(info);
+    row.appendChild(roleWrap);
+
+    container.appendChild(row);
+  });
+}
+
+settingOpen.addEventListener("click", (e) => {
+  e.stopPropagation();
+
+  if (e.target.closest(".back-btn")) {
+    settingOpen.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  }
+   const manageMemberItem = e.target.closest(".manager-member");
+  if (manageMemberItem) {
+    settingOpen.classList.add("hidden");
+    memberModal.classList.remove("hidden");
+    renderMembersboard(members);
+  }
+});
+
+// click ngoài → đóng tất cả
+document.addEventListener("click", () => {
+  moreMenu.classList.add("hidden");
+  settingOpen.classList.add("hidden");
+});
+
+// đóng modal
+memberModal.addEventListener("click", (e) => {
+  if (
+    e.target.classList.contains("modal-overlay") ||
+    e.target.classList.contains("close-modal") ||
+    e.target.classList.contains("cancel")
+  ) {
+    memberModal.classList.add("hidden");
+  }
+});
+
+
 const showAddListBtn = document.getElementById("showAddListBtn");
 const addListForm = document.getElementById("addListForm");
 const cancelAddListBtn = document.getElementById("cancelAddListBtn");
