@@ -79,21 +79,6 @@ html, body {
   flex-wrap: wrap;
 }
 
-.assigned-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: #0079bf;
-  color: white;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-weight: bold;
-  font-size: 14px;
-  position: relative;
-  cursor: pointer;
-}
-
 .remove-member {
   position: absolute;
   top: -5px;
