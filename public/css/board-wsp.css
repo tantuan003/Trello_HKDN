@@ -1,0 +1,281 @@
+/* ===================== Reset cơ bản ===================== */
+html,
+body {
+    width: 100%;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+        "Helvetica Neue", Arial, sans-serif;
+    background-color: #fff;
+}
+
+/* ===================== Workspace Boards ===================== */
+.content-boards {
+    margin-left: 260px;
+    /* giữ khoảng cách với nav */
+    width: calc(100% - 260px);
+    max-width: 900px;
+    /* max width để căn giữa */
+    margin-left: calc((100% - 1200px)/2 + 260px);
+    /* căn giữa trừ nav */
+    background: #fff;
+    padding: 12px 28px 28px;
+    min-height: calc(100vh - var(--header-h, 60px));
+    overflow-y: auto;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.content-boards.fullwidth {
+    position: absolute;
+    top: var(--header-h, 60px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: calc(100% - var(--header-h, 60px));
+}
+
+.section-title h1 {
+    font-size: 28px;
+    /* Lớn hơn h3 */
+    font-weight: 700;
+    margin: 24px 0 16px 0;
+    /* margin top/bottom hợp lý */
+    color: #172b4d;
+}
+
+.section-block {
+    margin-bottom: 28px;
+    margin-top: 32px;
+    /* cách top cho toàn section */
+}
+
+/* ===================== Sections ===================== */
+.section-block {
+    margin-bottom: 28px;
+}
+
+.section-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.section-title h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+/* ===================== Board Grid ===================== */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    /* 4 cột đều nhau */
+    gap: 16px;
+    justify-content: start;
+}
+
+.card-grid.empty {
+    display: flex;
+    justify-content: center;
+}
+
+.no-recent {
+    margin-top: 80px;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 500;
+    color: #666;
+    opacity: 0.8;
+}
+
+/* ===================== Board Card ===================== */
+.board-card {
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    min-height: 120px;
+    position: relative;
+    transition: transform 0.08s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.board-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+    border-color: #e2e8f0;
+}
+
+.board-cover {
+    height: 100%;
+    width: auto;
+    border-radius: 6px;
+    overflow: hidden;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+
+/* Gradients */
+.gradient-1 {
+    background: linear-gradient(135deg, #4facfe, #00f2fe);
+}
+
+.gradient-2 {
+    background: linear-gradient(135deg, #43e97b, #38f9d7);
+}
+
+.gradient-3 {
+    background: linear-gradient(135deg, #fa709a, #fee140);
+}
+
+.gradient-4 {
+    background: linear-gradient(135deg, #89f7fe, #66a6ff);
+}
+
+.gradient-5 {
+    background: linear-gradient(135deg, #ff758c, #ff7eb3);
+}
+
+.gradient-6 {
+    background: linear-gradient(135deg, #2af598, #009efd);
+}
+
+.gradient-7 {
+    background: linear-gradient(135deg, #fbc2eb, #a18cd1);
+}
+
+/* Footer & title */
+.board-footer {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+}
+
+.board-title {
+    font-weight: 600;
+}
+
+/* ===================== Delete Button ===================== */
+.board-delete-btn {
+    position: absolute;
+    right: 10px;
+    bottom: 10px;
+    z-index: 20;
+    background: transparent;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.board-card:hover .board-delete-btn {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.board-delete-btn img {
+    width: 18px;
+    height: 18px;
+}
+
+/* ===================== Buttons ===================== */
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: #fafbfc;
+    border: 1px solid #e2e5e9;
+    font-size: 14px;
+    font-weight: 600;
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.btn-outline:hover {
+    background: #f0f2f5;
+}
+
+.btn-danger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: 10px;
+    background: #dc2626;
+    border: 1px solid #dc2626;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+}
+
+.btn-danger:hover {
+    background: #b91c1c;
+}
+
+/* ===================== Modal Delete Board ===================== */
+/* Overlay */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.25);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+}
+
+/* Modal box */
+.modal-box {
+    background-color: #fff;
+    padding: 20px 24px;
+    border-radius: 10px;
+    width: 360px;
+    max-width: 90%;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.modal-box h3 {
+    margin: 0 0 8px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #172b4d;
+}
+
+.modal-box p.delete-desc {
+    margin: 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.modal-box .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.modal-box .btn-outline,
+.modal-box .btn-danger {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+}

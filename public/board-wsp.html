@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boards</title>
+
+    <link rel="stylesheet" href="./css/nav.css">
+    <link rel="stylesheet" href="./css/board-wsp.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+</head>
+
+<body>
+    <div id="nav-container"></div>
+
+    <main class="content content-boards" id="main">
+        <div id="boardView" class="boardView" style="display:none;">
+            <div class="board-head">
+                <img src="../uploads/backward-btn.png" id="backward-btn" alt="">
+                <div id="inviteUser" title="Invite user">
+                    <h2 id="boardTitle"></h2>
+                    <img src="../uploads/add-member-icon.png" id="invite-icon" alt="Invite" />
+                </div>
+            </div>
+
+            <div id="inviteFormContainer" class="hidden">
+                <form id="inviteForm">
+                    <input type="email" id="inviteEmail" placeholder="Enter user email" />
+                    <button type="submit">Invite</button>
+                </form>
+            </div>
+
+            <div id="listsContainer" class="lists-container"></div>
+            <div class="add-list">
+                <button id="showAddListBtn">+ Add a list</button>
+
+                <div id="addListForm" style="display:none;">
+                    <input type="text" id="newListTitle" placeholder="Enter list title">
+                    <div class="list-btn">
+                        <button id="addListBtn">Add List</button>
+                        <button id="cancelAddListBtn">X</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recently viewed boards -->
+        <section class="section-block">
+            <div class="section-head">
+                <div class="section-title">
+                    <h1 id="workspaceTitle">All your boards</h3>
+                </div>
+            </div>
+            <div class="card-grid" id="boardContainer"></div>
+        </section>
+    </main>
+
+    <script src="js/nav.js"></script>
+    <script type="module" src="js/board-wsp.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+</body>
+
+</html>
