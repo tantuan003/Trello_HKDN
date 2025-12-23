@@ -48,20 +48,25 @@ function renderAssignedMembersinvite(members) {
   if (!members || members.length === 0) return;
 
   members.forEach(member => {
-    if (!member.user) return; // tránh crash
-
+    if (!member.user) return;
     const avatar = document.createElement("div");
     avatar.className = "assigned-avatar";
 
-    avatar.textContent = member.user.username
-      ?.charAt(0)
-      .toUpperCase() || "?";
+    if (member.user.avatar) {
+      avatar.style.backgroundImage = `url('${member.user.avatar}')`;
+      avatar.style.backgroundSize = "cover";
+      avatar.style.backgroundPosition = "center";
+      avatar.textContent = ""; // có ảnh thì không cần chữ
+    } else {
+      avatar.textContent =
+        member.user.username?.charAt(0).toUpperCase() || "?";
+    }
 
     avatar.title = member.user.email || "";
-
     container.appendChild(avatar);
   });
 }
+
 
 renderBoardWithLists();
 
