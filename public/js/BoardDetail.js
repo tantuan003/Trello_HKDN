@@ -78,39 +78,47 @@ async function renderBoardWithLists() {
 
   try {
     const res = await fetch(`${API_BASE}/v1/board/${currentBoardId}`);
-    const data = await res.json();
-    members = data.board.members;
-    boardData.lists = data.board.lists;
-    boardData.members = data.board.members;
-    renderAssignedMembersinvite(members)
+    const result = await res.json();
 
+    if (!result.success) return;
+
+    // ✅ LẤY ĐÚNG DATA
+    const { board, currentUserRole } = result.data;
+
+    window.currentboardRole = currentUserRole;
+
+    members = board.members;
+    boardData.lists = board.lists;
+    boardData.members = board.members;
+
+    renderAssignedMembersinvite(members);
+
+    // socket
     socket.emit("joinBoard", currentBoardId);
     socket.on("connect", () => {
       socket.emit("joinBoard", currentBoardId);
     });
 
-    if (!data.board) return;
+    const { background, lists } = board;
 
-    const { background, lists } = data.board;
     const sidebar = document.querySelector(".sidebar");
     if (sidebar) sidebar.style.display = "none";
 
-    // Reset layout khi không có sidebar
     const shell = document.getElementById("app-shell");
     if (shell) {
-      shell.style.display = "block";         // không còn flex/grid
-      shell.style.gridTemplateColumns = "";  // xoá cột sidebar
+      shell.style.display = "block";
+      shell.style.gridTemplateColumns = "";
       shell.style.width = "100%";
     }
+
     const boardTitle = document.getElementById("boardTitle");
     if (boardTitle) {
-      boardTitle.textContent = data.board.name
+      boardTitle.textContent = board.name;
     }
-    // ⬇️ Áp dụng background vào trang
+
     applyBoardBackground(background);
 
     listsContainer.innerHTML = "";
-
     lists.forEach(list => {
       const listEl = createListElement(list);
       listsContainer.appendChild(listEl);
@@ -120,6 +128,7 @@ async function renderBoardWithLists() {
     console.error("Error loading board:", err);
   }
 }
+
 function applyBoardBackground(bg) {
   const boardPage = document.body;
   if (!boardPage) return;
@@ -834,21 +843,20 @@ function renderMembersboard(members) {
     const row = document.createElement("div");
     row.className = "member-row";
 
-    // Avatar
+    /* ===== Avatar ===== */
     const avatar = document.createElement("div");
     avatar.className = "member-avatar";
 
-   if (member.user.avatar) {
+    if (member.user.avatar) {
       avatar.style.backgroundImage = `url('${member.user.avatar}')`;
       avatar.style.backgroundSize = "cover";
       avatar.style.backgroundPosition = "center";
-      avatar.textContent = ""; // có ảnh thì không cần chữ
     } else {
       avatar.textContent =
         member.user.username?.charAt(0).toUpperCase() || "?";
     }
 
-    // Info
+    /* ===== Info ===== */
     const info = document.createElement("div");
     info.className = "member-info";
     info.innerHTML = `
@@ -856,27 +864,33 @@ function renderMembersboard(members) {
       <div class="member-email">${member.user.email}</div>
     `;
 
+    /* ===== Role ===== */
     const roleWrap = document.createElement("div");
     roleWrap.className = "member-role";
 
-    const select = document.createElement("select");
-    select.dataset.id = member._id;
+    // OWNER hiển thị text
+    if (member.role === "owner") {
+      const ownerLabel = document.createElement("span");
+      ownerLabel.className = "owner-badge";
+      ownerLabel.textContent = "Owner";
+      roleWrap.appendChild(ownerLabel);
+    } else {
+      const select = document.createElement("select");
+      select.dataset.userId = member.user._id; // ✅ FIX
 
-    ["member", "admin", "owner"].forEach(r => {
-      const option = document.createElement("option");
-      option.value = r;
-      option.textContent = r.charAt(0).toUpperCase() + r.slice(1);
-      if (member.role === r) option.selected = true;
-      select.appendChild(option);
-    });
+      ["member", "admin"].forEach(r => {
+        const option = document.createElement("option");
+        option.value = r;
+        option.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+        if (member.role === r) option.selected = true;
+        select.appendChild(option);
+      });
 
-    // 🔒 LOGIC DISABLE
-    const isOwner = member.role === "owner";
-    const canEdit = currentUserRole === "owner" && !isOwner;
+      // 🔒 CHỈ OWNER ĐƯỢC CHỈNH
+      select.disabled = currentboardRole !== "owner";
 
-    select.disabled = !canEdit;
-
-    roleWrap.appendChild(select);
+      roleWrap.appendChild(select);
+    }
 
     row.appendChild(avatar);
     row.appendChild(info);
@@ -885,6 +899,56 @@ function renderMembersboard(members) {
     container.appendChild(row);
   });
 }
+
+//chỉnh role
+document.getElementById("memberForm").addEventListener("change", async (e) => {
+  const select = e.target.closest("select");
+  if (!select) return;
+
+  // 🔒 chỉ owner mới được chỉnh (phòng hờ)
+  if (window.currentboardRole !== "owner") {
+    alert("Bạn không có quyền chỉnh role");
+    return;
+  }
+
+  const userId = select.dataset.userId;
+  const newRole = select.value;
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/v1/board/${currentBoardId}/member-role`,
+      {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          userId,
+          role: newRole
+        })
+      }
+    );
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.message || "Không thể cập nhật role");
+      return;
+    }
+
+    // ✅ cập nhật local state
+    const member = members.find(m => m.user._id === userId);
+    if (member) member.role = newRole;
+
+    // (optional) re-render nếu muốn
+    renderMembersboard(members);
+
+  } catch (err) {
+    console.error("Update role error:", err);
+    alert("Lỗi server");
+  }
+});
+
 
 settingOpen.addEventListener("click", (e) => {
   e.stopPropagation();

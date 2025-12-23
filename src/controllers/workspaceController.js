@@ -53,12 +53,12 @@ export const getWorkspaceMembers = async (req, res) => {
     const allMembers = [];
     let currentUserRole = null;
 
-    // 👑 Owner
+    // Owner
     if (workspace.owner) {
       const ownerId = workspace.owner._id.toString();
 
       if (ownerId === userId) {
-        currentUserRole = "owner"; // 🔥 QUAN TRỌNG
+        currentUserRole = "owner";
       }
 
       if (!seen.has(ownerId)) {
@@ -80,7 +80,7 @@ export const getWorkspaceMembers = async (req, res) => {
       const memberId = m.user._id.toString();
 
       if (memberId === userId) {
-        currentUserRole = m.role?.toLowerCase() || "member"; // 🔥
+        currentUserRole = m.role?.toLowerCase() || "member";
       }
 
       if (!seen.has(memberId)) {
