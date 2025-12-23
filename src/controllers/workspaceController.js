@@ -316,4 +316,43 @@ export const updateMemberRole = async (req, res) => {
   }
 };
 
+import Board from "../models/BoardModel.js"; 
+import Task from "../models/CardModel.js";  
+import Message from "../models/ListModel.js"; 
+
+export const deleteWorkspace = async (req, res) => {
+  try {
+    const { workspaceId } = req.params;
+    const userId = req.user._id; // user đang đăng nhập
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) {
+      return res.status(404).json({ success: false, message: "Workspace không tồn tại" });
+    }
+
+    // Chỉ owner mới được xóa
+    if (workspace.owner.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: "Bạn không có quyền xóa workspace này" });
+    }
+
+    // Xóa các dữ liệu liên quan
+    await Board.deleteMany({ workspace: workspaceId });
+    await Task.deleteMany({ workspace: workspaceId });
+    await Message.deleteMany({ workspace: workspaceId });
+
+    // Gỡ workspace khỏi tất cả user
+    await User.updateMany(
+      { workspaces: workspaceId },
+      { $pull: { workspaces: workspaceId } }
+    );
+
+    // Xóa workspace chính
+    await Workspace.findByIdAndDelete(workspaceId);
+
+    return res.json({ success: true, message: "Xóa workspace và dữ liệu liên quan thành công" });
+  } catch (err) {
+    console.error("ERROR deleteWorkspace:", err);
+    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+  }
+};
 

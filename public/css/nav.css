@@ -1,118 +1,110 @@
+/* ===== Reset ===== */
 html,
 body {
     height: 100%;
     margin: 0;
     padding: 0;
     overflow: hidden;
+    font-family: "Segoe UI", Inter, system-ui, sans-serif;
 }
+
+/* ===== App Layout ===== */
 #app {
     display: flex;
+    height: 100vh;
     width: 100%;
-    height: 100%;
 }
 
+/* ===== Sidebar ===== */
 .nav-container {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 240px;
-    height: 100%;
-    background: #fff;
-    border-right: 1px solid #e2e4e6;
+    inset: 0 auto 0 0;
+    width: 260px;
+    background: #ffffff;
+    border-right: 1px solid #e1e4e8;
+    padding: 24px 18px;
     box-sizing: border-box;
-    padding: 20px;
 }
 
-.sidebar-section {
-    list-style: none;
-    margin: 0 0 30px 0;
-    padding: 0 0;
-}
-
-.sidebar-header {
-    font-weight: 600;
-    font-size: 12px;
-    color: #5e6c84;
-    text-transform: none;
-    margin-bottom: 12px;
-}
-
-.menu-item {
-    font-size: 14px;
-    color: #172b4d;
-    padding: 8px 12px;
-    margin-bottom: 8px;
-    border-radius: 4px;
-    cursor: pointer;
+/* ===== Workspace ===== */
+.workspace-title {
     display: flex;
     align-items: center;
-    transition: background-color 0.15s ease;
+    margin-bottom: 28px;
+    font-size: 16px;
+    font-weight: 700;
+    color: #172b4d;
 }
 
-.menu-item .mi-icon,
-.menu-item .ws-icon {
-    display: inline-flex;
+.workspace-title .ws-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0c66e4, #4c9aff);
+    color: #fff;
+    display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 10px;
+    font-size: 14px;
+}
+
+/* ===== Sections ===== */
+.sidebar-section {
+    list-style: none;
+    margin: 0 0 32px;
+    padding: 0;
+}
+
+.sidebar-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: #6b778c;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+}
+
+/* ===== Menu Items ===== */
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #172b4d;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.menu-item:hover {
+    background: #f1f5ff;
+}
+
+.menu-item.active {
+    background: #e7f0ff;
+    color: #0c66e4;
+    font-weight: 600;
+}
+
+/* ===== Icons ===== */
+.menu-item .mi-icon,
+.menu-item .ws-icon {
     width: 20px;
     height: 20px;
-    font-size: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     color: #42526e;
     flex-shrink: 0;
 }
 
-.menu-item:hover {
-    background-color: #e2e4e6;
+.menu-item.active .mi-icon {
+    color: #0c66e4;
 }
 
-.menu-item.active {
-    background-color: #dfe1e6;
-    font-weight: 600;
-}
-
-.ws-icon {
-    font-weight: 700;
-    background: #0c66e4;
-    color: white;
-    font-size: 14px;
-    width: 24px;
-    height: 24px;
-    text-align: center;
-    line-height: 24px;
-}
-
-.workspace-title {
-    display: flex;
-    align-items: center;
-    font-weight: 600;
-    font-size: 16px;
-    color: #333;
-}
-
-.workspace-title .ws-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    margin-right: 8px;
-    border-radius: 50%;
-    background-color: #0079bf;
-    color: #fff;
-    font-weight: bold;
-    font-size: 14px;
-}
-
-.main-content {
-    flex: 1;
-    padding: 25px;
-    box-sizing: border-box;
-    min-height: 100vh;
-    background: #fff;
-    overflow-y: auto;
-}
-
+/* ===== Close Button ===== */
 .close-button {
     position: fixed;
     top: 16px;
@@ -120,9 +112,8 @@ body {
     background: none;
     border: none;
     font-size: 22px;
-    color: #333;
     cursor: pointer;
-    z-index: 9999;
+    color: #444;
     transition: color 0.2s ease;
 }
 
