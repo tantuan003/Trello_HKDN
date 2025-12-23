@@ -1,13 +1,8 @@
 // ---------------- Members Page ----------------
 import { API_BASE } from "../js/config.js";
 document.addEventListener("DOMContentLoaded", async () => {
-  // Inject nav và highlight menu "members"
   await loadNav("members");
-
-  // Sau khi nav đã load, khởi tạo trang members
   await initMembersPage();
-
-  // Bind invite modal
   bindInviteModal();
 });
 
@@ -18,31 +13,29 @@ async function initMembersPage() {
     const user = await resUser.json();
 
     if (!user.workspaces || user.workspaces.length === 0) {
-      throw new Error("User không thuộc workspace nào");
+      throw new Error("User does not belong to any workspace");
     }
 
-    // Lấy workspaceId từ URL hoặc localStorage
-    let wsId = new URLSearchParams(window.location.search).get("ws") || localStorage.getItem("currentWorkspaceId");
+    let wsId = new URLSearchParams(window.location.search).get("ws") || localStorage.getItem("currentWorkspaceId"); 
+
     let workspace = user.workspaces.find(ws => ws._id === wsId) || user.workspaces[0];
+
 
     currentWorkspaceId = workspace._id;
     localStorage.setItem("currentWorkspaceId", currentWorkspaceId);
 
-    // Update URL
     const url = new URL(window.location);
     url.searchParams.set("ws", currentWorkspaceId);
     window.history.replaceState({}, "", url);
 
-    // Hiển thị tên workspace trong nav
     const wsTitle = document.querySelector('.workspace-title');
     if (wsTitle) {
       wsTitle.innerHTML = `
         <span class="ws-icon">${workspace.name.charAt(0).toUpperCase()}</span>
         ${workspace.name}
-        `;
+      `;
     }
 
-    // Render workspace list (sidebar switcher)
     const wsListContainer = document.getElementById("workspace-list");
     if (wsListContainer) {
       wsListContainer.innerHTML = "";
@@ -53,7 +46,6 @@ async function initMembersPage() {
         if (ws._id === currentWorkspaceId) div.classList.add("active");
 
         div.addEventListener("click", () => {
-          if (currentWorkspaceId === ws._id) return;
 
           currentWorkspaceId = ws._id;
           localStorage.setItem("currentWorkspaceId", currentWorkspaceId);
@@ -67,7 +59,7 @@ async function initMembersPage() {
           wsTitle.innerHTML = `
               <span class="ws-icon">${ws.name.charAt(0).toUpperCase()}</span>
               ${ws.name}
-            `;
+          `;
 
           loadMembers(currentWorkspaceId);
         });
@@ -76,15 +68,13 @@ async function initMembersPage() {
       });
     }
 
-    // Load members lần đầu
     await loadMembers(currentWorkspaceId);
 
   } catch (err) {
     console.error(err);
-    document.querySelector(".members-list").innerHTML = "<p>Lỗi khi load workspace hoặc members</p>";
+    document.querySelector(".members-list").innerHTML = "<p>Error loading workspace or members</p>";
   }
 }
-
 
 function canEditRole(member) {
   if (!window.currentWorkspaceRole) return false;
@@ -168,8 +158,8 @@ async function loadMembers(workspaceId) {
 
     window.currentWorkspaceRole = response.data.currentUserRole;
     const members = response.data.members;
-    // Lấy đúng mảng từ backend
-    console.log("members của workspace", members);
+
+    console.log("Members: ", members);
 
     membersContainer.innerHTML = "";
 
@@ -225,7 +215,7 @@ async function loadMembers(workspaceId) {
 
   } catch (err) {
     console.error(err);
-    membersContainer.innerHTML = "<p>Lỗi khi load danh sách members</p>";
+    membersContainer.innerHTML = "<p>Error loading members list</p>";
   }
 }
 
@@ -233,45 +223,79 @@ async function loadMembers(workspaceId) {
 
 // ---------------- Invite modal ----------------
 function bindInviteModal() {
-  const inviteBtn = document.querySelector(".invite-btn");
   const inviteModal = document.getElementById("inviteModal");
-  const closeBtn = document.querySelector(".modal .close");
-  const sendInviteBtn = document.getElementById("sendInvite");
+  const inviteBtn = document.querySelector(".invite-btn");
+  const closeBtn = inviteModal.querySelector(".close");
+  const sendBtn = document.getElementById("sendInvite");
   const inviteEmailInput = document.getElementById("inviteEmail");
 
-  if (!inviteBtn || !inviteModal || !closeBtn || !sendInviteBtn || !inviteEmailInput) return;
+  if (!inviteModal || !inviteBtn || !closeBtn || !sendBtn || !inviteEmailInput) return;
 
+  // Mở modal
   inviteBtn.addEventListener("click", () => {
-    if (!currentWorkspaceId) return alert("Workspace chưa được chọn!");
-    inviteModal.style.display = "block";
+    const wsId = localStorage.getItem("currentWorkspaceId") || window.currentWorkspaceId;
+    if (!wsId) {
+      alert("Workspace chưa được chọn!");
+      return;
+    }
+    inviteModal.classList.add("show");
+    inviteModal.style.display = "flex";
     inviteEmailInput.value = "";
     inviteEmailInput.focus();
   });
 
-  closeBtn.addEventListener("click", () => inviteModal.style.display = "none");
-  window.addEventListener("click", e => { if (e.target === inviteModal) inviteModal.style.display = "none"; });
+  // Đóng modal bằng nút close
+  closeBtn.addEventListener("click", () => {
+    inviteModal.classList.remove("show");
+    setTimeout(() => {
+      inviteModal.style.display = "none";
+    }, 300);
+  });
 
-  sendInviteBtn.addEventListener("click", async () => {
+  // Đóng modal khi click ra ngoài
+  inviteModal.addEventListener("click", (e) => {
+    if (e.target === inviteModal) {
+      inviteModal.classList.remove("show");
+      setTimeout(() => {
+        inviteModal.style.display = "none";
+      }, 300);
+    }
+  });
+
+  // Gửi invite
+  sendBtn.addEventListener("click", async () => {
     const email = inviteEmailInput.value.trim();
-    if (!email) return alert("Vui lòng nhập email");
+    const wsId = localStorage.getItem("currentWorkspaceId") || window.currentWorkspaceId;
+
+    if (!email) {
+      alert("Vui lòng nhập email!");
+      return;
+    }
+    if (!wsId) {
+      alert("Workspace chưa được chọn!");
+      return;
+    }
 
     try {
-      const res = await fetch(`${API_BASE}/v1/workspace/${currentWorkspaceId}/invite`, {
+      const res = await fetch(`${API_BASE}/v1/workspace/${wsId}/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, role: "member" }) // gửi role nếu muốn
+        body: JSON.stringify({ email, role: "member" })
       });
 
       const data = await res.json();
 
       if (!res.ok) throw new Error(data.message || "Không thể mời user");
 
-      alert(data.message);
-      inviteModal.style.display = "none";
+      alert(data.message || "Invitation sent successfully!");
+      inviteModal.classList.remove("show");
+      setTimeout(() => {
+        inviteModal.style.display = "none";
+      }, 300);
 
       // reload members list
-      await loadMembers(currentWorkspaceId);
+      await loadMembers(wsId);
 
     } catch (err) {
       console.error("Invite error:", err);
@@ -279,3 +303,4 @@ function bindInviteModal() {
     }
   });
 }
+

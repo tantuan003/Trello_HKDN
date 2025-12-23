@@ -1,10 +1,5 @@
-// ---------------- Globals ----------------
 let currentWorkspaceId = null;
 
-/**
- * Load sidebar nav, highlight active item, and set workspace title/dropdown.
- * Call this once per page: await loadNav("profile") / "members" / "settings-wsp" / "boards"
- */
 async function loadNav(activePage) {
   try {
     console.log("Loading nav...");
