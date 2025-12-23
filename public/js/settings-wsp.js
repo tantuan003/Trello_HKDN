@@ -233,7 +233,34 @@ function restoreSpan(name) {
   if (editBtn) editBtn.style.display = "inline-block";
 }
 
-// Hàm mở modal xoá workspace
+// ---------------- Gắn sự kiện cho nút delete ----------------
+const deleteBtn = document.querySelector(".delete-workspace");
+if (deleteBtn) {
+  deleteBtn.addEventListener("click", async () => {
+    const wsId = localStorage.getItem("currentWorkspaceId"); // lấy workspace hiện tại
+    if (!wsId) {
+      alert("No workspace selected!");
+      return;
+    }
+
+    try {
+      // Lấy thông tin workspace để hiển thị tên
+      const res = await fetch(`http://localhost:8127/v1/workspace/${wsId}`, {
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const workspace = await res.json();
+
+      // mở modal confirm xoá, truyền id và tên
+      openDeleteModal(wsId, workspace.name);
+    } catch (err) {
+      console.error("Error fetching workspace:", err);
+      alert("Error fetching workspace info!");
+    }
+  });
+}
+
+// ---------------- Hàm mở modal xoá workspace ----------------
 function openDeleteModal(wsId, wsName) {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -294,19 +321,17 @@ function openDeleteModal(wsId, wsName) {
   // Xác nhận xoá
   confirmBtn.addEventListener("click", async () => {
     try {
-      const res = await fetch(`http://localhost:8127/v1/workspace/${wsId}/delete`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ deleted_at: new Date().toISOString() })
+      const res = await fetch(`http://localhost:8127/v1/workspace/${wsId}`, {
+        method: "DELETE",
+        credentials: "include"
       });
       const data = await res.json();
 
       if (res.ok && data.success) {
         alert("Workspace deleted successfully!");
-        location.reload(); // reload lại UI sau khi xoá
+        window.location.href = "/home.html"; // redirect sau khi xoá
       } else {
-        alert("Failed to delete workspace!");
+        alert(data.message || "Failed to delete workspace!");
       }
     } catch (err) {
       console.error(err);
@@ -318,28 +343,8 @@ function openDeleteModal(wsId, wsName) {
   });
 }
 
-// ---------------- Gắn sự kiện cho nút delete ----------------
-const deleteBtn = document.querySelector(".delete-workspace");
-if (deleteBtn) {
-  deleteBtn.addEventListener("click", async () => {
-    const wsId = localStorage.getItem("currentWorkspaceId"); // lấy workspace hiện tại
-    if (!wsId) {
-      alert("No workspace selected!");
-      return;
-    }
 
-    try {
-      const res = await fetch(`http://localhost:8127/v1/workspace/${wsId}`, { credentials: "include" });
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const workspace = await res.json();
 
-      openDeleteModal(wsId, workspace.name);
-    } catch (err) {
-      console.error("Error fetching workspace:", err);
-      alert("Error fetching workspace info!");
-    }
-  });
-}
 
 
 

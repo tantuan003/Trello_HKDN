@@ -76,19 +76,20 @@
           <div class="workspace-header">
             <h4>Workspaces</h4>
             <button id="addWorkspaceBtn">+</button>
-          </div>
-          <div id="workspaceModal" class="modalworkspace">
-            <div class="modal-content">
-              <span class="close">&times;</span>
-              <h3>Create New Workspace</h3>
-              <form id="workspaceForm">
-                <input type="text" id="workspaceName" placeholder="Workspace name" required />
-                <button type="submit">Create</button>
-              </form>
+
+            <div id="createWorkspaceModal" class="create-workspace-modal">
+              <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Create New Workspace</h3>
+                <form id="workspaceForm">
+                  <input type="text" id="workspaceName" placeholder="Workspace name" required />
+                  <button type="submit">Create</button>
+                </form>
+              </div>
             </div>
           </div>
 
-          <div id="workspace-list"></div>
+        <div id="workspace-list"></div>
         </section>
       </aside>
 

@@ -155,13 +155,13 @@ body {
 /* Content chính — xoá hẳn khoảng trắng dư phía trên */
 .content {
   position: absolute;
-  top: var(--header-h);     
+  top: var(--header-h);
   left: var(--sidebar-w);
   right: 0;
   bottom: 0;
   overflow-y: auto;
   background: #fff;
-  padding: 0 28px 28px;       
+  padding: 0 28px 28px;
 }
 
 /* ===== SIDEBAR ITEMS ===== */
@@ -175,13 +175,15 @@ body {
   text-decoration: none;
   font-weight: 700;
   color: #111827;
-  transition: background .15s, color .15s; /* thêm color transition */
+  transition: background .15s, color .15s;
+  /* thêm color transition */
 }
 
 /* Hover giống cũ + chữ đổi màu */
 .nav-item:hover {
   background: #f5f8ff;
-  color: #3b82f6; /*chữ đổi màu khi hover */
+  color: #3b82f6;
+  /*chữ đổi màu khi hover */
 }
 
 /* Active giống Trello (bạn có rồi) */
@@ -192,7 +194,7 @@ body {
 }
 
 /* Icon container dùng mask để đổi màu mượt */
-.nav-ic{
+.nav-ic {
   width: 18px;
   height: 18px;
   display: inline-block;
@@ -205,27 +207,27 @@ body {
 }
 
 /* Hover đổi màu icon */
-.nav-item:hover .nav-ic{
+.nav-item:hover .nav-ic {
   background-color: #3b82f6;
 }
 
 /* Active đổi màu icon */
-.nav-item.is-active .nav-ic{
+.nav-item.is-active .nav-ic {
   background-color: #1c4ce0;
 }
 
 /* Mask cho từng icon */
-.icon-boards{
+.icon-boards {
   -webkit-mask: url("/uploads/icons8-boards.png") no-repeat center / contain;
   mask: url("/uploads/icons8-boards.png") no-repeat center / contain;
 }
 
-.icon-template{
+.icon-template {
   -webkit-mask: url("/uploads/icons8-template.png") no-repeat center / contain;
   mask: url("/uploads/icons8-template.png") no-repeat center / contain;
 }
 
-.icon-home{
+.icon-home {
   -webkit-mask: url("/uploads/icons8-home.png") no-repeat center / contain;
   mask: url("/uploads/icons8-home.png") no-repeat center / contain;
 }
@@ -587,26 +589,124 @@ body {
   /* khoảng cách giữa h4 và nút nếu muốn */
 }
 
+
 #addWorkspaceBtn {
   font-size: 18px;
-  padding: 2px 8px; /* nhỏ gọn */
+  padding: 2px 8px;
+  /* nhỏ gọn */
   cursor: pointer;
   border: none;
   color: black;
   border-radius: 4px;
   line-height: 1;
+  transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 #addWorkspaceBtn:hover {
-  color: #009efd;
+  background: #007acc;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px);
+}
+
+#addWorkspaceBtn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.workspace-header {
+  position: relative;
+  /* cần cho modal absolute */
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Modal dạng dropdown, hiện ra bên dưới nút + */
+.create-workspace-modal {
+  display: none;
+  /* mặc định ẩn */
+  position: absolute;
+  top: 36px;
+  /* cách nút + */
+  right: 0;
+  width: 100%;
+  /* bằng width sidebar nếu muốn */
+  max-width: 280px;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  padding: 12px 16px;
+  box-sizing: border-box;
+}
+
+/* Close button */
+.create-workspace-modal .close {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Tiêu đề căn giữa */
+.create-workspace-modal h3 {
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+/* Form input và button xếp dọc */
+#workspaceForm {
+  display: flex;
+  flex-direction: column;
+  /* xếp dọc */
+  gap: 8px;
+  /* khoảng cách giữa input và button */
+}
+
+/* Input */
+#workspaceForm input[type="text"] {
+  width: 100%;
+  /* chiếm toàn bộ chiều ngang modal */
+  height: 36px;
+  padding: 0 12px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  box-sizing: border-box;
+}
+
+/* Button */
+#workspaceForm button[type="submit"] {
+  width: 100%;
+  /* button cũng chiếm toàn bộ chiều ngang */
+  height: 36px;
+  font-size: 14px;
+  background-color: #009efd;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#workspaceForm button[type="submit"]:hover {
+  background-color: #007acc;
 }
 
 /* Nền mờ toàn màn hình */
-#workspaceModal{
+#workspaceModal {
   display: none;
 }
+
 .modalworkspace {
-  display: none; /* ẩn mặc định */
+  display: none;
+  /* ẩn mặc định */
   top: 0;
   left: 0;
   width: 100%;
@@ -615,7 +715,8 @@ body {
   display: flex;
   border-radius: 5px;
   justify-content: center;
-  align-items: flex-start; /* hiển thị gần header hơn */
+  align-items: flex-start;
+  /* hiển thị gần header hơn */
 }
 
 /* Nội dung modal */
@@ -643,35 +744,6 @@ body {
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-}
-
-/* Form input và button */
-#workspaceForm input[type="text"] {
-  width: calc(100% - 60px); /* giảm chiều rộng vừa button */
-  height: 20px;
-  padding: 6px 8px;
-  margin-right: 6px;
-  font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
-#workspaceForm input::placeholder {
-  font-size: 10px;
-}
-
-#workspaceForm button {
-  padding: 6px 12px;
-  font-size: 10px;
-  cursor: pointer;
-  border: none;
-  background-color: #007bff;
-  color: #fff;
-  border-radius: 4px;
-}
-
-#workspaceForm button:hover {
-  background-color: #0056b3;
 }
 
 .profile-modal {
@@ -725,4 +797,3 @@ body {
 .profile-modal-close:focus {
   outline: none;
 }
-

@@ -11,10 +11,6 @@ let uploadedBg = "";
 let selectedColor = "";
 let pendingDelete = { boardId: null, cardEl: null };
 
-/* ===========================
-   ✅ DELETE BOARD (ICON + MODAL + API)
-=========================== */
-
 function ensureDeleteModal() {
   if (document.getElementById("deleteBoardModal")) return;
 

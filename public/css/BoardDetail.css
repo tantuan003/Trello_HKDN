@@ -1,9 +1,9 @@
 html, body {
   width: 100%;
-  min-height: 100vh;   /* luôn cao ít nhất bằng chiều cao màn hình */
+  min-height: 100vh;  
   margin: 0;
   padding: 10px;
-  overflow-x: hidden;  /* tránh bị tràn ngang */
+  overflow-x: hidden;  
   box-sizing: border-box;
   font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
                "Helvetica Neue", Arial, sans-serif;
