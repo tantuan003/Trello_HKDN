@@ -221,19 +221,30 @@ function createListElement(list) {
       if (!ok) return;
 
       try {
-        // UI: xoá list
-        listEl.remove();
+        const res = await fetch(
+          `${API_BASE}/v1/board/${list._id}`,
+          {
+            method: "DELETE",
+            credentials: "include"
+          }
+        );
 
-        // Backend
-        await fetch(`/v1/board/${list._id}`, {
-          method: "DELETE",
-        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Bạn không có quyền xoá list");
+          return;
+        }
+
+        // ✅ KHÔNG xoá UI ở đây
+        // UI sẽ xoá khi socket "list-deleted" bắn về
 
       } catch (err) {
         alert("Xoá list thất bại");
         console.error(err);
       }
     }
+
 
     menu.style.display = "none";
   });
@@ -302,32 +313,32 @@ function createListElement(list) {
     deleteBtn.src = "uploads/icons8-delete-128.png"; // sửa đúng path của bạn
     deleteBtn.className = "card-delete-btn";
     deleteBtn.alt = "Delete card"
-    
+
     deleteBtn.addEventListener("click", async (e) => {
-  e.stopPropagation();
-  e.preventDefault();
+      e.stopPropagation();
+      e.preventDefault();
 
-  if (!confirm("Xoá card này?")) return;
+      if (!confirm("Xoá card này?")) return;
 
-  try {
-    const res = await fetch(`${API_BASE}/v1/board/delete/${card._id}`, {
-      method: "DELETE",
-      credentials: "include"
+      try {
+        const res = await fetch(`${API_BASE}/v1/board/delete/${card._id}`, {
+          method: "DELETE",
+          credentials: "include"
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          alert(data.message || "Bạn không có quyền xoá card này");
+          return;
+        }
+
+        // ✅ Xoá thành công → UI sẽ được socket xử lý
+      } catch (err) {
+        alert("Xoá card thất bại");
+        console.error(err);
+      }
     });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      alert(data.message || "Bạn không có quyền xoá card này");
-      return;
-    }
-
-    // ✅ Xoá thành công → UI sẽ được socket xử lý
-  } catch (err) {
-    alert("Xoá card thất bại");
-    console.error(err);
-  }
-});
 
 
 
@@ -802,7 +813,7 @@ document.addEventListener("DOMContentLoaded", () => {
     e.stopPropagation(); // tránh click ra ngoài tự ẩn form ngay
     inviteFormContainer.classList.toggle("hidden");
   });
-  
+
 
   // Click ra ngoài sẽ ẩn form
   document.addEventListener("click", (e) => {
@@ -831,7 +842,7 @@ document.addEventListener("click", () => {
 // click trong menu không đóng
 moreMenu.addEventListener("click", (e) => {
   e.stopPropagation();
-   if (e.target.closest("#settingMenu")) {
+  if (e.target.closest("#settingMenu")) {
     moreMenu.classList.add("hidden");
     settingOpen.classList.remove("hidden");
   }
@@ -964,7 +975,7 @@ settingOpen.addEventListener("click", (e) => {
     settingOpen.classList.add("hidden");
     moreMenu.classList.remove("hidden");
   }
-   const manageMemberItem = e.target.closest(".manager-member");
+  const manageMemberItem = e.target.closest(".manager-member");
   if (manageMemberItem) {
     settingOpen.classList.add("hidden");
     memberModal.classList.remove("hidden");

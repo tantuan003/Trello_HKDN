@@ -11,7 +11,7 @@ router.get("/workspace/:workspaceId",verifyToken, getBoardsByWorkspace);
 router.delete("/delete/:cardId",verifyToken, deleteCard);
 router.delete("/delete/:boardId", verifyToken, deleteBoard);
 router.delete("/:listId/clear-cards", clearCardsInList);
-router.delete("/:listId", deleteList);
+router.delete("/:listId",verifyToken, deleteList);
 //board recent
 router.get("/recent", verifyToken, getBoardsrecent);
 

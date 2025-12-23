@@ -591,28 +591,58 @@ export const clearCardsInList = async (req, res) => {
 export const deleteList = async (req, res) => {
   try {
     const { listId } = req.params;
+    const userId = req.user.id;
 
+    /* 1️⃣ Tìm list */
     const list = await List.findById(listId);
     if (!list) {
       return res.status(404).json({ message: "List không tồn tại" });
     }
 
+    /* 2️⃣ Tìm board */
+    const board = await Board.findById(list.board);
+    if (!board) {
+      return res.status(404).json({ message: "Board không tồn tại" });
+    }
+
+    /* 3️⃣ Kiểm tra quyền */
+    const member = board.members.find(
+      m => m.user.toString() === userId
+    );
+
+    if (!member || !["owner", "admin"].includes(member.role)) {
+      return res.status(403).json({
+        message: "Bạn không có quyền xoá list này"
+      });
+    }
+
+    /* 4️⃣ Xoá toàn bộ card trong list */
     await Card.deleteMany({ list: listId });
+
+    /* 5️⃣ Xoá list */
     await List.findByIdAndDelete(listId);
-     req.io.to(list.board.toString()).emit("list-deleted", {
+
+    /* 6️⃣ Gỡ list khỏi board.lists (RẤT QUAN TRỌNG) */
+    await Board.findByIdAndUpdate(board._id, {
+      $pull: { lists: listId }
+    });
+
+    /* 7️⃣ Realtime */
+    req.io.to(board._id.toString()).emit("list-deleted", {
       listId
     });
 
-
     res.json({
+      success: true,
       message: "Đã xoá list và toàn bộ card trong list",
-      listId,
+      listId
     });
   } catch (err) {
-    console.error("deleteList error:", err);
+    console.error("❌ deleteList error:", err);
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 export const deleteCard = async (req, res) => {
   try {
     const { cardId } = req.params;
