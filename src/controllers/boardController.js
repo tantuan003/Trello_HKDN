@@ -13,8 +13,12 @@ export const createBoard = async (req, res) => {
     const { name, workspaceId, visibility, background } = req.body;
     const userId = req.user?.id;
 
-    if (!userId) return res.status(401).json({ message: "Chưa xác thực" });
-    if (!name?.trim()) return res.status(400).json({ message: "Tên board không hợp lệ" });
+    if (!userId)
+      return res.status(401).json({ message: "Chưa xác thực" });
+
+    if (!name?.trim())
+      return res.status(400).json({ message: "Tên board không hợp lệ" });
+
     if (!mongoose.Types.ObjectId.isValid(workspaceId))
       return res.status(400).json({ message: "workspaceId không hợp lệ" });
 
@@ -22,8 +26,18 @@ export const createBoard = async (req, res) => {
     if (!workspace)
       return res.status(404).json({ message: "Workspace không tồn tại" });
 
-    // (tuỳ chọn) check user là member workspace
-    // if (!workspace.members.includes(userId)) return res.status(403)...
+    const member = workspace.members.find(
+      m => m.user.toString() === userId
+    );
+
+    if (!member)
+      return res.status(403).json({ message: "Bạn không thuộc workspace này" });
+
+    if (!["owner", "admin"].includes(member.role)) {
+      return res.status(403).json({
+        message: "Bạn không có quyền tạo board"
+      });
+    }
 
     const board = await Board.create({
       name: name.trim(),
@@ -31,19 +45,16 @@ export const createBoard = async (req, res) => {
       createdBy: userId,
       background: background || "gradient-1",
       visibility: visibility || "workspace",
-      members: [
-        {
-          user: userId,
-          role: "owner"
-        }
-      ]
+      members: [{ user: userId, role: "owner" }]
     });
 
     workspace.boards.push(board._id);
     await workspace.save();
 
-    const io = req.app.get("socketio");
-    io?.to(`workspace:${workspaceId}`).emit("board:new", board);
+    req.app
+      .get("socketio")
+      ?.to(`workspace:${workspaceId}`)
+      .emit("board:new", board);
 
     res.status(201).json({
       success: true,
@@ -55,6 +66,7 @@ export const createBoard = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
 
 export const getBoardsByCurrentUser = async (req, res) => {
   try {
