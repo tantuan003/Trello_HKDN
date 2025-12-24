@@ -48,7 +48,7 @@ export async function initWorkspaceBoardsPage() {
         btnConfirm.onclick = async () => {
             btnConfirm.disabled = true;
             try {
-                const res = await fetch(`${API_BASE}/v1/board/delete/${pendingDelete.boardId}`, {
+                const res = await fetch(`${API_BASE}/v1/board/board/${pendingDelete.boardId}`, {
                     method: "DELETE",
                     credentials: "include"
                 });
