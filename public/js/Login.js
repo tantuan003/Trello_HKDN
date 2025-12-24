@@ -1,4 +1,5 @@
 import { API_BASE } from "../js/config.js";
+
 const loginForm = document.getElementById('loginForm');
 const loginButton = document.getElementById('login');
 
@@ -11,7 +12,7 @@ loginButton.addEventListener('click', async (e) => {
   // Kiểm tra rỗng
   if (!email || !password) {
     Toastify({
-      text: "⚠️ Vui lòng nhập đầy đủ email và mật khẩu!",
+      text: "Vui lòng nhập đầy đủ email và mật khẩu!",
       duration: 2000,
       gravity: "top",
       position: "right",
@@ -33,7 +34,7 @@ loginButton.addEventListener('click', async (e) => {
 
     if (response.ok) {
       Toastify({
-        text: "✅ Đăng nhập thành công!",
+        text: "Đăng nhập thành công!",
         duration: 2000,
         gravity: "top",
         position: "right",
@@ -51,7 +52,7 @@ loginButton.addEventListener('click', async (e) => {
       }, 1000);
     } else {
       Toastify({
-        text: `❌ ${result.message || "Đăng nhập thất bại!"}`,
+        text: result.message || "Đăng nhập thất bại!",
         duration: 2000,
         gravity: "top",
         position: "right",
@@ -62,18 +63,12 @@ loginButton.addEventListener('click', async (e) => {
   } catch (err) {
     console.error(err);
     Toastify({
-      text: "🚫 Lỗi kết nối đến server!",
+      text: "Lỗi kết nối đến server!",
       duration: 2000,
       gravity: "top",
       position: "right",
       backgroundColor: "#9C27B0",
       close: true
     }).showToast();
-  }
-});
-
-document.addEventListener("DOMContentLoaded", () => {
-  if (typeof initYetiAnimation === "function") {
-    initYetiAnimation();
   }
 });

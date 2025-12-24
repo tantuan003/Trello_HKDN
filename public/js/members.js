@@ -16,7 +16,7 @@ async function initMembersPage() {
       throw new Error("User does not belong to any workspace");
     }
 
-    let wsId = new URLSearchParams(window.location.search).get("ws") || localStorage.getItem("currentWorkspaceId"); 
+    let wsId = new URLSearchParams(window.location.search).get("ws") || localStorage.getItem("currentWorkspaceId");
 
     let workspace = user.workspaces.find(ws => ws._id === wsId) || user.workspaces[0];
 
@@ -187,18 +187,19 @@ async function loadMembers(workspaceId) {
       }
 
       // 🔽 Role select
-      let roleHTML = `<div class="role-text">${member.role}</div>`;
-      console.log("member:", member);
-      console.log("canEditRole:", typeof canEditRole, canEditRole?.(member));
+      let roleHTML = "";
 
-
-      if (canEditRole(member)) {
+      if (member.role.toLowerCase() === "owner") {
+        roleHTML = `<div class="role-owner">OWNER</div>`;
+      } else if (canEditRole(member)) {
         roleHTML = `
-      <select class="role-select" data-user-id="${member._id}" data-old-role="${member.role}">
-        <option value="member" ${member.role === "member" ? "selected" : ""}>Member</option>
-        <option value="admin" ${member.role === "admin" ? "selected" : ""}>Admin</option>
-      </select>
-    `;
+          <select class="role-select" data-user-id="${member._id}" data-old-role="${member.role}">
+            <option value="member" ${member.role === "member" ? "selected" : ""}>Member</option>
+            <option value="admin" ${member.role === "admin" ? "selected" : ""}>Admin</option>
+          </select>
+          `;
+      } else {
+        roleHTML = `<div class="role-text">${member.role}</div>`;
       }
 
       div.innerHTML = `

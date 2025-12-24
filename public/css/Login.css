@@ -1,18 +1,25 @@
 /* RESET + GLOBAL */
-html, body {
+html,
+body {
   width: 100%;
-  height: 100%;
-  margin: 0;                 /* quan trọng: bỏ khoảng trắng mặc định */
-  padding: 0;
+  min-height: 100vh;
+  margin: 0;
+  padding: 10px;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+    "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
 }
 
-body {
-  min-height: 100vh;         /* đảm bảo body phủ hết chiều cao màn hình */
-  background: linear-gradient(135deg, #8b5cf6, #ec4899);
-  font-size: 1rem;
-  font-family: 'Source Sans Pro', sans-serif;
-  font-weight: 400;
-  -webkit-font-smoothing: antialiased;
+.title {
+  text-align: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 1.2em;
 }
 
 /* FORM CONTAINER */
@@ -23,54 +30,13 @@ form {
   transform: translate(-50%, -50%);
   display: block;
   width: 100%;
-  max-width: 360px; /* trước 400px */
+  max-width: 360px;
   background-color: #FFF;
-  padding: 1.5em 1.75em; /* trước 2.25em */
+  padding: 1.5em 1.75em;
   box-sizing: border-box;
   border: solid 1px #DDD;
   border-radius: 0.5em;
   font-family: inherit;
-}
-
-/* AVATAR / SVG CIRCLE */
-form .svgContainer {
-  position: relative;
-  width: 140px; /* trước 200px */
-  height: 140px;
-  margin: 0 auto 0.75em;
-  border-radius: 50%;
-  pointer-events: none;
-}
-
-form .svgContainer div {
-  position: relative;
-  width: 100%;
-  height: 0;
-  overflow: hidden;
-  border-radius: 50%;
-  padding-bottom: 100%;
-}
-
-form .svgContainer .mySVG {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-}
-
-form .svgContainer:after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  z-index: 10;
-  width: inherit;
-  height: inherit;
-  border: solid 2.5px #217093;
-  border-radius: 50%;
-  box-sizing: border-box;
 }
 
 /* INPUT GROUP */
@@ -83,7 +49,7 @@ form .inputGroup {
 form label {
   margin: 0 0 8px;
   display: block;
-  font-size: 1rem; /* trước 1.25em */
+  font-size: 1rem;
   color: #217093;
   font-weight: 700;
 }
@@ -97,10 +63,9 @@ form input[type='search'],
 form input[type='password'] {
   display: block;
   width: 100%;
-  height: auto;              /* ép bỏ height cũ 65px nếu còn */
-  padding: 0.75em 0.9em;     /* tăng padding trên dưới cho cân giữa */
+  padding: 0.75em 0.9em;
   font-size: 1rem;
-  line-height: 1.3;          /* chữ nằm đẹp hơn trong ô */
+  line-height: 1.3;
   font-family: inherit;
   font-weight: 600;
   background-color: #f3fafd;
@@ -111,23 +76,13 @@ form input[type='password'] {
   transition: box-shadow 0.2s linear, border-color 0.25s ease-out;
 }
 
-form input[type='email']:focus,
-form input[type='text']:focus,
-form input[type='number']:focus,
-form input[type='url']:focus,
-form input[type='search']:focus,
-form input[type='password']:focus {
+form input:focus {
   outline: none;
   border-color: #4eb8dd;
-  box-shadow: 0px 2px 10px rgba(0,0,0,0.1);
+  box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-
-/* SHOW PASSWORD */
-form .inputGroup2 input[type="password"] {
-  padding: 0.4em 1em 0.5em;
-}
-
+/* SHOW PASSWORD TOGGLE */
 form .inputGroup2 #showPasswordToggle {
   position: absolute;
   right: 0;
@@ -166,7 +121,7 @@ form .inputGroup2 #showPasswordToggle .indicator:after {
   visibility: hidden;
 }
 
-form .inputGroup2 #showPasswordToggle input:checked ~ .indicator:after {
+form .inputGroup2 #showPasswordToggle input:checked~.indicator:after {
   visibility: visible;
 }
 
@@ -181,7 +136,7 @@ form button {
   background-position: left;
   border: none;
   border-radius: 4px;
-  font-size: 1.1rem; /* trước 1.55em */
+  font-size: 1.1rem;
   font-weight: 600;
   color: #fff;
   cursor: pointer;
@@ -194,13 +149,6 @@ form button:hover {
 }
 
 /* FOOTER TEXT */
-.centred {
-  text-align: center;
-  font-size: 1rem; /* trước 1.25em */
-  color: #217093;
-  font-weight: 700;
-}
-
 .signup-text {
   text-align: center;
   margin-top: 12px;
@@ -208,7 +156,6 @@ form button:hover {
   color: #444;
 }
 
-/* 修 color đúng — linear-gradient không dùng được */
 .signup-link {
   color: #8b5cf6;
   text-decoration: none;
@@ -220,7 +167,7 @@ form button:hover {
 .signup-link:hover {
   color: #ec4899;
 }
-/* Ẩn icon con mắt mặc định của Edge/IE trong ô password */
+
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none;

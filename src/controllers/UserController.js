@@ -39,7 +39,7 @@ export const registerUser = async (req, res) => {
     newUser.workspaces.push(workspace._id);
     await newUser.save();
 
-    res.status(201).json({ message: "Đăng ký thành công", user: newUser });
+    res.status(201).json({ success: true, message: "Đăng ký thành công", user: newUser });
 
   } catch (error) {
     console.error("ERROR registerUser:", error);

@@ -50,11 +50,10 @@ export async function loadSidebarWorkspace() {
       menu.className = "wsp-menu";
       menu.style.display = "none";
       menu.innerHTML = `
-        <li><a href="boards.html?ws=${workspace._id}"><i class="fa-solid fa-briefcase"></i>Boards</a></li>
+        <li><a href="board-wsp.html?ws=${workspace._id}"><i class="fa-solid fa-briefcase"></i>Boards</a></li>
         <li><a href="members.html?ws=${workspace._id}"><i class="fa-solid fa-user-group"></i>Members</a></li>
         <li><a href="settings-wsp.html?ws=${workspace._id}"><i class="fa-solid fa-gear"></i>Settings</a></li>
       `;
-
       // **Chỉ mở menu và set currentWorkspaceId nếu URL match**
       if (workspaceIdFromUrl === workspace._id) {
         currentWorkspaceId = workspace._id;
@@ -527,16 +526,15 @@ export function initSidebarHeader() {
   document.body.dataset.sidebarHeaderInit = "1";
 }
 
-// tạo mới workspace
 const addBtn = document.getElementById("addWorkspaceBtn");
-const modal = document.getElementById("workspaceModal");
+const modal = document.getElementById("createWorkspaceModal");
 const closeBtn = modal.querySelector(".close");
 const form = document.getElementById("workspaceForm");
 const input = document.getElementById("workspaceName");
 
 // Mở modal khi bấm "+"
 addBtn.addEventListener("click", () => {
-  modal.style.display = "flex";
+  modal.style.display = modal.style.display === "block" ? "none" : "block";
   input.value = "";
   input.focus();
 });
@@ -546,34 +544,36 @@ closeBtn.addEventListener("click", () => modal.style.display = "none");
 
 // Đóng modal khi click ra ngoài
 window.addEventListener("click", e => {
-  if (e.target === modal) modal.style.display = "none";
+  if (!modal.contains(e.target) && e.target !== addBtn) {
+    modal.style.display = "none";
+  }
 });
 
-// Xử lý submit form
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = input.value.trim();
-    if (!name) return alert("Vui lòng nhập tên workspace");
+// Submit form tạo workspace
+form.addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = input.value.trim();
+  if (!name) return alert("Vui lòng nhập tên workspace");
 
-    try {
-      const res = await fetch(`${API_BASE}/v1/workspace/create`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // gửi cookie token nếu có
-        body: JSON.stringify({ name })
-      });
+  try {
+    const res = await fetch(`${API_BASE}/v1/workspace/create`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ name })
+    });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Lỗi tạo workspace");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Lỗi tạo workspace");
 
-      alert(data.message);
-      modal.style.display = "none";
+    alert(data.message);
+    modal.style.display = "none";
 
-      // reload danh sách workspace
-      loadSidebarWorkspace();
+    // reload danh sách workspace
+    loadSidebarWorkspace();
+  } catch (err) {
+    console.error(err);
+    alert("Error: " + err.message);
+  }
+});
 
-    } catch (err) {
-      console.error(err);
-      alert("Error: " + err.message);
-    }
-  });
