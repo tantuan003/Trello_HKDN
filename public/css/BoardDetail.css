@@ -43,6 +43,13 @@ html, body {
   display: flex;
   flex-direction: column;
 }
+.board-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  overflow-x: auto;
+  padding: 12px;
+}
 
 .lists-container {
   display: flex;
@@ -310,19 +317,24 @@ html, body {
 /* --- Nút Add List --- */
 /* Nút Add List (container) */
 .add-list {
-  position: absolute;
+  margin-top: 20px;
   background: rgba(255, 255, 255, 0.2);
   border: 1.5px dashed rgba(0, 0, 0, 0.15);
   border-radius: 8px;
+
   display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
+  justify-content: center; /* căn ngang */
+  align-items: center;     /* căn dọc */
+
+  text-align: center;
   color: #444;
   cursor: pointer;
   transition: all 0.2s ease;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   min-height: 44px;
+  flex: 0 0 280px;
 }
+
 
 .add-list:hover {
   background: rgba(255, 255, 255, 0.45);

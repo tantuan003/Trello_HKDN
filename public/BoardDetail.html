@@ -63,9 +63,9 @@
             </div>
 
             <!-- Form -->
-           <div id="memberForm">
+            <div id="memberForm">
 
-           </div>
+            </div>
           </div>
         </div>
 
@@ -81,9 +81,24 @@
 
 
       <!-- Lists container -->
-      <div id="listsContainer" class="lists-container">
-        <!-- Lists sẽ được JS render ở đây -->
+      <div class="board-content">
+        <!-- Lists container -->
+        <div id="listsContainer" class="lists-container">
+          <!-- Lists sẽ được JS render ở đây -->
+        </div>
+
+        <div class="add-list" id="add-list">
+          <button id="showAddListBtn">+ Add a list</button>
+          <div id="addListForm" style="display:none;">
+            <input type="text" id="newListTitle" placeholder="Enter list title">
+            <div class="list-btn">
+              <button id="addListBtn">Add List</button>
+              <button id="cancelAddListBtn">X</button>
+            </div>
+          </div>
+        </div>
       </div>
+
       <!-- Card Detail Modal -->
       <div id="cardDetailModal" class="modal" style="display: none;">
         <div class="modal-content" id="modalContent">
@@ -176,19 +191,6 @@
 
           </div>
 
-        </div>
-      </div>
-
-
-      <!-- Add list form -->
-      <div class="add-list">
-        <button id="showAddListBtn">+ Add a list</button>
-        <div id="addListForm" style="display:none;">
-          <input type="text" id="newListTitle" placeholder="Enter list title">
-          <div class="list-btn">
-            <button id="addListBtn">Add List</button>
-            <button id="cancelAddListBtn">X</button>
-          </div>
         </div>
       </div>
     </div>

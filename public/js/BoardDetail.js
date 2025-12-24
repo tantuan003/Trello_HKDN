@@ -1001,20 +1001,30 @@ memberModal.addEventListener("click", (e) => {
 });
 
 
+const addList = document.querySelector(".add-list");
 const showAddListBtn = document.getElementById("showAddListBtn");
 const addListForm = document.getElementById("addListForm");
 const cancelAddListBtn = document.getElementById("cancelAddListBtn");
 
-showAddListBtn.addEventListener("click", () => {
+// Click vào div cha → mở form
+addList.addEventListener("click", () => {
   showAddListBtn.style.display = "none";
   addListForm.style.display = "flex";
+  newListTitle.focus();
 });
 
-cancelAddListBtn.addEventListener("click", () => {
+// Ngăn click trong form làm đóng/mở lại
+addListForm.addEventListener("click", (e) => {
+  e.stopPropagation();
+});
+
+// Cancel → quay lại nút Add list
+cancelAddListBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
   addListForm.style.display = "none";
   showAddListBtn.style.display = "inline-block";
-  newListTitle.value = "";
 });
+
 
 // card detail
 async function openCardDetail(cardId) {
