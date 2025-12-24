@@ -41,6 +41,8 @@ function ensureDeleteModal() {
 function openDeleteModal(boardId, cardEl) {
   ensureDeleteModal();
   pendingDelete = { boardId, cardEl };
+  console.log("Deleting board:", pendingDelete.boardId);
+
 
   const overlay = document.getElementById("deleteBoardModal");
   overlay.style.display = "flex";
@@ -56,7 +58,7 @@ function openDeleteModal(boardId, cardEl) {
   btnConfirm.onclick = async () => {
     btnConfirm.disabled = true;
     try {
-      const res = await fetch(`${API_BASE}/v1/board/delete/${pendingDelete.boardId}`, {
+      const res = await fetch(`${API_BASE}/v1/board/board/${pendingDelete.boardId}`, {
         method: "DELETE",
         credentials: "include",
       });

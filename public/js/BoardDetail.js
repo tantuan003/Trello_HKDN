@@ -321,7 +321,7 @@ function createListElement(list) {
       if (!confirm("Xoá card này?")) return;
 
       try {
-        const res = await fetch(`${API_BASE}/v1/board/delete/${card._id}`, {
+        const res = await fetch(`${API_BASE}/v1/board/card/${card._id}`, {
           method: "DELETE",
           credentials: "include"
         });
