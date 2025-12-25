@@ -874,3 +874,38 @@ export const updateBoardTitle = async (req, res) => {
     });
   }
 };
+
+// update visibility
+export const updateBoardVisibility = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const { visibility } = req.body;
+    const userId = req.user.id;
+
+    const allow = ["public", "workspace", "private"];
+    if (!allow.includes(visibility)) {
+      return res.status(400).json({ message: "Visibility không hợp lệ" });
+    }
+
+    const board = await Board.findById(boardId);
+    if (!board) {
+      return res.status(404).json({ message: "Board không tồn tại" });
+    }
+
+    // 🔒 phân quyền (ví dụ)
+    if (board.createdBy.toString() !== userId) {
+      return res.status(403).json({ message: "Không có quyền thay đổi visibility" });
+    }
+
+    board.visibility = visibility;
+    await board.save();
+
+    res.json({
+      success: true,
+      visibility: board.visibility
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

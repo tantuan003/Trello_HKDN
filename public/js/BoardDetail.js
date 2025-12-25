@@ -13,7 +13,8 @@ let assignedMembers = [];  // chứa array ID user
 let currentCard = []
 let boardData = {
   lists: [],   // array of lists, mỗi list có cards
-  members: []  // array of members
+  members: [], // array of members
+  visibility:""
 };
 // Map lưu các hàm render UI của từng card
 const cardUIActions = {};
@@ -89,7 +90,7 @@ async function renderBoardWithLists() {
     members = board.members;
     boardData.lists = board.lists;
     boardData.members = board.members;
-
+    boardData.visibility =board.visibility;
     renderAssignedMembersinvite(members);
 
     // socket
@@ -1060,7 +1061,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
 settingOpen.addEventListener("click", (e) => {
   e.stopPropagation();
 
-  if (e.target.closest(".back-btn")) {
+  if (e.target.closest("#settingOpen .back-btn")) {
     settingOpen.classList.add("hidden");
     moreMenu.classList.remove("hidden");
   }
@@ -1113,6 +1114,78 @@ cancelAddListBtn.addEventListener("click", (e) => {
   addListForm.style.display = "none";
   showAddListBtn.style.display = "inline-block";
 });
+const visibilityBtn = document.querySelector(".fa-eye-slash").parentElement;
+const visibilityMenu = document.getElementById("visibilityMenu");
+
+
+visibilityBtn.addEventListener("click", () => {
+  moreMenu.classList.add("hidden");
+  visibilityMenu.classList.remove("hidden");
+  console.log("visibility hiện tại là ",boardData.visibility)
+  setActiveVisibility(boardData.visibility);
+});
+
+//quay lại menu
+visibilityMenu.addEventListener("click", (e) => {
+  e.stopPropagation();
+
+  if (e.target.closest("#visibilityMenu .back-btn")) {
+    visibilityMenu.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  }
+});
+
+
+//click chọn visibility
+document.querySelectorAll(".visibility-option").forEach(item => {
+  item.addEventListener("click", async () => {
+    const newVisibility = item.dataset.value;
+
+    // không gọi API nếu chọn lại cái cũ
+    if (newVisibility === boardData.visibility) {
+      visibilityMenu.classList.add("hidden");
+      moreMenu.classList.remove("hidden");
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/v1/board/${boardId}/visibility`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ visibility: newVisibility })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message);
+
+      // update state
+      boardData.visibility = data.visibility;
+      
+      // update UI
+      setActiveVisibility(boardData.visibility);
+      console.log("Visibility updated:", boardData.visibility);
+
+    } catch (err) {
+      alert("Cập nhật visibility thất bại");
+      console.error(err);
+    }
+  });
+});
+
+
+//lấy visibility
+
+function setActiveVisibility(visibility) {
+  document.querySelectorAll(".visibility-option").forEach(item => {
+    item.classList.toggle(
+      "active",
+      item.dataset.value === visibility
+    );
+  });
+}
+
 
 
 // card detail
