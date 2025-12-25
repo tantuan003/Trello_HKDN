@@ -29,9 +29,8 @@
             <label>Menu</label>
             <div class="menu-item"><i class="fa-solid fa-share"></i> Share</div>
             <div class="menu-item"><i class="fa-solid fa-eye-slash"></i> Visibility</div>
+            <div class="menu-item"><i class="fa-solid fa-palette"></i>Change Background</div>
             <div id="settingMenu" class="menu-item"><i class="fa-solid fa-gear"></i> Setting</div>
-            <div class="menu-divider"></div>
-            <div class="menu-item danger"><i class="fa-regular fa-trash-can"></i> Delete board</div>
           </div>
           <div id="settingOpen" class="dropdown-menu hidden">
             <label>
@@ -42,14 +41,33 @@
             <div class="manager-member" id="Manage-members">
               <i class="fa-solid fa-users"></i> Manage members
             </div>
+            <div class="menu-divider"></div>
+            <div class="menu-item danger"><i class="fa-regular fa-trash-can"></i> Delete board</div>
+          </div>
+          <div id="visibilityMenu" class="dropdown-menu hidden">
+            <label>
+              <i class="fa-solid fa-arrow-left back-btn" id="backToMoreFromVisibility"></i>
+              Visibility
+            </label>
 
-            <div class="menu-item">
-              <i class="fa-solid fa-lock"></i> Privacy
+            <div class="menu-item visibility-option" data-value="public">
+              <i class="fa-solid fa-globe"></i>
+              Public
+              <i class="fa-solid fa-check check-icon"></i>
             </div>
 
-            <div class="menu-item">
-              <i class="fa-solid fa-palette"></i> Background
+            <div class="menu-item visibility-option" data-value="workspace">
+              <i class="fa-solid fa-building"></i>
+              Workspace
+              <i class="fa-solid fa-check check-icon"></i>
             </div>
+
+            <div class="menu-item visibility-option" data-value="private">
+              <i class="fa-solid fa-lock"></i>
+              Private
+              <i class="fa-solid fa-check check-icon"></i>
+            </div>
+
           </div>
         </div>
         <!-- Overlay -->
@@ -67,8 +85,6 @@
             </div>
           </div>
         </div>
-
-
       </div>
 
       <div id="inviteFormContainer" class="hidden">

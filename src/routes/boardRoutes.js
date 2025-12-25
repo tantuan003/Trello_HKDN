@@ -1,5 +1,5 @@
 import express from "express";
-import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard,deleteBoard,updateBoardMemberRole,updateBoardTitle } from "../controllers/boardController.js";
+import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard,deleteBoard,updateBoardMemberRole,updateBoardTitle,updateBoardVisibility } from "../controllers/boardController.js";
 const router = express.Router();
 import { verifyToken } from "../middlewares/verifyToken.js";
 // POST /v1/board
@@ -34,6 +34,8 @@ router.put("/:boardId/member-role",verifyToken, updateBoardMemberRole);
 
 //chỉnh tên board
 router.put("/:boardId/title", verifyToken, updateBoardTitle);
+//chỉnh visibility
+router.put("/:boardId/visibility", verifyToken, updateBoardVisibility);
 
 //mời user
 router.post("/:boardId/invite", verifyToken, inviteUser);
