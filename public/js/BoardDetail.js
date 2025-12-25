@@ -1168,7 +1168,7 @@ document.querySelectorAll(".visibility-option").forEach(item => {
       console.log("Visibility updated:", boardData.visibility);
 
     } catch (err) {
-      alert("Cập nhật visibility thất bại");
+      alert(err);
       console.error(err);
     }
   });
