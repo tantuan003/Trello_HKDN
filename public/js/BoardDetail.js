@@ -67,7 +67,6 @@ function renderAssignedMembersinvite(members) {
   });
 }
 
-
 renderBoardWithLists();
 
 async function renderBoardWithLists() {
@@ -111,10 +110,76 @@ async function renderBoardWithLists() {
       shell.style.width = "100%";
     }
 
-    const boardTitle = document.getElementById("boardTitle");
-    if (boardTitle) {
-      boardTitle.textContent = board.name;
-    }
+ let isEditing = false;
+
+const boardTitle = document.getElementById("boardTitle");
+
+if (boardTitle) {
+  boardTitle.textContent = board.name;
+
+  // ✅ chỉ gắn event nếu có quyền
+  if (["owner", "admin"].includes(currentUserRole)) {
+    boardTitle.addEventListener("click", () => {
+      if (isEditing) return;
+      isEditing = true;
+
+      const oldTitle = boardTitle.innerText;
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = oldTitle;
+      input.className = "board-title-input";
+
+      boardTitle.replaceWith(input);
+      input.focus();
+      input.select();
+
+      let isDone = false;
+
+      async function save() {
+        if (isDone) return;
+        isDone = true;
+
+        const newTitle = input.value.trim();
+
+        input.replaceWith(boardTitle);
+        isEditing = false;
+
+        if (!newTitle || newTitle === oldTitle) return;
+
+        boardTitle.innerText = newTitle;
+
+        try {
+          await updateBoardTitle(newTitle);
+        } catch (err) {
+          boardTitle.innerText = oldTitle;
+          alert("Không thể cập nhật tên board");
+        }
+      }
+
+      function cancel() {
+        if (isDone) return;
+        isDone = true;
+
+        input.replaceWith(boardTitle);
+        isEditing = false;
+      }
+
+      input.addEventListener("blur", save);
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          save();
+        }
+        if (e.key === "Escape") {
+          e.preventDefault();
+          cancel();
+        }
+      });
+    });
+  }
+}
 
     applyBoardBackground(background);
 
@@ -126,6 +191,23 @@ async function renderBoardWithLists() {
 
   } catch (err) {
     console.error("Error loading board:", err);
+  }
+}
+async function updateBoardTitle(title) {
+  const boardId = new URLSearchParams(window.location.search).get("id");
+    console.log("🔥 CALL API updateBoardTitle:", title);
+
+
+  try {
+    await fetch(`${API_BASE}/v1/board/${boardId}/title`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+      credentials: "include"
+    });
+  } catch (err) {
+    alert("Cập nhật board thất bại");
+    console.error(err);
   }
 }
 
@@ -151,6 +233,13 @@ function applyBoardBackground(bg) {
   }
 }
 
+//realtime cho việc sửa tên board
+socket.on("board:titleUpdated", (data) => {
+  const boardTitle = document.getElementById("boardTitle");
+  if (boardTitle) {
+    boardTitle.textContent = data.name;
+  }
+});
 
 
 // ===================================================================

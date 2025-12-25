@@ -148,13 +148,13 @@ export const getBoardById = async (req, res) => {
     // update lastViewedAt
     Board.findByIdAndUpdate(boardId, {
       lastViewedAt: new Date()
-    }).catch(() => {});
+    }).catch(() => { });
 
     res.status(200).json({
       success: true,
       data: {
         board,
-        currentUserRole 
+        currentUserRole
       }
     });
   } catch (error) {
@@ -517,7 +517,7 @@ export const updateCardComplete = async (req, res) => {
   try {
     const { cardId } = req.params;
     const { complete } = req.body; // true / false
-    
+
     if (typeof complete !== "boolean") {
       return res.status(400).json({ message: "complete must be boolean" });
     }
@@ -569,7 +569,7 @@ export const clearCardsInList = async (req, res) => {
     list.cards = [];
     await list.save();
     // realtime
-     req.io.to(list.board.toString()).emit("cards-cleared", {
+    req.io.to(list.board.toString()).emit("cards-cleared", {
       listId
     });
 
@@ -812,5 +812,65 @@ export const updateBoardMemberRole = async (req, res) => {
   } catch (err) {
     console.error("updateBoardMemberRole error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// sửa tên board
+
+export const updateBoardTitle = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const { title } = req.body;
+    const userId = req.user?.id;
+
+    // Validate
+    if (!title || !title.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Tên board không được để trống",
+      });
+    }
+
+    // Tìm board + kiểm tra quyền
+    const board = await Board.findOne({
+      _id: boardId,
+      members: {
+        $elemMatch: {
+          user: userId,
+          role: { $in: ["owner", "admin"] },
+        },
+      },
+    });
+
+    if (!board) {
+      return res.status(403).json({
+        success: false,
+        message: "Bạn không có quyền sửa board này",
+      });
+    }
+
+    // Update
+    board.name = title.trim();
+    await board.save();
+     io.to(boardId).emit("board:titleUpdated", {
+      boardId,
+      name: board.name,
+    });
+
+    return res.json({
+      success: true,
+      message: "Cập nhật tên board thành công",
+      data: {
+        _id: board._id,
+        title: board.title,
+      },
+    });
+
+  } catch (error) {
+    console.error("updateBoardTitle error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Lỗi server",
+    });
   }
 };
