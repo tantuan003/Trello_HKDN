@@ -2031,4 +2031,22 @@ function updateCardCommentCount(cardId, comment) {
   countEl.textContent = card.comments.length;
 }
 
+//kéo ngang bằng chuột
+let isDown = false, startX, scrollLeft;
+const c = document.getElementById("board-content");
 
+c.onmousedown = e => {
+  isDown = true;
+  startX = e.pageX;
+  scrollLeft = c.scrollLeft;
+};
+
+c.onmouseup = c.onmouseleave = () => isDown = false;
+
+c.onmousemove = e => {
+  if (window.getSelection().toString()) return;
+  // ❌ scroll dọc trong card → bỏ qua
+  if (e.target.closest(".card, input, textarea")) return;
+  if (!isDown) return;
+  c.scrollLeft = scrollLeft - (e.pageX - startX);
+};
