@@ -1,5 +1,5 @@
 import express from "express";
-import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard,deleteBoard,updateBoardMemberRole,updateBoardTitle,updateBoardVisibility } from "../controllers/boardController.js";
+import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard,deleteBoard,updateBoardMemberRole,updateBoardTitle,updateBoardVisibility,updateListTitle } from "../controllers/boardController.js";
 const router = express.Router();
 import { verifyToken } from "../middlewares/verifyToken.js";
 // POST /v1/board
@@ -18,7 +18,7 @@ router.get("/recent", verifyToken, getBoardsrecent);
 //load list
 router.get("/:boardId",verifyToken, getBoardById);
 //tạo list
-router.post("/create-list/:boardId",createList);
+router.post("/create-list/:boardId",verifyToken,createList);
 
 // Tạo card trong 1 list 
 router.post("/create-card/:listId",verifyToken, createCard);
@@ -37,6 +37,8 @@ router.put("/:boardId/title", verifyToken, updateBoardTitle);
 //chỉnh visibility
 router.put("/:boardId/visibility", verifyToken, updateBoardVisibility);
 
+// sửa tên list
+router.put("/list/:listId", verifyToken, updateListTitle);
 //mời user
 router.post("/:boardId/invite", verifyToken, inviteUser);
 

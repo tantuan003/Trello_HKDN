@@ -201,11 +201,12 @@ export const createList = async (req, res) => {
   try {
     const { boardId } = req.params;
     const { name } = req.body;
+    const userId = req.user?.id;
 
     const board = await Board.findById(boardId);
     if (!board) return res.status(404).json({ message: "Board not found" });
 
-    const newList = await List.create({ name, board: boardId, cards: [] });
+    const newList = await List.create({ name, board: boardId, cards: [],createdBy: userId, });
     board.lists.push(newList._id);
     await board.save();
 
@@ -919,5 +920,39 @@ export const updateBoardVisibility = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// sửa têm list
+export const updateListTitle = async (req, res) => {
+  try {
+    const { listId } = req.params;
+    const { title } = req.body;
+    const userId = req.user.id;
+
+    const list = await List.findById(listId);
+    if (!list) return res.status(404).json({ message: "List không tồn tại" });
+
+    const board = await Board.findById(list.board);
+    if (!board) return res.status(404).json({ message: "Board không tồn tại" });
+
+    const member = board.members.find(
+      (m) => m.user && m.user.toString() === userId
+    );
+
+    if (!member || (!["owner", "admin"].includes(member.role) && list.createdBy.toString() !== userId)) {
+      return res.status(403).json({ message: "Bạn không có quyền chỉnh sửa list này" });
+    }
+
+
+    list.name = title;
+    await list.save();
+
+    req.io.to(board._id.toString()).emit("list-updated", { listId, title });
+
+    res.json({ success: true, message: "Đã cập nhật tên list", listId, title });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };
