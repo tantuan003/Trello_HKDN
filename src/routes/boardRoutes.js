@@ -1,5 +1,5 @@
 import express from "express";
-import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard,deleteBoard,updateBoardMemberRole } from "../controllers/boardController.js";
+import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard,deleteBoard,updateBoardMemberRole,updateBoardTitle,updateBoardVisibility } from "../controllers/boardController.js";
 const router = express.Router();
 import { verifyToken } from "../middlewares/verifyToken.js";
 // POST /v1/board
@@ -10,7 +10,7 @@ router.get("/workspace/:workspaceId",verifyToken, getBoardsByWorkspace);
 //xoá 
 router.delete("/card/:cardId",verifyToken, deleteCard);
 router.delete("/board/:boardId", verifyToken, deleteBoard);
-router.delete("/:listId/clear-cards", clearCardsInList);
+router.delete("/:listId/clear-cards",verifyToken, clearCardsInList);
 router.delete("/:listId",verifyToken, deleteList);
 //board recent
 router.get("/recent", verifyToken, getBoardsrecent);
@@ -32,6 +32,10 @@ router.put("/complete/:cardId", updateCardComplete);
 //chỉnh role
 router.put("/:boardId/member-role",verifyToken, updateBoardMemberRole);
 
+//chỉnh tên board
+router.put("/:boardId/title", verifyToken, updateBoardTitle);
+//chỉnh visibility
+router.put("/:boardId/visibility", verifyToken, updateBoardVisibility);
 
 //mời user
 router.post("/:boardId/invite", verifyToken, inviteUser);
