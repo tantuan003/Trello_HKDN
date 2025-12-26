@@ -1,8 +1,8 @@
 html, body {
   width: 100%;
+  height: 100%;
   margin: 0;
   padding: 10px;
-  overflow-x: hidden;  
   box-sizing: border-box;
   font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
                "Helvetica Neue", Arial, sans-serif;
@@ -44,6 +44,7 @@ html, body {
 }
 .board-content {
   display: flex;
+  height: 100%;
   align-items: flex-start;
   gap: 12px;
   overflow-x: auto;
@@ -81,6 +82,7 @@ html, body {
 
 .boardView {
   width: 100%;
+  height: 100%;
 }
 #main{
   width: 100%;
@@ -385,9 +387,9 @@ html, body {
   flex-direction: column;
   width: 220px;            /* Chiều rộng vừa phải */
   gap: 6px;                /* Khoảng cách giữa input và nút */
-  margin-top: 6px;
+  margin: 10px;
   padding: 8px;
-  background-color: #020409cd; /* Nền nhạt, giống Trello */
+  background-color: #9a9ca3cd; /* Nền nhạt, giống Trello */
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   animation: fadeIn 0.25s ease;
