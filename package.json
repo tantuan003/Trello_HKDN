@@ -11,6 +11,7 @@
     "mongoose": "^8.19.2",
     "multer": "^2.0.2",
     "nodemon": "^3.1.10",
+    "notiflix": "^3.2.8",
     "socket.io": "^4.8.1",
     "toastify-js": "^1.12.0"
   },
