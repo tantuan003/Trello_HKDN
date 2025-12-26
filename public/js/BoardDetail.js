@@ -13,7 +13,7 @@ let currentCard = []
 let boardData = {
   lists: [],   // array of lists, mỗi list có cards
   members: [], // array of members
-  visibility:""
+  visibility: ""
 };
 // Map lưu các hàm render UI của từng card
 const cardUIActions = {};
@@ -89,7 +89,7 @@ async function renderBoardWithLists() {
     members = board.members;
     boardData.lists = board.lists;
     boardData.members = board.members;
-    boardData.visibility =board.visibility;
+    boardData.visibility = board.visibility;
     renderAssignedMembersinvite(members);
 
     // socket
@@ -110,76 +110,76 @@ async function renderBoardWithLists() {
       shell.style.width = "100%";
     }
 
- let isEditing = false;
+    let isEditing = false;
 
-const boardTitle = document.getElementById("boardTitle");
+    const boardTitle = document.getElementById("boardTitle");
 
-if (boardTitle) {
-  boardTitle.textContent = board.name;
+    if (boardTitle) {
+      boardTitle.textContent = board.name;
 
-  // ✅ chỉ gắn event nếu có quyền
-  if (["owner", "admin"].includes(currentUserRole)) {
-    boardTitle.addEventListener("click", () => {
-      if (isEditing) return;
-      isEditing = true;
+      // ✅ chỉ gắn event nếu có quyền
+      if (["owner", "admin"].includes(currentUserRole)) {
+        boardTitle.addEventListener("click", () => {
+          if (isEditing) return;
+          isEditing = true;
 
-      const oldTitle = boardTitle.innerText;
+          const oldTitle = boardTitle.innerText;
 
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = oldTitle;
-      input.className = "board-title-input";
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = oldTitle;
+          input.className = "board-title-input";
 
-      boardTitle.replaceWith(input);
-      input.focus();
-      input.select();
+          boardTitle.replaceWith(input);
+          input.focus();
+          input.select();
 
-      let isDone = false;
+          let isDone = false;
 
-      async function save() {
-        if (isDone) return;
-        isDone = true;
+          async function save() {
+            if (isDone) return;
+            isDone = true;
 
-        const newTitle = input.value.trim();
+            const newTitle = input.value.trim();
 
-        input.replaceWith(boardTitle);
-        isEditing = false;
+            input.replaceWith(boardTitle);
+            isEditing = false;
 
-        if (!newTitle || newTitle === oldTitle) return;
+            if (!newTitle || newTitle === oldTitle) return;
 
-        boardTitle.innerText = newTitle;
+            boardTitle.innerText = newTitle;
 
-        try {
-          await updateBoardTitle(newTitle);
-        } catch (err) {
-          boardTitle.innerText = oldTitle;
-          alert("Không thể cập nhật tên board");
-        }
+            try {
+              await updateBoardTitle(newTitle);
+            } catch (err) {
+              boardTitle.innerText = oldTitle;
+              alert("Không thể cập nhật tên board");
+            }
+          }
+
+          function cancel() {
+            if (isDone) return;
+            isDone = true;
+
+            input.replaceWith(boardTitle);
+            isEditing = false;
+          }
+
+          input.addEventListener("blur", save);
+
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              save();
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              cancel();
+            }
+          });
+        });
       }
-
-      function cancel() {
-        if (isDone) return;
-        isDone = true;
-
-        input.replaceWith(boardTitle);
-        isEditing = false;
-      }
-
-      input.addEventListener("blur", save);
-
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") {
-          e.preventDefault();
-          save();
-        }
-        if (e.key === "Escape") {
-          e.preventDefault();
-          cancel();
-        }
-      });
-    });
-  }
-}
+    }
 
     applyBoardBackground(background);
 
@@ -195,7 +195,7 @@ if (boardTitle) {
 }
 async function updateBoardTitle(title) {
   const boardId = new URLSearchParams(window.location.search).get("id");
-    console.log("🔥 CALL API updateBoardTitle:", title);
+  console.log("🔥 CALL API updateBoardTitle:", title);
 
 
   try {
@@ -257,10 +257,71 @@ function createListElement(list) {
   const header = document.createElement("div");
   header.className = "list-header";
 
-  // Title
-  const h3 = document.createElement("h3");
-  h3.className = "list-title";
-  h3.textContent = list.name;
+// Title
+const h3 = document.createElement("h3");
+h3.className = "list-title";
+h3.textContent = list.name;
+
+h3.addEventListener("click", () => {
+  const input = document.createElement("input");
+  input.type = "text";
+  input.value = h3.textContent;
+  input.className = "edit-list-input";
+  h3.replaceWith(input);
+  input.focus();
+
+  let isSubmitting = false; // ✅ cờ chỉ submit 1 lần
+
+  const submitChange = async () => {
+    if (isSubmitting) return;
+    isSubmitting = true;
+
+    const newTitle = input.value.trim();
+    if (!newTitle || newTitle === h3.textContent) {
+      input.replaceWith(h3);
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_BASE}/v1/board/list/${list._id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: newTitle }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        Notiflix.Notify.failure(data.message || "Không thể cập nhật list");
+        input.focus();
+        isSubmitting = false; // reset cờ nếu cần thử lại
+        return;
+      }
+
+      h3.textContent = newTitle;
+      Notiflix.Notify.success("Đã cập nhật tên list");
+    } catch (err) {
+      Notiflix.Notify.failure("Cập nhật thất bại");
+      console.error(err);
+    } finally {
+      input.replaceWith(h3);
+    }
+  };
+
+  // Nhấn Enter → submit
+  input.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") submitChange();
+    if (e.key === "Escape") {
+      if (!isSubmitting) input.replaceWith(h3);
+      isSubmitting = true;
+    }
+  });
+
+  // Blur → submit, nhưng sẽ không submit nếu đang submit bởi Enter
+  input.addEventListener("blur", submitChange);
+});
+
 
   // Nút ...
   const menuBtn = document.createElement("button");
@@ -280,89 +341,89 @@ function createListElement(list) {
     e.stopPropagation();
     menu.style.display = menu.style.display === "none" ? "block" : "none";
   });
-menu.addEventListener("click", async (e) => {
-  const action = e.target.dataset.action;
-  if (!action) return;
+  menu.addEventListener("click", async (e) => {
+    const action = e.target.dataset.action;
+    if (!action) return;
 
-  // === XOÁ TẤT CẢ CARD TRONG LIST ===
-  if (action === "clear-cards") {
-    Notiflix.Confirm.show(
-      "Xác nhận",
-      "Xoá TẤT CẢ card trong list này?",
-      "Xoá",
-      "Huỷ",
-      async () => {
-        Notiflix.Loading.circle("Đang xoá tất cả card...");
-        try {
-          const res = await fetch(`${API_BASE}/v1/board/${list._id}/clear-cards`, {
-            method: "DELETE",
-            credentials: "include",
-          });
-
-          const data = await res.json();
-
-          Notiflix.Loading.remove();
-
-          if (!res.ok) {
-            Notiflix.Notify.failure(data.message || "Không thể xoá card");
-            return;
-          }
-
-          // ✅ UI xoá khi socket bắn về hoặc tự xoá
-          // cardsContainer.innerHTML = ""; // nếu muốn xoá ngay
-
-          Notiflix.Notify.success(data.message || "Đã xoá toàn bộ card");
-        } catch (err) {
-          Notiflix.Loading.remove();
-          Notiflix.Notify.failure("Xoá card thất bại");
-          console.error(err);
-        }
-      }
-    );
-  }
-
-  // === XOÁ LIST ===
-  if (action === "delete-list") {
-    Notiflix.Confirm.show(
-      "Xác nhận",
-      "Xoá list này? Tất cả card sẽ mất!",
-      "Xoá",
-      "Huỷ",
-      async () => {
-        Notiflix.Loading.circle("Đang xoá list...");
-        try {
-          const res = await fetch(
-            `${API_BASE}/v1/board/${list._id}`,
-            {
+    // === XOÁ TẤT CẢ CARD TRONG LIST ===
+    if (action === "clear-cards") {
+      Notiflix.Confirm.show(
+        "Xác nhận",
+        "Xoá TẤT CẢ card trong list này?",
+        "Xoá",
+        "Huỷ",
+        async () => {
+          Notiflix.Loading.circle("Đang xoá tất cả card...");
+          try {
+            const res = await fetch(`${API_BASE}/v1/board/${list._id}/clear-cards`, {
               method: "DELETE",
               credentials: "include",
+            });
+
+            const data = await res.json();
+
+            Notiflix.Loading.remove();
+
+            if (!res.ok) {
+              Notiflix.Notify.failure(data.message || "Không thể xoá card");
+              return;
             }
-          );
 
-          const data = await res.json();
-          Notiflix.Loading.remove();
+            // ✅ UI xoá khi socket bắn về hoặc tự xoá
+            // cardsContainer.innerHTML = ""; // nếu muốn xoá ngay
 
-          if (!res.ok) {
-            Notiflix.Notify.failure(
-              data.message || "Bạn không có quyền xoá list"
-            );
-            return;
+            Notiflix.Notify.success(data.message || "Đã xoá toàn bộ card");
+          } catch (err) {
+            Notiflix.Loading.remove();
+            Notiflix.Notify.failure("Xoá card thất bại");
+            console.error(err);
           }
-
-          // ❗ KHÔNG xoá UI ở đây
-          // UI sẽ xoá khi socket "list-deleted" bắn về
-
-          Notiflix.Notify.success("Đã xoá list");
-        } catch (err) {
-          Notiflix.Notify.failure("Xoá list thất bại");
-          console.error(err);
         }
-      }
-    );
-  }
+      );
+    }
 
-  menu.style.display = "none";
-});
+    // === XOÁ LIST ===
+    if (action === "delete-list") {
+      Notiflix.Confirm.show(
+        "Xác nhận",
+        "Xoá list này? Tất cả card sẽ mất!",
+        "Xoá",
+        "Huỷ",
+        async () => {
+          Notiflix.Loading.circle("Đang xoá list...");
+          try {
+            const res = await fetch(
+              `${API_BASE}/v1/board/${list._id}`,
+              {
+                method: "DELETE",
+                credentials: "include",
+              }
+            );
+
+            const data = await res.json();
+            Notiflix.Loading.remove();
+
+            if (!res.ok) {
+              Notiflix.Notify.failure(
+                data.message || "Bạn không có quyền xoá list"
+              );
+              return;
+            }
+
+            // ❗ KHÔNG xoá UI ở đây
+            // UI sẽ xoá khi socket "list-deleted" bắn về
+
+            Notiflix.Notify.success("Đã xoá list");
+          } catch (err) {
+            Notiflix.Notify.failure("Xoá list thất bại");
+            console.error(err);
+          }
+        }
+      );
+    }
+
+    menu.style.display = "none";
+  });
 
 
   // Click ra ngoài thì đóng menu
@@ -430,46 +491,46 @@ menu.addEventListener("click", async (e) => {
     deleteBtn.className = "card-delete-btn";
     deleteBtn.alt = "Delete card"
 
-  deleteBtn.addEventListener("click", async (e) => {
-  e.stopPropagation();
-  e.preventDefault();
+    deleteBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      e.preventDefault();
 
-  Notiflix.Confirm.show(
-    "Xác nhận",
-    "Xoá card này?",
-    "Xoá",
-    "Huỷ",
-    async () => {
-      deleteBtn.disabled = true;
-      Notiflix.Loading.circle("Đang xoá card...");
+      Notiflix.Confirm.show(
+        "Xác nhận",
+        "Xoá card này?",
+        "Xoá",
+        "Huỷ",
+        async () => {
+          deleteBtn.disabled = true;
+          Notiflix.Loading.circle("Đang xoá card...");
 
-      try {
-        const res = await fetch(`${API_BASE}/v1/board/card/${card._id}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
+          try {
+            const res = await fetch(`${API_BASE}/v1/board/card/${card._id}`, {
+              method: "DELETE",
+              credentials: "include",
+            });
 
-        const data = await res.json();
+            const data = await res.json();
 
-        Notiflix.Loading.remove();
-        deleteBtn.disabled = false;
+            Notiflix.Loading.remove();
+            deleteBtn.disabled = false;
 
-        if (!res.ok) {
-          Notiflix.Notify.failure(data.message || "Không thể xoá card");
-          return;
+            if (!res.ok) {
+              Notiflix.Notify.failure(data.message || "Không thể xoá card");
+              return;
+            }
+
+            // ✅ UI sẽ xoá khi socket bắn về
+            Notiflix.Notify.success(data.message || "Đã xoá card");
+          } catch (err) {
+            Notiflix.Loading.remove();
+            deleteBtn.disabled = false;
+            Notiflix.Notify.failure("Xoá card thất bại");
+            console.error(err);
+          }
         }
-
-        // ✅ UI sẽ xoá khi socket bắn về
-        Notiflix.Notify.success(data.message || "Đã xoá card");
-      } catch (err) {
-        Notiflix.Loading.remove();
-        deleteBtn.disabled = false;
-        Notiflix.Notify.failure("Xoá card thất bại");
-        console.error(err);
-      }
-    }
-  );
-});
+      );
+    });
 
 
 
@@ -677,6 +738,14 @@ menu.addEventListener("click", async (e) => {
 
   return listEl;
 }
+//socket edit list
+socket.on("list-updated", ({ listId, title }) => {
+  const h3 = document.querySelector(`.list[data-id='${listId}'] .list-title`);
+  if (h3) {
+    h3.textContent = title;
+  }
+});
+
 //socket xoá 
 socket.on("cards-cleared", ({ listId }) => {
   const listEl = document.querySelector(`.list[data-id="${listId}"]`);
@@ -1163,7 +1232,7 @@ const visibilityMenu = document.getElementById("visibilityMenu");
 visibilityBtn.addEventListener("click", () => {
   moreMenu.classList.add("hidden");
   visibilityMenu.classList.remove("hidden");
-  console.log("visibility hiện tại là ",boardData.visibility)
+  console.log("visibility hiện tại là ", boardData.visibility)
   setActiveVisibility(boardData.visibility);
 });
 
@@ -1204,7 +1273,7 @@ document.querySelectorAll(".visibility-option").forEach(item => {
 
       // update state
       boardData.visibility = data.visibility;
-      
+
       // update UI
       setActiveVisibility(boardData.visibility);
       console.log("Visibility updated:", boardData.visibility);

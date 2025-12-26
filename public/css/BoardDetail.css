@@ -119,10 +119,11 @@ html, body {
 }
 
 .list h3 {
-  height: 10px;
+  height: 30px;
   font-size: 1rem;
   font-weight: 600;
   color: #ffffffd1;
+  border-radius: 5px;
 }
 
 /* Cards container */
@@ -1743,4 +1744,37 @@ html, body {
 
 .visibility-option.active .check-icon {
   display: inline-block !important;
+}
+
+/* input list name */
+
+/* Input khi edit list title */
+.edit-list-input {
+  width: 100%;
+  height: 30px;               /* full chiều rộng của h3 */
+  font-size: 1rem;;           /* giống font list title */
+  font-weight: bold;          /* nếu list title in đậm */
+  border: 1px solid #0079bf; /* viền màu xanh Trello */
+  border-radius: 4px;        /* bo góc mềm mại */
+  outline: none;             /* bỏ viền mặc định khi focus */
+  box-sizing: border-box;    /* tránh padding làm input quá rộng */
+  background-color: #fff;    /* nền trắng */
+  transition: all 0.2s ease;
+}
+.list-title,
+.edit-list-input {
+  margin: 0;
+}
+
+
+/* Hover / focus */
+.edit-list-input:focus {
+  border-color: #026aa7;      /* viền xanh đậm hơn */
+  box-shadow: 0 0 0 2px rgba(0, 121, 191, 0.2); /* hiệu ứng shadow nhẹ */
+}
+
+/* Chống text tràn */
+.edit-list-input::placeholder {
+  color: #999;
+  font-style: italic;
 }
