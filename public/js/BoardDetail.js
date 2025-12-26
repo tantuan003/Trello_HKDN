@@ -1,6 +1,5 @@
 import { socket } from "../js/socket.js";
 import { API_BASE } from "../js/config.js";
-
 // ===================================================================
 // Lấy boardId từ URL
 // ===================================================================
@@ -281,63 +280,90 @@ function createListElement(list) {
     e.stopPropagation();
     menu.style.display = menu.style.display === "none" ? "block" : "none";
   });
-  menu.addEventListener("click", async (e) => {
-    const action = e.target.dataset.action;
-    if (!action) return;
+menu.addEventListener("click", async (e) => {
+  const action = e.target.dataset.action;
+  if (!action) return;
 
-    // === XOÁ TẤT CẢ CARD TRONG LIST ===
-    if (action === "clear-cards") {
-      const ok = confirm("Xoá TẤT CẢ card trong list này?");
-      if (!ok) return;
-
-      try {
-        // UI: xoá card trước
-        cardsContainer.innerHTML = "";
-
-        // Backend
-        await fetch(`/v1/board/${list._id}/clear-cards`, {
-          method: "DELETE",
-        });
-
-      } catch (err) {
-        alert("Xoá card thất bại");
-        console.error(err);
-      }
-    }
-
-    // === XOÁ LIST ===
-    if (action === "delete-list") {
-      const ok = confirm("Xoá list này? Tất cả card sẽ mất!");
-      if (!ok) return;
-
-      try {
-        const res = await fetch(
-          `${API_BASE}/v1/board/${list._id}`,
-          {
+  // === XOÁ TẤT CẢ CARD TRONG LIST ===
+  if (action === "clear-cards") {
+    Notiflix.Confirm.show(
+      "Xác nhận",
+      "Xoá TẤT CẢ card trong list này?",
+      "Xoá",
+      "Huỷ",
+      async () => {
+        Notiflix.Loading.circle("Đang xoá tất cả card...");
+        try {
+          const res = await fetch(`${API_BASE}/v1/board/${list._id}/clear-cards`, {
             method: "DELETE",
-            credentials: "include"
+            credentials: "include",
+          });
+
+          const data = await res.json();
+
+          Notiflix.Loading.remove();
+
+          if (!res.ok) {
+            Notiflix.Notify.failure(data.message || "Không thể xoá card");
+            return;
           }
-        );
 
-        const data = await res.json();
+          // ✅ UI xoá khi socket bắn về hoặc tự xoá
+          // cardsContainer.innerHTML = ""; // nếu muốn xoá ngay
 
-        if (!res.ok) {
-          alert(data.message || "Bạn không có quyền xoá list");
-          return;
+          Notiflix.Notify.success(data.message || "Đã xoá toàn bộ card");
+        } catch (err) {
+          Notiflix.Loading.remove();
+          Notiflix.Notify.failure("Xoá card thất bại");
+          console.error(err);
         }
-
-        // ✅ KHÔNG xoá UI ở đây
-        // UI sẽ xoá khi socket "list-deleted" bắn về
-
-      } catch (err) {
-        alert("Xoá list thất bại");
-        console.error(err);
       }
-    }
+    );
+  }
 
+  // === XOÁ LIST ===
+  if (action === "delete-list") {
+    Notiflix.Confirm.show(
+      "Xác nhận",
+      "Xoá list này? Tất cả card sẽ mất!",
+      "Xoá",
+      "Huỷ",
+      async () => {
+        Notiflix.Loading.circle("Đang xoá list...");
+        try {
+          const res = await fetch(
+            `${API_BASE}/v1/board/${list._id}`,
+            {
+              method: "DELETE",
+              credentials: "include",
+            }
+          );
 
-    menu.style.display = "none";
-  });
+          const data = await res.json();
+          Notiflix.Loading.remove();
+
+          if (!res.ok) {
+            Notiflix.Notify.failure(
+              data.message || "Bạn không có quyền xoá list"
+            );
+            return;
+          }
+
+          // ❗ KHÔNG xoá UI ở đây
+          // UI sẽ xoá khi socket "list-deleted" bắn về
+
+          Notiflix.Notify.success("Đã xoá list");
+        } catch (err) {
+          Notiflix.Notify.failure("Xoá list thất bại");
+          console.error(err);
+        }
+      }
+    );
+  }
+
+  menu.style.display = "none";
+});
+
 
   // Click ra ngoài thì đóng menu
   document.addEventListener("click", () => {
@@ -404,31 +430,47 @@ function createListElement(list) {
     deleteBtn.className = "card-delete-btn";
     deleteBtn.alt = "Delete card"
 
-    deleteBtn.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      e.preventDefault();
+  deleteBtn.addEventListener("click", async (e) => {
+  e.stopPropagation();
+  e.preventDefault();
 
-      if (!confirm("Xoá card này?")) return;
+  Notiflix.Confirm.show(
+    "Xác nhận",
+    "Xoá card này?",
+    "Xoá",
+    "Huỷ",
+    async () => {
+      deleteBtn.disabled = true;
+      Notiflix.Loading.circle("Đang xoá card...");
 
       try {
         const res = await fetch(`${API_BASE}/v1/board/card/${card._id}`, {
           method: "DELETE",
-          credentials: "include"
+          credentials: "include",
         });
 
         const data = await res.json();
 
+        Notiflix.Loading.remove();
+        deleteBtn.disabled = false;
+
         if (!res.ok) {
-          alert(data.message || "Bạn không có quyền xoá card này");
+          Notiflix.Notify.failure(data.message || "Không thể xoá card");
           return;
         }
 
-        // ✅ Xoá thành công → UI sẽ được socket xử lý
+        // ✅ UI sẽ xoá khi socket bắn về
+        Notiflix.Notify.success(data.message || "Đã xoá card");
       } catch (err) {
-        alert("Xoá card thất bại");
+        Notiflix.Loading.remove();
+        deleteBtn.disabled = false;
+        Notiflix.Notify.failure("Xoá card thất bại");
         console.error(err);
       }
-    });
+    }
+  );
+});
+
 
 
 
