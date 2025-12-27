@@ -257,70 +257,70 @@ function createListElement(list) {
   const header = document.createElement("div");
   header.className = "list-header";
 
-// Title
-const h3 = document.createElement("h3");
-h3.className = "list-title";
-h3.textContent = list.name;
+  // Title
+  const h3 = document.createElement("h3");
+  h3.className = "list-title";
+  h3.textContent = list.name;
 
-h3.addEventListener("click", () => {
-  const input = document.createElement("input");
-  input.type = "text";
-  input.value = h3.textContent;
-  input.className = "edit-list-input";
-  h3.replaceWith(input);
-  input.focus();
+  h3.addEventListener("click", () => {
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = h3.textContent;
+    input.className = "edit-list-input";
+    h3.replaceWith(input);
+    input.focus();
 
-  let isSubmitting = false; // ✅ cờ chỉ submit 1 lần
+    let isSubmitting = false; // ✅ cờ chỉ submit 1 lần
 
-  const submitChange = async () => {
-    if (isSubmitting) return;
-    isSubmitting = true;
+    const submitChange = async () => {
+      if (isSubmitting) return;
+      isSubmitting = true;
 
-    const newTitle = input.value.trim();
-    if (!newTitle || newTitle === h3.textContent) {
-      input.replaceWith(h3);
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/v1/board/list/${list._id}`, {
-        method: "PUT",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: newTitle }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        Notiflix.Notify.failure(data.message || "Không thể cập nhật list");
-        input.focus();
-        isSubmitting = false; // reset cờ nếu cần thử lại
+      const newTitle = input.value.trim();
+      if (!newTitle || newTitle === h3.textContent) {
+        input.replaceWith(h3);
         return;
       }
 
-      h3.textContent = newTitle;
-      Notiflix.Notify.success("Đã cập nhật tên list");
-    } catch (err) {
-      Notiflix.Notify.failure("Cập nhật thất bại");
-      console.error(err);
-    } finally {
-      input.replaceWith(h3);
-    }
-  };
+      try {
+        const res = await fetch(`${API_BASE}/v1/board/list/${list._id}`, {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title: newTitle }),
+        });
 
-  // Nhấn Enter → submit
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") submitChange();
-    if (e.key === "Escape") {
-      if (!isSubmitting) input.replaceWith(h3);
-      isSubmitting = true;
-    }
+        const data = await res.json();
+
+        if (!res.ok) {
+          Notiflix.Notify.failure(data.message || "Không thể cập nhật list");
+          input.focus();
+          isSubmitting = false; // reset cờ nếu cần thử lại
+          return;
+        }
+
+        h3.textContent = newTitle;
+        Notiflix.Notify.success("Đã cập nhật tên list");
+      } catch (err) {
+        Notiflix.Notify.failure("Cập nhật thất bại");
+        console.error(err);
+      } finally {
+        input.replaceWith(h3);
+      }
+    };
+
+    // Nhấn Enter → submit
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") submitChange();
+      if (e.key === "Escape") {
+        if (!isSubmitting) input.replaceWith(h3);
+        isSubmitting = true;
+      }
+    });
+
+    // Blur → submit, nhưng sẽ không submit nếu đang submit bởi Enter
+    input.addEventListener("blur", submitChange);
   });
-
-  // Blur → submit, nhưng sẽ không submit nếu đang submit bởi Enter
-  input.addEventListener("blur", submitChange);
-});
 
 
   // Nút ...
@@ -2050,3 +2050,104 @@ c.onmousemove = e => {
   if (!isDown) return;
   c.scrollLeft = scrollLeft - (e.pageX - startX);
 };
+
+
+// activity
+const activityMenu = document.getElementById("activityMenu");
+
+document.querySelector(".fa-clock-rotate-left")
+  .closest(".menu-item")
+  .addEventListener("click", () => {
+    moreMenu.classList.add("hidden");
+    activityMenu.classList.remove("hidden");
+    loadActivities();
+    Notiflix.Loading.circle("Đang tải...");
+  });
+
+// nút back về
+
+activityMenu.addEventListener("click", (e) => {
+  e.stopPropagation();
+
+  if (e.target.closest("#activityMenu .back-btn")) {
+    activityMenu.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  }
+});
+
+// đổ dữ liệu acitivity
+
+function loadActivities() {
+  const activityList = document.getElementById("activityList");
+  fetch(`${API_BASE}/v1/activitys/boards/${boardId}/activities?limit=30`)
+    .then(res => res.json())
+    .then(data => {
+      console.log("activity-logs", data)
+      Notiflix.Loading.remove();
+      if (!data.length) {
+        activityList.innerHTML = "<p>No activity yet</p>";
+        return;
+      }
+      activityList.innerHTML = "";
+
+      data.forEach(act => {
+        const item = document.createElement("div");
+        item.className = "activity-item";
+
+        const username = act.userId?.username || "Someone";
+        const avatar = act.userId?.avatar || null;
+        const firstChar = username.charAt(0).toUpperCase();
+
+        item.innerHTML = `
+    <div class="activity-avatar">
+      ${avatar
+            ? `<img title="${act.userId.email}" src="${avatar}" alt="${username}">`
+            : `<span class="avatar-fallback" title="${act.userId.email}">${firstChar}</span>`
+          }
+    </div>
+
+    <div class="activity-content">
+      <div class="activity-text">
+        <b>${username}</b>
+        ${renderActivityText(act)}
+      </div>
+      <div class="activity-time">
+        ${formatTime(act.createdAt)}
+      </div>
+    </div>
+  `;
+
+        activityList.appendChild(item);
+      });
+
+    });
+}
+function renderActivityText(act) {
+  switch (act.action) {
+    case "BOARD_RENAME":
+      return ` changed board title from <b>${act.data.oldValue}</b> to <b>${act.data.newValue}</b>`;
+    case "LIST_RENAME":
+      return ` changed list title from <b>${act.data.oldValue}</b> to <b>${act.data.newValue}</b>`;
+    case "CREATE_LIST":
+      return ` added list <b>${act.target.title}</b>`;
+    case "DELETE_LIST":
+      return ` deleted list <b>${act.target.title}</b>`;
+    case "CREATE_CARD":
+      return ` added card <b>${act.target.title}</b>`;
+    case "DELETE_CARD":
+      return ` deleted card <b>${act.target.title}</b>`;
+    case "CLEAR_CARDS_IN_LIST":
+      return ` cleared <b>${act.data.extra.cardCount}</b> cards in list <b>${act.target.title}</b>`;
+    default:
+      return ` ${act.action || "did something"}`;
+  }
+}
+function formatTime(date) {
+  return new Date(date).toLocaleString("vi-VN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+}

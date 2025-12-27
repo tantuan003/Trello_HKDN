@@ -6,6 +6,7 @@ import connectDB from "./config/db.js";
 import dotenv from "dotenv";
 import userRoutes from "./routes/UserRoutes.js";
 import boardRoutes from "./routes/boardRoutes.js";
+import activityRoutes from "./routes/activityRoutes.js"
 import uploadRoutes from "./routes/uploadRoutes.js";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -39,6 +40,7 @@ app.use((req, res, next) => {
 });
 app.use("/v1/User", userRoutes);
 app.use("/v1/board", boardRoutes);
+app.use("/v1/activitys", activityRoutes);
 app.use("/v1/workspace", workspaceRoutes);
 app.use("/v1/upload", uploadRoutes);
 
