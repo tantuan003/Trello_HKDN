@@ -495,6 +495,7 @@ function createListElement(list) {
     cardEl.appendChild(titleEl);
     // --- Due date (trái) ---
     let dueEl = null;
+    let diffdayFallback = 0;
     const leftEl = document.createElement("div");
     leftEl.style.display = "flex";
     leftEl.style.alignItems = "center";
@@ -529,10 +530,11 @@ function createListElement(list) {
       due.setHours(0, 0, 0, 0); // bỏ giờ phút giây
 
       const diffDays = (due - now) / (1000 * 60 * 60 * 24);
+      diffdayFallback = diffDays;
 
       if (diffDays < 0) dueEl.style.backgroundColor = "#ff4d4f"; // đỏ quá hạn
       else if (diffDays <= 2) dueEl.style.backgroundColor = "#f2d600"; // vàng gần hạn
-      else dueEl.style.backgroundColor = "#61bd4f"; // xanh còn nhiều thời gian
+      else dueEl.style.backgroundColor = "#32ee0cff"; // xanh còn nhiều thời gian
     }
     // --- Middle (attachments + comments) ---
     const midEl = document.createElement("div");
@@ -619,34 +621,57 @@ function createListElement(list) {
     cardEl.appendChild(footerEl);
     cardEl.appendChild(completeFooter);
 
+    if (card.complete === true && dueEl) {
+      dueEl.style.backgroundColor = "#32ee0cff";
+    }
+
+
+
     //checkbox render   
     // --- CLICK CHECKBOX ---
-    checkboxEl.addEventListener("click", async (e) => {
+    checkboxEl.addEventListener("click", (e) => {
+      e.stopPropagation();
+    });
+    checkboxEl.addEventListener("change", async (e) => {
       e.stopPropagation();
 
       const isComplete = checkboxEl.checked;
+      const prevValue = !isComplete;
+      // UI optimistic
+      if (isComplete) {
+        renderCompleteElement();
+        dueEl.style.backgroundColor = "#32ee0cff";
+      } else {
+        completeFooter.innerHTML = "";
+        if (diffdayFallback < 0) {
+          dueEl.style.backgroundColor = "#ff4d4f";
+        } else if (diffdayFallback <= 2) {
+          dueEl.style.backgroundColor = "#f2d600";
+        } else {
+          dueEl.style.backgroundColor = "#32ee0cff";
+        }
+      }
 
-      // UI local (client A)
-      if (isComplete) renderCompleteElement();
-      else completeFooter.innerHTML = "";
-
-      // Emit realtime
-      socket.emit("card:completeToggle", {
-        cardId: card._id,
-        complete: isComplete
-      });
-
-      // Update DB
       try {
-        await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
+        const res = await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ complete: isComplete })
         });
+
+        if (!res.ok) throw new Error();
+
+        socket.emit("card:completeToggle", {
+          cardId: card._id,
+          complete: isComplete
+        });
+
       } catch (err) {
-        console.error("Error updating card complete:", err);
+        checkboxEl.checked = prevValue;
+        Notiflix.Notify.failure("Không thể cập nhật trạng thái");
       }
     });
+
     // ⭐ Sự kiện mở chi tiết
     cardEl.addEventListener("click", () => {
       openCardDetail(card._id);
@@ -2004,7 +2029,7 @@ activityMenu.addEventListener("click", (e) => {
 
 //back về trang list board
 const backlistboard = document.getElementById("back-list-board")
-backlistboard.addEventListener("click",(e) =>{
+backlistboard.addEventListener("click", (e) => {
   e.stopPropagation();
   window.history.back();
 })
