@@ -75,13 +75,17 @@ async function renderBoardWithLists() {
     return;
   }
 
+  Notiflix.Loading.standard("Loading...");
+
   try {
     const res = await fetch(`${API_BASE}/v1/board/${currentBoardId}`);
     const result = await res.json();
 
-    if (!result.success) return;
+    if (!result.success) {
+      Notiflix.Notify.failure("Không thể tải board");
+      return;
+    }
 
-    // ✅ LẤY ĐÚNG DATA
     const { board, currentUserRole } = result.data;
 
     window.currentboardRole = currentUserRole;
@@ -90,109 +94,28 @@ async function renderBoardWithLists() {
     boardData.lists = board.lists;
     boardData.members = board.members;
     boardData.visibility = board.visibility;
+
     renderAssignedMembersinvite(members);
 
-    // socket
     socket.emit("joinBoard", currentBoardId);
-    socket.on("connect", () => {
-      socket.emit("joinBoard", currentBoardId);
-    });
 
     const { background, lists } = board;
-
-    const sidebar = document.querySelector(".sidebar");
-    if (sidebar) sidebar.style.display = "none";
-
-    const shell = document.getElementById("app-shell");
-    if (shell) {
-      shell.style.display = "block";
-      shell.style.gridTemplateColumns = "";
-      shell.style.width = "100%";
-    }
-
-    let isEditing = false;
-
-    const boardTitle = document.getElementById("boardTitle");
-
-    if (boardTitle) {
-      boardTitle.textContent = board.name;
-
-      // ✅ chỉ gắn event nếu có quyền
-      if (["owner", "admin"].includes(currentUserRole)) {
-        boardTitle.addEventListener("click", () => {
-          if (isEditing) return;
-          isEditing = true;
-
-          const oldTitle = boardTitle.innerText;
-
-          const input = document.createElement("input");
-          input.type = "text";
-          input.value = oldTitle;
-          input.className = "board-title-input";
-
-          boardTitle.replaceWith(input);
-          input.focus();
-          input.select();
-
-          let isDone = false;
-
-          async function save() {
-            if (isDone) return;
-            isDone = true;
-
-            const newTitle = input.value.trim();
-
-            input.replaceWith(boardTitle);
-            isEditing = false;
-
-            if (!newTitle || newTitle === oldTitle) return;
-
-            boardTitle.innerText = newTitle;
-
-            try {
-              await updateBoardTitle(newTitle);
-            } catch (err) {
-              boardTitle.innerText = oldTitle;
-              alert("Không thể cập nhật tên board");
-            }
-          }
-
-          function cancel() {
-            if (isDone) return;
-            isDone = true;
-
-            input.replaceWith(boardTitle);
-            isEditing = false;
-          }
-
-          input.addEventListener("blur", save);
-
-          input.addEventListener("keydown", (e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              save();
-            }
-            if (e.key === "Escape") {
-              e.preventDefault();
-              cancel();
-            }
-          });
-        });
-      }
-    }
 
     applyBoardBackground(background);
 
     listsContainer.innerHTML = "";
     lists.forEach(list => {
-      const listEl = createListElement(list);
-      listsContainer.appendChild(listEl);
+      listsContainer.appendChild(createListElement(list));
     });
 
   } catch (err) {
     console.error("Error loading board:", err);
+    Notiflix.Notify.failure("Có lỗi khi tải board");
+  } finally {
+    Notiflix.Loading.remove();
   }
 }
+
 async function updateBoardTitle(title) {
   const boardId = new URLSearchParams(window.location.search).get("id");
   console.log("🔥 CALL API updateBoardTitle:", title);
@@ -785,12 +708,6 @@ socket.on("card:completeUpdated", ({ cardId, complete }) => {
 });
 
 
-
-
-
-
-
-
 // ===================================================================
 // Thêm card vào list
 // ===================================================================
@@ -1019,7 +936,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Click ra ngoài sẽ ẩn form
   document.addEventListener("click", (e) => {
     if (!inviteFormContainer.contains(e.target) && e.target !== inviteIcon) {
-      inviteIcon.style.display = "block";
+      inviteIcon.style.display = "flex";
       inviteFormContainer.classList.add("hidden");
     }
   });
@@ -1252,7 +1169,7 @@ document.querySelectorAll(".visibility-option").forEach(item => {
   item.addEventListener("click", async () => {
     const newVisibility = item.dataset.value;
 
-    // không gọi API nếu chọn lại cái cũ
+    // Không gọi API nếu chọn lại cái cũ
     if (newVisibility === boardData.visibility) {
       visibilityMenu.classList.add("hidden");
       moreMenu.classList.remove("hidden");
@@ -1260,30 +1177,40 @@ document.querySelectorAll(".visibility-option").forEach(item => {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/v1/board/${boardId}/visibility`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ visibility: newVisibility })
-      });
+      Notiflix.Loading.standard("Updating...");
+      const res = await fetch(
+        `${API_BASE}/v1/board/${boardId}/visibility`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ visibility: newVisibility })
+        }
+      );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      Notiflix.Loading.remove();
+      if (!res.ok) throw new Error(data.message || "Update failed");
 
       // update state
       boardData.visibility = data.visibility;
 
       // update UI
       setActiveVisibility(boardData.visibility);
-      console.log("Visibility updated:", boardData.visibility);
+
+      // notify success
+      Notiflix.Notify.success("Board visibility updated");
+
+      visibilityMenu.classList.add("hidden");
+      moreMenu.classList.remove("hidden");
 
     } catch (err) {
-      alert(err);
-      console.error(err);
+      Notiflix.Notify.failure(err.message || "Something went wrong");
     }
   });
 });
+
 
 
 //lấy visibility
@@ -2074,6 +2001,13 @@ activityMenu.addEventListener("click", (e) => {
     moreMenu.classList.remove("hidden");
   }
 });
+
+//back về trang list board
+const backlistboard = document.getElementById("back-list-board")
+backlistboard.addEventListener("click",(e) =>{
+  e.stopPropagation();
+  window.history.back();
+})
 
 // đổ dữ liệu acitivity
 
