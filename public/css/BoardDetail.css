@@ -1,8 +1,8 @@
 html, body {
   width: 100%;
+  height: 100%;
   margin: 0;
   padding: 10px;
-  overflow-x: hidden;  
   box-sizing: border-box;
   font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
                "Helvetica Neue", Arial, sans-serif;
@@ -44,11 +44,29 @@ html, body {
 }
 .board-content {
   display: flex;
+  height: 100%;
   align-items: flex-start;
   gap: 12px;
   overflow-x: auto;
+  white-space: nowrap; 
   padding: 12px;
 }
+
+.board-content::-webkit-scrollbar {
+  height: 8px; /* chiều cao scrollbar ngang */
+  margin-bottom: auto;
+}
+
+.board-content::-webkit-scrollbar-thumb {
+  background-color: rgba(0,0,0,0.3); /* màu thanh kéo */
+  border-radius: 4px;
+}
+
+.board-content::-webkit-scrollbar-track {
+  background-color: rgba(0,0,0,0.1); /* nền track */
+  border-radius: 4px;
+}
+
 
 .lists-container {
   display: flex;
@@ -58,20 +76,13 @@ html, body {
   flex-wrap: nowrap;
   padding-bottom: 10px;
   scroll-behavior: smooth;
-  overflow-x: auto;
   margin-top: 20px;
   z-index: 10;
-}
-.lists-container::-webkit-scrollbar {
-  height: 8px;
-}
-.lists-container::-webkit-scrollbar-thumb {
-  background-color: rgba(0,0,0,0.15);
-  border-radius: 10px;
 }
 
 .boardView {
   width: 100%;
+  height: 100%;
 }
 #main{
   width: 100%;
@@ -119,10 +130,11 @@ html, body {
 }
 
 .list h3 {
-  height: 10px;
+  height: 30px;
   font-size: 1rem;
   font-weight: 600;
   color: #ffffffd1;
+  border-radius: 5px;
 }
 
 /* Cards container */
@@ -147,7 +159,8 @@ html, body {
   display: flex;
   flex-direction: column;      /* xếp dọc */
   align-items: flex-start;     /* 🔥 label nằm trên, title nằm dưới */
-  height: auto;                /* cho cao linh hoạt */
+  height: auto;               /* cho cao linh hoạt */
+  width: 260px;
   padding: 10px 12px;
   background-color: #ffffff;
   border-radius: 8px;
@@ -157,6 +170,15 @@ html, body {
   cursor: pointer;
   transition: all 0.2s ease;
 }
+.card-title {
+  display: block;        /* hoặc inline-block, block tùy layout */
+  white-space: normal;   /* cho phép xuống dòng bình thường */
+  word-wrap: break-word; /* cho phép break từ giữa từ nếu quá dài */
+  overflow-wrap: break-word; /* chuẩn hơn cho nhiều trình duyệt */
+  line-height: 1.3;     /* khoảng cách giữa các dòng */
+  max-width: 100%;       /* không vượt quá width container */
+}
+
 
 /* Container chung của labels + checkbox */
 .card-topbar {
@@ -365,9 +387,9 @@ html, body {
   flex-direction: column;
   width: 220px;            /* Chiều rộng vừa phải */
   gap: 6px;                /* Khoảng cách giữa input và nút */
-  margin-top: 6px;
+  margin: 10px;
   padding: 8px;
-  background-color: #020409cd; /* Nền nhạt, giống Trello */
+  background-color: #9a9ca3cd; /* Nền nhạt, giống Trello */
   border-radius: 8px;
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   animation: fadeIn 0.25s ease;
@@ -1743,4 +1765,100 @@ html, body {
 
 .visibility-option.active .check-icon {
   display: inline-block !important;
+}
+
+/* input list name */
+
+/* Input khi edit list title */
+.edit-list-input {
+  width: 100%;
+  height: 30px;               /* full chiều rộng của h3 */
+  font-size: 1rem;;           /* giống font list title */
+  font-weight: bold;          /* nếu list title in đậm */
+  border: 1px solid #0079bf; /* viền màu xanh Trello */
+  border-radius: 4px;        /* bo góc mềm mại */
+  outline: none;             /* bỏ viền mặc định khi focus */
+  box-sizing: border-box;    /* tránh padding làm input quá rộng */
+  background-color: #fff;    /* nền trắng */
+  transition: all 0.2s ease;
+}
+.list-title,
+.edit-list-input {
+  margin: 0;
+}
+
+
+/* Hover / focus */
+.edit-list-input:focus {
+  border-color: #026aa7;      /* viền xanh đậm hơn */
+  box-shadow: 0 0 0 2px rgba(0, 121, 191, 0.2); /* hiệu ứng shadow nhẹ */
+}
+
+/* Chống text tràn */
+.edit-list-input::placeholder {
+  color: #999;
+  font-style: italic;
+}
+
+/* activity logs */
+#activityMenu{
+  width: 250px;
+}
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.activity-item {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.activity-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.activity-content {
+  flex: 1;
+}
+
+.activity-time {
+  color: #888;
+  font-size: 12px;
+}
+.activity-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #4b7bec;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+#activityList img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+#activityList p{
+  text-align: center;
+  color: #afafaff6;
+
+}
+
+.avatar-fallback {
+  font-weight: 600;
+  color: white;
 }

@@ -7,6 +7,7 @@ import User from "../models/UserModel.js";
 import multer from "multer";
 import path from "path";
 import { io } from "../server.js";
+import { logActivity } from "../services/activity.service.js";
 
 export const createBoard = async (req, res) => {
   try {
@@ -201,16 +202,33 @@ export const createList = async (req, res) => {
   try {
     const { boardId } = req.params;
     const { name } = req.body;
+    const userId = req.user?.id;
 
     const board = await Board.findById(boardId);
     if (!board) return res.status(404).json({ message: "Board not found" });
 
-    const newList = await List.create({ name, board: boardId, cards: [] });
+    const newList = await List.create({ name, board: boardId, cards: [], createdBy: userId, });
     board.lists.push(newList._id);
     await board.save();
 
     const io = req.app.get("socketio");
     io.to(boardId).emit("newList", newList);
+    await logActivity({
+      boardId: board._id,
+      userId,
+      action: "CREATE_LIST",
+      target: {
+        type: "list",
+        id: newList._id,
+        title: newList.name
+      },
+      data: {
+        newValue: newList.name,
+        extra:{
+          boardname:board.name
+        }
+      }
+    });
     res.status(201).json(newList);
   } catch (error) {
     console.log(error);
@@ -247,6 +265,24 @@ export const createCard = async (req, res) => {
     await List.findByIdAndUpdate(list._id, { $push: { cards: newCard._id } });
     const io = req.app.get("socketio");
     io.to(list.board.toString()).emit("newCard", newCard);
+    await logActivity({
+      boardId: list.board,
+      userId,
+      action: "CREATE_CARD",
+      target: {
+        type: "card",
+        id: newCard._id,
+        title: newCard.name // snapshot tên card
+      },
+      data: {
+        newValue: newCard.name,
+        extra: {
+          listId: list._id,
+          listName: list.name
+        }
+      },
+    });
+
 
     res.status(201).json({ message: "Tạo card thành công!", card: newCard });
   } catch (error) {
@@ -577,6 +613,26 @@ export const clearCardsInList = async (req, res) => {
     if (!member || !["owner", "admin"].includes(member.role)) {
       return res.status(403).json({ message: "Bạn không có quyền xoá card" });
     }
+     const cardCount = await Card.countDocuments({ list: listId });
+
+    if (cardCount === 0) {
+      return res.json({ message: "List không có card để xoá", listId });
+    }
+    await logActivity({
+      boardId: list.board,
+      userId,
+      action: "CLEAR_CARDS_IN_LIST",
+      target: {
+        type: "list",
+        id: list._id,
+        title: list.name
+      },
+      data: {
+        extra: {
+          cardCount
+        }
+      }
+    });
 
     // Xoá card trong DB
     await Card.deleteMany({ list: listId });
@@ -627,6 +683,23 @@ export const deleteList = async (req, res) => {
         message: "Bạn không có quyền xoá list này"
       });
     }
+    await logActivity({
+      boardId: list.board,
+      userId,
+      action: "DELETE_LIST",
+      target: {
+        type: "list",
+        id: list._id,
+        title: list.name // snapshot tên list
+      },
+      data: {
+        newValue: list.name,
+        extra: {
+          listId: list._id,
+          listName: list.name
+        }
+      },
+    });
 
     /* 4️⃣ Xoá toàn bộ card trong list */
     await Card.deleteMany({ list: listId });
@@ -688,6 +761,23 @@ export const deleteCard = async (req, res) => {
     if (!member || (!["owner", "admin"].includes(member.role) && !isCreator)) {
       return res.status(403).json({ message: "Bạn không có quyền xoá card này" });
     }
+      await logActivity({
+      boardId: list.board,
+      userId,
+      action: "DELETE_CARD",
+      target: {
+        type: "card",
+        id: card._id,
+        title: card.name // snapshot tên list
+      },
+      data: {
+        newValue: card.name,
+        extra: {
+          listId: list._id,
+          listName: list.name
+        }
+      },
+    });
 
     // 5️⃣ Xoá card
     await Card.findByIdAndDelete(cardId);
@@ -860,13 +950,27 @@ export const updateBoardTitle = async (req, res) => {
         message: "Bạn không có quyền sửa board này",
       });
     }
-
+    const oldTitle = board.name;
     // Update
     board.name = title.trim();
     await board.save();
     io.to(boardId).emit("board:titleUpdated", {
       boardId,
       name: board.name,
+    });
+    await logActivity({
+      boardId: board._id,
+      userId,
+      action: "BOARD_RENAME",
+      target: {
+        type: "board",
+        id: board._id,
+        title: board.title
+      },
+      data: {
+        oldValue: oldTitle,
+        newValue: title
+      }
     });
 
     return res.json({
@@ -919,5 +1023,52 @@ export const updateBoardVisibility = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+// sửa têm list
+export const updateListTitle = async (req, res) => {
+  try {
+    const { listId } = req.params;
+    const { title } = req.body;
+    const userId = req.user.id;
+
+    const list = await List.findById(listId);
+    if (!list) return res.status(404).json({ message: "List không tồn tại" });
+
+    const board = await Board.findById(list.board);
+    if (!board) return res.status(404).json({ message: "Board không tồn tại" });
+
+    const member = board.members.find(
+      (m) => m.user && m.user.toString() === userId
+    );
+
+    if (!member || (!["owner", "admin"].includes(member.role) && list.createdBy.toString() !== userId)) {
+      return res.status(403).json({ message: "Bạn không có quyền chỉnh sửa list này" });
+    }
+    const oldName = list.name;
+    list.name = title;
+    await list.save();
+    await logActivity({
+      boardId: list.board,
+      userId,
+      action: "LIST_RENAME",
+      target: {
+        type: "list",
+        id: list._id,
+        title: list.name // snapshot tên mới
+      },
+      data: {
+        oldValue: oldName,
+        newValue: list.name
+      }
+    });
+
+    req.io.to(board._id.toString()).emit("list-updated", { listId, title });
+
+    res.json({ success: true, message: "Đã cập nhật tên list", listId, title });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Lỗi server" });
   }
 };

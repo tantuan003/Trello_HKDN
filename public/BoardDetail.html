@@ -10,11 +10,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <!-- CSS Notiflix -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notiflix/dist/notiflix-3.2.6.min.css" />
-
-  <!-- JS Notiflix -->
-  <script src="https://cdn.jsdelivr.net/npm/notiflix/dist/notiflix-aio-3.2.6.min.js"></script>
-
-
 </head>
 
 <body>
@@ -24,7 +19,7 @@
   <main class="content-content-boards" id="main">
     <div id="boardView" class="boardView">
       <!-- Header board -->
-      <div id="inviteUser" title="Invite user">
+      <div id="inviteUser">
         <h2 id="boardTitle">Board Title</h2>
 
         <div class="invite-right">
@@ -51,6 +46,17 @@
             <div class="menu-divider"></div>
             <div class="menu-item danger"><i class="fa-regular fa-trash-can"></i> Delete board</div>
           </div>
+          <div id="activityMenu" class="dropdown-menu hidden">
+            <label>
+              <i class="fa-solid fa-arrow-left back-btn" id="backToMoreFromActivity"></i>
+              Activitys
+            </label>
+
+            <div class="activity-list" id="activityList">
+              <!-- Activity item render bằng JS -->
+            </div>
+          </div>
+
           <div id="visibilityMenu" class="dropdown-menu hidden">
             <label>
               <i class="fa-solid fa-arrow-left back-btn" id="backToMoreFromVisibility"></i>
@@ -103,7 +109,7 @@
 
 
       <!-- Lists container -->
-      <div class="board-content">
+      <div class="board-content" id="board-content">
         <!-- Lists container -->
         <div id="listsContainer" class="lists-container">
           <!-- Lists sẽ được JS render ở đây -->
@@ -220,6 +226,9 @@
 
   <script type="module" src="js/BoardDetail.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <!-- JS Notiflix -->
+  <script src="https://cdn.jsdelivr.net/npm/notiflix/dist/notiflix-aio-3.2.6.min.js"></script>
+
 </body>
 
 </html>
