@@ -100,6 +100,76 @@ async function renderBoardWithLists() {
     socket.emit("joinBoard", currentBoardId);
 
     const { background, lists } = board;
+     let isEditing = false;
+
+    const boardTitle = document.getElementById("boardTitle");
+
+    if (boardTitle) {
+      boardTitle.textContent = board.name;
+
+      // ✅ chỉ gắn event nếu có quyền
+      if (["owner", "admin"].includes(currentUserRole)) {
+        boardTitle.addEventListener("click", () => {
+          if (isEditing) return;
+          isEditing = true;
+
+          const oldTitle = boardTitle.innerText;
+
+          const input = document.createElement("input");
+          input.type = "text";
+          input.value = oldTitle;
+          input.className = "board-title-input";
+
+          boardTitle.replaceWith(input);
+          input.focus();
+          input.select();
+
+          let isDone = false;
+
+          async function save() {
+            if (isDone) return;
+            isDone = true;
+
+            const newTitle = input.value.trim();
+
+            input.replaceWith(boardTitle);
+            isEditing = false;
+
+            if (!newTitle || newTitle === oldTitle) return;
+
+            boardTitle.innerText = newTitle;
+
+            try {
+              await updateBoardTitle(newTitle);
+            } catch (err) {
+              boardTitle.innerText = oldTitle;
+              alert("Không thể cập nhật tên board");
+            }
+          }
+
+          function cancel() {
+            if (isDone) return;
+            isDone = true;
+
+            input.replaceWith(boardTitle);
+            isEditing = false;
+          }
+
+          input.addEventListener("blur", save);
+
+          input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              save();
+            }
+            if (e.key === "Escape") {
+              e.preventDefault();
+              cancel();
+            }
+          });
+        });
+      }
+    }
 
     applyBoardBackground(background);
 
@@ -1722,7 +1792,7 @@ socket.on("card:labelAdded", ({ cardId, color }) => {
 });
 
 // Mảng màu
-const colors = ["#61bd4f", "#f2d600", "#ff9f1a", "#eb5a46", "#c377e0"];
+const colors = ["#2eeb08ff", "#edd72dff", "#ff9f1a", "#f0270cff", "#ae16ebff"];
 
 // Thêm label vào DOM
 function addLabelToCard(color) {
