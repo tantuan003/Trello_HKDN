@@ -2085,6 +2085,13 @@ activityMenu.addEventListener("click", (e) => {
   }
 });
 
+//back về trang list board
+const backlistboard = document.getElementById("back-list-board")
+backlistboard.addEventListener("click",(e) =>{
+  e.stopPropagation();
+  window.history.back();
+})
+
 // đổ dữ liệu acitivity
 
 function loadActivities() {
