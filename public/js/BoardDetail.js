@@ -1019,7 +1019,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Click ra ngoài sẽ ẩn form
   document.addEventListener("click", (e) => {
     if (!inviteFormContainer.contains(e.target) && e.target !== inviteIcon) {
-      inviteIcon.style.display = "block";
+      inviteIcon.style.display = "flex";
       inviteFormContainer.classList.add("hidden");
     }
   });
@@ -1252,7 +1252,7 @@ document.querySelectorAll(".visibility-option").forEach(item => {
   item.addEventListener("click", async () => {
     const newVisibility = item.dataset.value;
 
-    // không gọi API nếu chọn lại cái cũ
+    // Không gọi API nếu chọn lại cái cũ
     if (newVisibility === boardData.visibility) {
       visibilityMenu.classList.add("hidden");
       moreMenu.classList.remove("hidden");
@@ -1260,30 +1260,40 @@ document.querySelectorAll(".visibility-option").forEach(item => {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/v1/board/${boardId}/visibility`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ visibility: newVisibility })
-      });
+      Notiflix.Loading.standard("Updating...");
+      const res = await fetch(
+        `${API_BASE}/v1/board/${boardId}/visibility`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ visibility: newVisibility })
+        }
+      );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      Notiflix.Loading.remove();
+      if (!res.ok) throw new Error(data.message || "Update failed");
 
       // update state
       boardData.visibility = data.visibility;
 
       // update UI
       setActiveVisibility(boardData.visibility);
-      console.log("Visibility updated:", boardData.visibility);
+
+      // notify success
+      Notiflix.Notify.success("Board visibility updated");
+
+      visibilityMenu.classList.add("hidden");
+      moreMenu.classList.remove("hidden");
 
     } catch (err) {
-      alert(err);
-      console.error(err);
+      Notiflix.Notify.failure(err.message || "Something went wrong");
     }
   });
 });
+
 
 
 //lấy visibility

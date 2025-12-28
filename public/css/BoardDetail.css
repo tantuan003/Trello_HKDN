@@ -488,7 +488,12 @@ html, body {
   background: #00000061;
 }
 #invite-icon{
+  display: flex;
   font-size: 20px;
+  align-items: center;
+}
+#invite-icon:hover{
+  background-color: #e4e6ea64;
 }
 #inviteUser h2 {
   margin: 0;                  /* xoá margin mặc định của h2 */
@@ -505,7 +510,7 @@ html, body {
   font-size: 14px;
   cursor: pointer;
 }
-.invite-right span {
+.invite-right span,.fa-user-plus {
   display: flex;
   align-items: center;
   justify-content: center;
