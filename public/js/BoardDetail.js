@@ -702,45 +702,50 @@ function createListElement(list) {
     checkboxEl.addEventListener("click", (e) => {
       e.stopPropagation();
     });
-    checkboxEl.addEventListener("change", async (e) => {
-      e.stopPropagation();
+   checkboxEl.addEventListener("change", async (e) => {
+  e.stopPropagation();
 
-      const isComplete = checkboxEl.checked;
-      const prevValue = !isComplete;
-      // UI optimistic
-      if (isComplete) {
-        renderCompleteElement();
-        dueEl.style.backgroundColor = "#32ee0cff";
-      } else {
-        completeFooter.innerHTML = "";
-        if (diffdayFallback < 0) {
-          dueEl.style.backgroundColor = "#ff4d4f";
-        } else if (diffdayFallback <= 2) {
-          dueEl.style.backgroundColor = "#f2d600";
-        } else {
-          dueEl.style.backgroundColor = "#32ee0cff";
-        }
-      }
+  const nextValue = checkboxEl.checked;
+  const prevValue = card.isCompleted;
 
-      try {
-        const res = await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ complete: isComplete })
-        });
+  // Optimistic UI
+  applyCompleteUI(nextValue);
+  card.isCompleted = nextValue;
 
-        if (!res.ok) throw new Error();
-
-        socket.emit("card:completeToggle", {
-          cardId: card._id,
-          complete: isComplete
-        });
-
-      } catch (err) {
-        checkboxEl.checked = prevValue;
-        Notiflix.Notify.failure("Không thể cập nhật trạng thái");
-      }
+  try {
+    const res = await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ complete: nextValue })
     });
+
+    if (!res.ok) throw new Error();
+
+  } catch (err) {
+    // Rollback toàn bộ
+    checkboxEl.checked = prevValue;
+    card.isCompleted = prevValue;
+    applyCompleteUI(prevValue);
+
+    Notiflix.Notify.failure("Không thể cập nhật trạng thái");
+  }
+});
+function applyCompleteUI(isComplete) {
+  if (isComplete) {
+    renderCompleteElement();
+    if (card.dueDate) dueEl.style.backgroundColor = "#32ee0cff";
+  } else {
+    completeFooter.innerHTML = "";
+    if (diffdayFallback < 0 && card.dueDate) {
+      dueEl.style.backgroundColor = "#ff4d4f";
+    } else if (diffdayFallback <= 2  && card.dueDate) {
+      dueEl.style.backgroundColor = "#f2d600";
+    } else if (diffdayFallback > 2 && card.dueDate) {
+      dueEl.style.backgroundColor = "#32ee0cff";
+    }
+  }
+}
+
 
     // ⭐ Sự kiện mở chi tiết
     cardEl.addEventListener("click", () => {
