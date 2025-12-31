@@ -18,7 +18,7 @@ let boardData = {
 // Map lưu các hàm render UI của từng card
 const cardUIActions = {};
 
-
+const cardUIMap = new Map();
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
 if (!boardId) {
@@ -100,7 +100,7 @@ async function renderBoardWithLists() {
     socket.emit("joinBoard", currentBoardId);
 
     const { background, lists } = board;
-     let isEditing = false;
+    let isEditing = false;
 
     const boardTitle = document.getElementById("boardTitle");
 
@@ -525,9 +525,6 @@ function createListElement(list) {
       );
     });
 
-
-
-
     // Gộp vào wrapper
     actionsWrap.appendChild(deleteBtn);
     actionsWrap.appendChild(checkboxEl);
@@ -682,7 +679,6 @@ function createListElement(list) {
       membersEl.appendChild(memberEl);
     });
 
-
     // Thêm due date + members vào footer
     if (dueEl) footerEl.appendChild(dueEl);
     footerEl.appendChild(midEl);
@@ -696,55 +692,63 @@ function createListElement(list) {
     }
 
 
+    function applyCompleteUI(isComplete) {
+      if (isComplete) {
+        renderCompleteElement();
+        if(card.dueDate)
+        dueEl.style.backgroundColor = "#32ee0cff";
+        return;
+      }
+      completeFooter.innerHTML = "";
 
+      if (diffdayFallback < 0 && card.dueDate) {
+        dueEl.style.backgroundColor = "#ff4d4f";
+      } else if (diffdayFallback <= 2 && card.dueDate) {
+        dueEl.style.backgroundColor = "#f2d600";
+      } else if (diffdayFallback > 2 && card.dueDate) {
+        dueEl.style.backgroundColor = "#32ee0cff";
+      }
+    }
+
+    cardUIMap.set(card._id, {
+      card,
+      checkboxEl,
+      applyCompleteUI
+    });
     //checkbox render   
     // --- CLICK CHECKBOX ---
-    checkboxEl.addEventListener("click", (e) => {
+    checkboxEl.addEventListener("click", e => e.stopPropagation());
+
+    checkboxEl.addEventListener("change", async e => {
       e.stopPropagation();
+
+      const nextValue = checkboxEl.checked;
+      const prevValue = card.isCompleted;
+
+      // Optimistic UI
+      card.isCompleted = nextValue;
+      applyCompleteUI(nextValue);
+
+      try {
+        const res = await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ complete: nextValue })
+        });
+
+        if (!res.ok) throw new Error();
+
+      } catch (err) {
+        // Rollback
+        card.isCompleted = prevValue;
+        checkboxEl.checked = prevValue;
+        applyCompleteUI(prevValue);
+
+        Notiflix.Notify.failure("Không thể cập nhật trạng thái");
+      }
     });
-   checkboxEl.addEventListener("change", async (e) => {
-  e.stopPropagation();
 
-  const nextValue = checkboxEl.checked;
-  const prevValue = card.isCompleted;
 
-  // Optimistic UI
-  applyCompleteUI(nextValue);
-  card.isCompleted = nextValue;
-
-  try {
-    const res = await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ complete: nextValue })
-    });
-
-    if (!res.ok) throw new Error();
-
-  } catch (err) {
-    // Rollback toàn bộ
-    checkboxEl.checked = prevValue;
-    card.isCompleted = prevValue;
-    applyCompleteUI(prevValue);
-
-    Notiflix.Notify.failure("Không thể cập nhật trạng thái");
-  }
-});
-function applyCompleteUI(isComplete) {
-  if (isComplete) {
-    renderCompleteElement();
-    if (card.dueDate) dueEl.style.backgroundColor = "#32ee0cff";
-  } else {
-    completeFooter.innerHTML = "";
-    if (diffdayFallback < 0 && card.dueDate) {
-      dueEl.style.backgroundColor = "#ff4d4f";
-    } else if (diffdayFallback <= 2  && card.dueDate) {
-      dueEl.style.backgroundColor = "#f2d600";
-    } else if (diffdayFallback > 2 && card.dueDate) {
-      dueEl.style.backgroundColor = "#32ee0cff";
-    }
-  }
-}
 
 
     // ⭐ Sự kiện mở chi tiết
@@ -790,22 +794,17 @@ socket.on("card-deleted", ({ cardId }) => {
 
 
 socket.on("card:completeUpdated", ({ cardId, complete }) => {
-  const ui = cardUIActions[cardId];
-  if (!ui) return;
+  const entry = cardUIMap.get(cardId);
+  if (!entry) return;
 
-  // Cập nhật checkbox
-  ui.checkboxEl.checked = complete;
+  const { card, checkboxEl, applyCompleteUI } = entry;
 
-  // Cập nhật UI
-  if (complete) {
-    ui.render();      // ✔ gọi hàm render đúng
-  } else {
-    const footer = ui.checkboxEl
-      .closest(".card")
-      .querySelector(".card-complete-footer");
-    if (footer) footer.innerHTML = "";
-  }
+  card.isCompleted = complete;
+  checkboxEl.checked = complete;
+  applyCompleteUI(complete);
 });
+
+
 
 
 // ===================================================================
