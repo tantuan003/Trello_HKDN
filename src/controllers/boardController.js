@@ -567,12 +567,23 @@ export const updateCardComplete = async (req, res) => {
     if (!card) {
       return res.status(404).json({ message: "Card not found" });
     }
+     // ✅ lấy boardId từ list
+    const list = await List.findById(card.list).select("board");
+
+    if (!list) {
+      return res.status(404).json({ message: "List not found" });
+    }
 
     // Emit realtime nếu bạn dùng socket.io
-    req.io?.to(cardId).emit("card:completeUpdated", {
-      cardId,
-      complete
-    });
+     req.io?.to(list.board.toString()).emit(
+      "card:completeUpdated",
+      {
+        cardId: card._id,
+        complete: card.complete,
+        listId: card.list
+      }
+    );
+
 
     return res.json({
       message: "Card updated successfully",
