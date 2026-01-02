@@ -486,6 +486,7 @@ html, body {
   cursor: pointer;
   user-select: none;
 }
+
 #inviteUser {
   width: 100%;
   display: flex;
@@ -505,6 +506,7 @@ html, body {
 #invite-icon:hover{
   background-color: #e4e6ea64;
 }
+
 #inviteUser h2 {
   margin: 0;                  /* xoá margin mặc định của h2 */
   font-size: 20px;

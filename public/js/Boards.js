@@ -603,12 +603,26 @@ const inviteForm = document.getElementById("inviteForm");
 if (inviteForm) {
   inviteForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (currentBoardVisibility === "private") {
+      Toastify({
+        text: "Board private, không thể mời thành viên!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#9C27B0",
+        close: true,
+        stopOnFocus: true,
+      }).showToast();
+      return;
+    }
+
     const boardId = currentBoardId;
     const email = inviteForm.querySelector("input").value.trim();
 
     if (!email) {
       Toastify({
-        text: "⚠️ Vui lòng nhập email!",
+        text: "Vui lòng nhập email!",
         duration: 3000,
         gravity: "top",
         position: "right",
@@ -631,7 +645,7 @@ if (inviteForm) {
 
       if (res.ok) {
         Toastify({
-          text: "✅ Mời thành công!",
+          text: "Mời thành công!",
           duration: 3000,
           gravity: "top",
           position: "right",
@@ -643,7 +657,7 @@ if (inviteForm) {
         inviteForm.reset();
       } else {
         Toastify({
-          text: `❌ ${data.message || "Mời thất bại!"}`,
+          text: data.message || "Mời thất bại!",
           duration: 3000,
           gravity: "top",
           position: "right",
@@ -655,7 +669,7 @@ if (inviteForm) {
     } catch (err) {
       console.error(err);
       Toastify({
-        text: "🚫 Lỗi server, vui lòng thử lại sau!",
+        text: "Lỗi server, vui lòng thử lại sau!",
         duration: 3000,
         gravity: "top",
         position: "right",
@@ -667,7 +681,7 @@ if (inviteForm) {
   });
 }
 
-//bật tắt invite
+// Bật/tắt invite form
 document.addEventListener("DOMContentLoaded", () => {
   const inviteIcon = document.getElementById("invite-icon");
   const inviteFormContainer = document.getElementById("inviteFormContainer");
@@ -676,6 +690,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   inviteIcon.addEventListener("click", (e) => {
     e.stopPropagation();
+
+    // Nếu board private thì hiện message và không mở form
+    if (currentBoardVisibility === "private") {
+      Toastify({
+        text: "Board private, không thể mở form mời!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#9C27B0",
+        close: true,
+        stopOnFocus: true,
+      }).showToast();
+      return;
+    }
+
+    // Nếu không phải private thì toggle form
     inviteFormContainer.classList.toggle("hidden");
     inviteIcon.style.display = "none";
   });
@@ -687,6 +717,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
 
 function addListToBoard(list) {
   const listsContainer = document.getElementById("listsContainer");

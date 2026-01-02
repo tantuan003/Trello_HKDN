@@ -1250,7 +1250,8 @@ visibilityBtn.addEventListener("click", () => {
   visibilityMenu.classList.remove("hidden");
   console.log("visibility hiện tại là ", boardData.visibility)
   setActiveVisibility(boardData.visibility);
-});
+}
+);
 
 //quay lại menu
 visibilityMenu.addEventListener("click", (e) => {
