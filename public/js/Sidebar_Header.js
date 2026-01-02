@@ -228,12 +228,24 @@ function normalizeVi(str = "") {
     .trim();
 }
 
-function initGlobalSearch() {
+async function initGlobalSearch() {
   const input = document.querySelector(".searchbar input");
   const panel = document.getElementById("globalSearchResults");
   if (!input || !panel) return;
 
   let debounceTimer = null;
+  let currentUserId = null;
+
+  // Lấy user hiện tại
+  try {
+    const resUser = await fetch(`${API_BASE}/v1/User/me`, { credentials: "include" });
+    if (resUser.ok) {
+      const user = await resUser.json();
+      currentUserId = user._id;
+    }
+  } catch (err) {
+    console.error("Không lấy được user:", err);
+  }
 
   input.addEventListener("focus", () => {
     if (input.value.trim() !== "") return;
@@ -245,20 +257,25 @@ function initGlobalSearch() {
     const keyword = normalizeVi(input.value);
     clearTimeout(debounceTimer);
 
-    // Không có keyword → quay lại hiển thị lịch sử
     if (!keyword) {
       const history = loadSearchHistory();
       renderSearchPanel(panel, history, { mode: "history" });
       return;
     }
 
-    // Debounce 200ms rồi search
     debounceTimer = setTimeout(async () => {
       const boards = await fetchBoardsForSearch();
       const matches = boards.filter((b) => {
         const name = normalizeVi(b.name || "");
         const ws = normalizeVi(b.workspace?.name || "");
-        return name.includes(keyword) || ws.includes(keyword);
+        const keywordMatch = name.includes(keyword) || ws.includes(keyword);
+
+        const isVisible =
+          b.visibility === "public" ||
+          b.visibility === "workspace" ||
+          (b.visibility === "private" && b.owner?._id === currentUserId);
+
+        return keywordMatch && isVisible;
       });
       renderSearchPanel(panel, matches, { mode: "search" });
     }, 200);
@@ -269,6 +286,7 @@ function initGlobalSearch() {
     if (!isInside) panel.classList.remove("is-open");
   });
 }
+
 
 function renderSearchPanel(panel, boards, { mode }) {
   panel.innerHTML = "";

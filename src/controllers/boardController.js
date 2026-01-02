@@ -345,6 +345,12 @@ export const inviteUser = async (req, res) => {
       return res.status(404).json({ message: "Board không tồn tại" });
     }
 
+    if (board.visibility === "private") { 
+      return res.status(403).json({ 
+        message: "Board private, không thể mời thành viên" 
+      });   
+    }
+
     // 1️⃣ Check quyền inviter trong board
     const inviter = board.members.find(
       m => m.user.toString() === inviterId
