@@ -8,7 +8,9 @@ import {
     updateWorkspaceName,
     updateWorkspaceVisibility,
     createWorkspace,
-    updateMemberRole, deleteWorkspace } from "../controllers/workspaceController.js";
+    updateMemberRole,
+    removeMember,
+    deleteWorkspace } from "../controllers/workspaceController.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
 import { checkOwnerWorkspace } from "../middlewares/checkowner.js";
@@ -41,6 +43,9 @@ router.put("/:workspaceId/update-visibility", verifyToken, updateWorkspaceVisibi
 router.put("/:workspaceId/members/:memberId/role",  verifyToken,checkOwnerWorkspace,updateMemberRole);
 
 router.delete("/:workspaceId", verifyToken, checkOwnerWorkspace, deleteWorkspace);
+
+router.delete("/:workspaceId/members/:memberId", verifyToken, checkOwnerWorkspace, removeMember);
+
 
 export default router;
 

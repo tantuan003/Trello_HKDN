@@ -114,6 +114,29 @@ body {
     margin-left: auto;
 }
 
+/* Member actions (edit/remove icons) */
+.member-actions {
+    margin-left: auto;
+    /* đẩy sang bên phải */
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    /* khoảng cách giữa 2 icon */
+}
+
+.member-actions i {
+    font-size: 18px;
+    color: #6b778c;
+    cursor: pointer;
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.member-actions i:hover {
+    color: #0c66e4;
+    /* đổi màu khi hover */
+    transform: scale(1.1);
+}
+
 /* Avatar */
 .avatar {
     width: 48px;
@@ -275,13 +298,15 @@ body {
 .role-owner {
     margin-left: auto;
     font-size: 14px;
-    font-weight: 600;
-    color: #374151;
-    background: #e0e7ff;
-    padding: 6px 12px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    padding: 6px 14px;
     border-radius: 12px;
     white-space: nowrap;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .role:hover,

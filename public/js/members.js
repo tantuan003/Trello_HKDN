@@ -1,5 +1,5 @@
-// ---------------- Members Page ----------------
 import { API_BASE } from "../js/config.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
   await loadNav("members");
   await initMembersPage();
@@ -69,82 +69,11 @@ async function initMembersPage() {
     }
 
     await loadMembers(currentWorkspaceId);
-
   } catch (err) {
     console.error(err);
     document.querySelector(".members-list").innerHTML = "<p>Error loading workspace or members</p>";
   }
 }
-
-function canEditRole(member) {
-  if (!window.currentWorkspaceRole) return false;
-
-  const currentUserRole = window.currentWorkspaceRole.toLowerCase();
-  const targetRole = member.role.toLowerCase();
-
-  // ❌ Không ai được sửa Owner
-  if (targetRole === "owner") return false;
-
-  // ✅ Chỉ Owner mới được sửa role
-  if (currentUserRole === "owner") return true;
-
-  return false;
-}
-function attachRoleChangeEvents(workspaceId) {
-  const selects = document.querySelectorAll(".role-select");
-
-  selects.forEach(select => {
-    select.addEventListener("change", async (e) => {
-      const memberId = e.target.dataset.userId;
-      const newRole = e.target.value;
-
-      const oldRole = e.target.getAttribute("data-old-role");
-
-      // UI optimistic
-      e.target.disabled = true;
-
-      try {
-        const res = await fetch(
-          `${API_BASE}/v1/workspace/${workspaceId}/members/${memberId}/role`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ role: newRole })
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error("Update role failed");
-        }
-
-        // cập nhật old role
-        e.target.setAttribute("data-old-role", newRole);
-
-        console.log(`✅ Role updated: ${memberId} → ${newRole}`);
-
-      } catch (err) {
-        console.error(err);
-
-        // rollback UI nếu lỗi
-        if (oldRole) {
-          e.target.value = oldRole;
-        }
-
-        alert("Không thể cập nhật role. Vui lòng thử lại.");
-      } finally {
-        e.target.disabled = false;
-      }
-    });
-
-    // lưu role cũ để rollback
-    select.setAttribute("data-old-role", select.value);
-  });
-}
-
-
 
 // ---------------- Load members ----------------
 async function loadMembers(workspaceId) {
@@ -152,10 +81,9 @@ async function loadMembers(workspaceId) {
 
   try {
     const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members`, { credentials: "include" });
-    if (!res.ok) throw new Error("Không thể load danh sách members");
+    if (!res.ok) throw new Error("Failed to load members list!");
 
     const response = await res.json();
-
     window.currentWorkspaceRole = response.data.currentUserRole;
     const members = response.data.members;
 
@@ -164,7 +92,7 @@ async function loadMembers(workspaceId) {
     membersContainer.innerHTML = "";
 
     if (!members.length) {
-      membersContainer.innerHTML = "<p>Chưa có member nào trong workspace</p>";
+      membersContainer.innerHTML = "<p>No members in this workspace</p>";
       return;
     }
 
@@ -186,41 +114,138 @@ async function loadMembers(workspaceId) {
         avatar.textContent = "?";
       }
 
-      // 🔽 Role select
-      let roleHTML = "";
+      // Info
+      const infoHTML = `
+        <div class="member-info">
+          <div class="name">${member.username}</div>
+          <div class="email">${member.email}</div>
+        </div>
+      `;
 
-      if (member.role.toLowerCase() === "owner") {
-        roleHTML = `<div class="role-owner">OWNER</div>`;
-      } else if (canEditRole(member)) {
-        roleHTML = `
-          <select class="role-select" data-user-id="${member._id}" data-old-role="${member.role}">
-            <option value="member" ${member.role === "member" ? "selected" : ""}>Member</option>
-            <option value="admin" ${member.role === "admin" ? "selected" : ""}>Admin</option>
-          </select>
-          `;
+      // Actions : only members
+      let actionsHTML = "";
+      if (member.role.toLowerCase() !== "owner") {
+        actionsHTML = `
+          <div class="member-actions">
+            <i class="fa-solid fa-pen-to-square edit-role"
+              data-user-id="${member._id}"             
+              data-current-role="${member.role}"
+              title="Edit role"></i>
+            <i class="fa-solid fa-user-minus remove-member"
+              data-member-id="${member.memberSubId}"    
+              data-user-id="${member._id}"
+              title="Remove member"></i>
+          </div>
+        `;
       } else {
-        roleHTML = `<div class="role-text">${member.role}</div>`;
+        actionsHTML = `<div class="role-owner">OWNER</div>`;
       }
 
-      div.innerHTML = `
-    <div class="member-info">
-      <div class="name">${member.username}</div>
-      <div class="email">${member.email}</div>
-    </div>
-    ${roleHTML}
-  `;
+      div.innerHTML = infoHTML + actionsHTML;
       div.prepend(avatar);
       membersContainer.appendChild(div);
     });
-    attachRoleChangeEvents(workspaceId);
 
+    attachMemberActions(workspaceId);
   } catch (err) {
     console.error(err);
     membersContainer.innerHTML = "<p>Error loading members list</p>";
   }
 }
 
+// ---------------- Edit/Remove actions ----------------
+function attachMemberActions(workspaceId) {
+  document.querySelectorAll(".edit-role").forEach(icon => {
+    icon.addEventListener("click", (e) => {
+      const userId = e.target.dataset.userId;
+      const currentRole = e.target.dataset.currentRole.toLowerCase();
 
+      // Show dropdown
+      const select = document.createElement("select");
+      select.className = "role-select";
+      select.dataset.userId = userId;
+      select.innerHTML = `
+      <option value="member" ${currentRole === "member" ? "selected" : ""}>Member</option>
+      <option value="admin" ${currentRole === "admin" ? "selected" : ""}>Admin</option>
+    `;
+
+      e.target.replaceWith(select);
+
+      // Edit role
+      select.addEventListener("change", async () => {
+        const newRole = select.value;
+        try {
+          const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members/${userId}/role`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({ role: newRole })
+          });
+          if (!res.ok) throw new Error("Update role failed");
+          alert("Role updated!");
+          await loadMembers(workspaceId);
+        } catch (err) {
+          console.error(err);
+          alert("Failed to update role");
+        }
+      });
+
+      // Close dropdown
+      function handleClickOutside(ev) {
+        if (!select.contains(ev.target)) {
+          const newIcon = document.createElement("i");
+          newIcon.className = "fa-solid fa-pen-to-square edit-role";
+          newIcon.dataset.userId = select.dataset.userId;
+          newIcon.dataset.currentRole = currentRole;
+          newIcon.title = "Edit role";
+
+          select.replaceWith(newIcon);
+          document.removeEventListener("click", handleClickOutside);
+          attachMemberActions(workspaceId);
+        }
+      }
+
+      setTimeout(() => { 
+        document.addEventListener("click", handleClickOutside); 
+      }, 0);
+    });
+  });
+
+  // Remove member
+  document.querySelectorAll(".remove-member").forEach(icon => {
+    icon.addEventListener("click", async (e) => {
+
+      const memberSubId = e.target.dataset.memberId;
+      const userId = e.target.dataset.userId;        
+
+      console.log("Removing:", { workspaceId, memberSubId, userId });
+
+      if (!memberSubId) { 
+        alert("Missing memberSubId."); 
+        return; 
+      }
+
+      const confirmed = confirm("Are you sure you want to remove this member?"); 
+      if (!confirmed) {
+        console.log("Cancelling removing", { workspaceId, memberSubId, userId });
+        return;  
+      }
+
+      try {
+        const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members/${memberSubId}`, {
+          method: "DELETE",
+          credentials: "include"
+        });
+        if (!res.ok) throw new Error("Remove member failed");
+        alert("Member removed!");
+        await loadMembers(workspaceId);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to remove member");
+      }
+    });
+  });
+}
 
 // ---------------- Invite modal ----------------
 function bindInviteModal() {
@@ -232,11 +257,11 @@ function bindInviteModal() {
 
   if (!inviteModal || !inviteBtn || !closeBtn || !sendBtn || !inviteEmailInput) return;
 
-  // Mở modal
+  // Show modal
   inviteBtn.addEventListener("click", () => {
     const wsId = localStorage.getItem("currentWorkspaceId") || window.currentWorkspaceId;
     if (!wsId) {
-      alert("Workspace chưa được chọn!");
+      alert("Missing wsp_id!");
       return;
     }
     inviteModal.classList.add("show");
@@ -245,7 +270,7 @@ function bindInviteModal() {
     inviteEmailInput.focus();
   });
 
-  // Đóng modal bằng nút close
+  // Close modal
   closeBtn.addEventListener("click", () => {
     inviteModal.classList.remove("show");
     setTimeout(() => {
@@ -253,7 +278,7 @@ function bindInviteModal() {
     }, 300);
   });
 
-  // Đóng modal khi click ra ngoài
+  // Hide modal
   inviteModal.addEventListener("click", (e) => {
     if (e.target === inviteModal) {
       inviteModal.classList.remove("show");
@@ -263,17 +288,17 @@ function bindInviteModal() {
     }
   });
 
-  // Gửi invite
+  // Invite logic
   sendBtn.addEventListener("click", async () => {
     const email = inviteEmailInput.value.trim();
     const wsId = localStorage.getItem("currentWorkspaceId") || window.currentWorkspaceId;
 
     if (!email) {
-      alert("Vui lòng nhập email!");
+      alert("Please enter a valid email!");
       return;
     }
     if (!wsId) {
-      alert("Workspace chưa được chọn!");
+      alert("Missing wsp_id!");
       return;
     }
 
@@ -287,7 +312,7 @@ function bindInviteModal() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Không thể mời user");
+      if (!res.ok) throw new Error(data.message || "Error");
 
       alert(data.message || "Invitation sent successfully!");
       inviteModal.classList.remove("show");
