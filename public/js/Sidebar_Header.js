@@ -201,22 +201,19 @@ async function fetchBoardsForSearch() {
 
     const result = await res.json();
 
-    // ❌ res.ok nhưng data sai format
     if (!res.ok || !result.success || !Array.isArray(result.data)) {
-      console.error("Không thể load boards cho search:", result);
+      console.error("Failed to load boards for search:", result);
       return [];
     }
 
-    // ✅ LẤY ĐÚNG ARRAY
     cachedSearchBoards = result.data;
     return cachedSearchBoards;
 
   } catch (err) {
-    console.error("Lỗi fetch boards cho search:", err);
+    console.error("Error fetching boards for search:", err);
     return [];
   }
 }
-
 
 function normalizeVi(str = "") {
   return str
@@ -236,7 +233,7 @@ async function initGlobalSearch() {
   let debounceTimer = null;
   let currentUserId = null;
 
-  // Lấy user hiện tại
+  // Get current user
   try {
     const resUser = await fetch(`${API_BASE}/v1/User/me`, { credentials: "include" });
     if (resUser.ok) {
@@ -244,7 +241,7 @@ async function initGlobalSearch() {
       currentUserId = user._id;
     }
   } catch (err) {
-    console.error("Không lấy được user:", err);
+    console.error("Failed to get current user:", err);
   }
 
   input.addEventListener("focus", () => {
@@ -286,7 +283,6 @@ async function initGlobalSearch() {
     if (!isInside) panel.classList.remove("is-open");
   });
 }
-
 
 function renderSearchPanel(panel, boards, { mode }) {
   panel.innerHTML = "";
@@ -342,13 +338,9 @@ function renderSearchPanel(panel, boards, { mode }) {
       thumb.style.backgroundSize = "cover";
       thumb.style.backgroundPosition = "center";
       thumb.style.backgroundRepeat = "no-repeat";
-    }
-    // 🔥 MÀU (class gradient,…)
-    else if (bg) {
+    } else if (bg) {
       thumb.classList.add(bg);
-    }
-    // fallback
-    else {
+    } else {
       thumb.classList.add("gradient-1");
     }
 
@@ -379,6 +371,7 @@ function renderSearchPanel(panel, boards, { mode }) {
 
   panel.classList.add("is-open");
 }
+
 
 // ================= INIT =================
 export function initUserMenu() {
