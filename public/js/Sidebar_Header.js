@@ -420,7 +420,14 @@ export function initUserMenu() {
       const resHtml = await fetch("/profile.html");
       if (!resHtml.ok) throw new Error("Không load được profile.html");
       const html = await resHtml.text();
-      profileContainer.innerHTML = `<button class="profile-modal-close">&times;</button>${html}`;
+      profileContainer.innerHTML = `<button class="profile-modal-close"><i class="fa-solid fa-x"></i></button>${html}`;
+
+      const modalCloseBtn = profileContainer.querySelector(".profile-modal-close"); 
+      if (modalCloseBtn) { 
+        modalCloseBtn.addEventListener("click", () => { 
+          profileModal.style.display = "none"; 
+        }); 
+      }
 
       if (!document.getElementById("profileCSS")) {
         const link = document.createElement("link");
@@ -461,14 +468,16 @@ export function initUserMenu() {
       profileContainer.dataset.loaded = "1";
 
     } catch (err) {
-      profileContainer.innerHTML = `<button class="profile-modal-close">&times;</button>
+      profileContainer.innerHTML = `<button class="profile-modal-close"><i class="fa-solid fa-x"></i></button>
       <div style="color:red">Lỗi load profile: ${err.message}</div>`;
-    }
-  });
 
-  profileContainer.addEventListener("click", (e) => {
-    if (e.target.classList.contains("profile-modal-close")) {
-      profileModal.style.display = "none";
+      const modalCloseBtn = profileContainer.querySelector(".profile-modal-close"); 
+      if (modalCloseBtn) {
+        modalCloseBtn.addEventListener("click", () => {
+          profileModal.style.display = "none";
+        });
+      }
+
     }
   });
 

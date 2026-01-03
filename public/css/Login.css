@@ -6,9 +6,11 @@ body {
   padding: 10px;
   overflow-x: hidden;
   box-sizing: border-box;
-  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
-    "Helvetica Neue", Arial, sans-serif;
-    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .title {
@@ -23,11 +25,6 @@ body {
 
 /* FORM CONTAINER */
 form {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  display: block;
   width: 100%;
   max-width: 360px;
   background-color: #FFF;
@@ -36,6 +33,18 @@ form {
   border: solid 1px #DDD;
   border-radius: 0.5em;
   font-family: inherit;
+}
+
+@media (max-width: 480px) {
+  body {
+    padding: 0;
+  }
+
+  form {
+    max-width: 95%;
+    border-radius: 0;
+    height: auto;
+  }
 }
 
 /* INPUT GROUP */
