@@ -1876,3 +1876,100 @@ html, body {
   font-weight: 600;
   color: white;
 }
+
+/* Background picker */
+#backgroundMenu{
+  width: 260px;                 /* tuỳ menu của bạn */
+  padding: 10px 12px 14px;
+  right: 12px;
+}
+
+.bg-grid{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 10px 0 6px;
+}
+
+.bg-option{
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;          /* ô vuông đẹp hơn */
+  border-radius: 14px;
+  cursor: pointer;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+  transform: translateZ(0);
+  transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+}
+
+.bg-option:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.12);
+}
+
+.bg-option:active{
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.10);
+}
+
+/* Active state: ring nổi + check nhỏ */
+.bg-option.active{
+  border-color: rgba(255,255,255,0.85);
+  box-shadow:
+    0 10px 18px rgba(0,0,0,0.14),
+    0 0 0 3px rgba(255,255,255,0.95),
+    0 0 0 6px rgba(0,0,0,0.12);
+}
+
+.bg-option.active::after{
+  content: "✓";
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.9);
+  color: rgba(0,0,0,0.75);
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 6px 12px rgba(0,0,0,0.12);
+}
+
+/* Upload area */
+.bg-upload{
+  margin-top: 10px;
+  display: flex;
+}
+
+.bg-upload-btn{
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid rgba(0,0,0,0.10);
+  border-radius: 14px;
+  cursor: pointer;
+  font-weight: 600;
+  background: rgba(0,0,0,0.04);
+  transition: background .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+
+.bg-upload-btn:hover{
+  background: rgba(0,0,0,0.06);
+  box-shadow: 0 10px 18px rgba(0,0,0,0.10);
+  transform: translateY(-1px);
+}
+
+.bg-upload-btn:active{
+  transform: translateY(0);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+}
+
+/* Mobile: tăng hit area một chút */
+@media (max-width: 420px){
+  #backgroundMenu{ width: 240px; }
+  .bg-grid{ gap: 10px; }
+  .bg-upload-btn{ padding: 12px; }
+}

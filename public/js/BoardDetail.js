@@ -100,6 +100,7 @@ async function renderBoardWithLists() {
     socket.emit("joinBoard", currentBoardId);
 
     const { background, lists } = board;
+    boardData.background = background;
     let isEditing = false;
 
     const boardTitle = document.getElementById("boardTitle");
@@ -208,23 +209,24 @@ function applyBoardBackground(bg) {
   const boardPage = document.body;
   if (!boardPage) return;
 
-  if (bg.startsWith("gradient")) {
-    const className = `body-${bg}`;
-    boardPage.classList.add(className);
+  const allGradientClasses = [
+    "body-gradient-1","body-gradient-2","body-gradient-3",
+    "body-gradient-4","body-gradient-5","body-gradient-6","body-gradient-7",
+  ];
 
-    // Xóa backgroundImage nếu trước đó có
+  if (bg.startsWith("gradient")) {
+    boardPage.classList.remove(...allGradientClasses);
+    boardPage.classList.add(`body-${bg}`);
     boardPage.style.backgroundImage = "";
   } else {
-    // ảnh
+    boardPage.classList.remove(...allGradientClasses);
     boardPage.style.backgroundImage = `url('${bg}')`;
     boardPage.style.backgroundSize = "cover";
     boardPage.style.backgroundPosition = "center";
     boardPage.style.backgroundRepeat = "no-repeat";
-
-    // Xóa class gradient nếu trước đó có
-    boardPage.classList.remove("body-gradient-1", "body-gradient-2", "body-gradient-3");
   }
 }
+
 
 //realtime cho việc sửa tên board
 socket.on("board:titleUpdated", (data) => {
@@ -803,6 +805,51 @@ socket.on("card:completeUpdated", ({ cardId, complete }) => {
   checkboxEl.checked = complete;
   applyCompleteUI(complete);
 });
+// ✅ Realtime: cập nhật danh sách members (cách A)
+socket.off("board:membersUpdated");
+socket.on("board:membersUpdated", ({ boardId: bId, members: newMembers }) => {
+  if (String(bId) !== String(currentBoardId)) return;
+  if (!Array.isArray(newMembers)) return;
+
+  members = newMembers;
+  boardData.members = newMembers;
+
+  renderAssignedMembersinvite(newMembers);
+
+  // Nếu modal manage member đang mở → render lại
+  const memberModal = document.getElementById("memberModal");
+  if (memberModal && !memberModal.classList.contains("hidden")) {
+    renderMembersboard(newMembers);
+  }
+
+  // Nếu popup assign đang mở → reload list
+  const assignPopup = document.getElementById("assignPopup");
+  if (assignPopup && assignPopup.style.display === "flex") {
+    const q = document.getElementById("assignSearch")?.value || "";
+    loadAssignList(q);
+  }
+});
+
+socket.on("board:memberInvited", ({ boardId: bId, member }) => {
+  if (String(bId) !== String(currentBoardId)) return;
+  if (!member?.user?._id) return;
+
+  // tránh add trùng
+  const existed = members.some(m => m?.user?._id === member.user._id);
+  if (existed) return;
+
+  members.push(member);
+  boardData.members = members;
+
+  // cập nhật dải avatar trên header
+  renderAssignedMembersinvite(members);
+
+  // nếu modal manage member đang mở thì re-render
+  const memberModal = document.getElementById("memberModal");
+  if (memberModal && !memberModal.classList.contains("hidden")) {
+    renderMembersboard(members);
+  }
+});
 
 
 
@@ -996,6 +1043,25 @@ inviteForm.addEventListener("submit", async (e) => {
       }).showToast();
 
       inviteForm.reset(); // Xóa giá trị input sau khi gửi
+
+      // ✅ Fallback: update UI ngay từ response (đề phòng socket đến chậm/mất)
+      if (Array.isArray(data.members)) {
+        members = data.members;
+        boardData.members = data.members;
+        renderAssignedMembersinvite(members);
+
+        const memberModal = document.getElementById("memberModal");
+        if (memberModal && !memberModal.classList.contains("hidden")) {
+          renderMembersboard(members);
+        }
+      } else if (data.member?.user?._id) {
+        const existed = members.some(m => m?.user?._id === data.member.user._id);
+        if (!existed) {
+          members.push(data.member);
+          boardData.members = members;
+          renderAssignedMembersinvite(members);
+        }
+      }
     } else {
       Toastify({
         text: `❌ ${data.message || "Mời thất bại!"}`,
@@ -1322,6 +1388,109 @@ function setActiveVisibility(visibility) {
     );
   });
 }
+const backgroundBtn = document.querySelector(".fa-palette").parentElement;
+const backgroundMenu = document.getElementById("backgroundMenu");
+const bgUploadBtn = document.getElementById("bgUploadBtn");
+const bgUploadInput = document.getElementById("bgUploadInput");
+
+backgroundBtn.addEventListener("click", () => {
+  moreMenu.classList.add("hidden");
+  backgroundMenu.classList.remove("hidden");
+  setActiveBackground(boardData.background);
+});
+
+backgroundMenu.addEventListener("click", (e) => {
+  e.stopPropagation();
+
+  if (e.target.closest("#backgroundMenu .back-btn")) {
+    backgroundMenu.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  }
+});
+
+function setActiveBackground(bg) {
+  document.querySelectorAll(".bg-option").forEach(el => {
+    el.classList.toggle("active", el.dataset.bg === bg);
+  });
+}
+
+async function updateBoardBackground(bg) {
+  const boardId = new URLSearchParams(window.location.search).get("id");
+
+  Notiflix.Loading.standard("Updating...");
+  try {
+    const res = await fetch(`${API_BASE}/v1/board/${boardId}/background`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ background: bg }),
+      credentials: "include"
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Update failed");
+
+    boardData.background = data.background;
+    applyBoardBackground(boardData.background); // hàm có sẵn :contentReference[oaicite:9]{index=9}
+    setActiveBackground(boardData.background);
+
+    Notiflix.Notify.success("Background updated");
+  } catch (err) {
+    Notiflix.Notify.failure(err.message || "Something went wrong");
+  } finally {
+    Notiflix.Loading.remove();
+  }
+}
+
+// click chọn gradient
+document.querySelectorAll(".bg-option").forEach(el => {
+  el.addEventListener("click", async () => {
+    const bg = el.dataset.bg;
+    if (bg === boardData.background) return;
+    await updateBoardBackground(bg);
+    backgroundMenu.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  });
+});
+
+// upload ảnh
+bgUploadBtn.addEventListener("click", () => bgUploadInput.click());
+
+bgUploadInput.addEventListener("change", async () => {
+  const file = bgUploadInput.files?.[0];
+  if (!file) return;
+
+  Notiflix.Loading.standard("Uploading...");
+  try {
+    const fd = new FormData();
+    fd.append("background", file);
+
+    const upRes = await fetch(`${API_BASE}/v1/board/background/upload`, {
+      method: "POST",
+      body: fd,
+      credentials: "include"
+    });
+
+    const upData = await upRes.json();
+    if (!upRes.ok) throw new Error(upData.message || "Upload failed");
+
+    await updateBoardBackground(upData.imageUrl); // `/uploads/...` :contentReference[oaicite:10]{index=10}
+
+    backgroundMenu.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  } catch (err) {
+    Notiflix.Notify.failure(err.message || "Upload failed");
+  } finally {
+    Notiflix.Loading.remove();
+    bgUploadInput.value = "";
+  }
+});
+
+// realtime
+socket.on("board:backgroundUpdated", ({ background }) => {
+  boardData.background = background;
+  applyBoardBackground(background);
+  setActiveBackground(background);
+});
 
 
 
