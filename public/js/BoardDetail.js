@@ -695,8 +695,8 @@ function createListElement(list) {
     function applyCompleteUI(isComplete) {
       if (isComplete) {
         renderCompleteElement();
-        if(card.dueDate)
-        dueEl.style.backgroundColor = "#32ee0cff";
+        if (card.dueDate)
+          dueEl.style.backgroundColor = "#32ee0cff";
         return;
       }
       completeFooter.innerHTML = "";
@@ -1130,10 +1130,71 @@ function renderMembersboard(members) {
     row.appendChild(avatar);
     row.appendChild(info);
     row.appendChild(roleWrap);
+     if (currentboardRole === "owner" && member.role !== "owner") {
+      const kickBtn = document.createElement("button");
+      kickBtn.className = "kick-member-btn";
+      kickBtn.textContent = "✕";
+      kickBtn.title = "Remove member";
+
+      kickBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleKickMember(member.user._id);
+      });
+
+      row.appendChild(kickBtn);
+    }
 
     container.appendChild(row);
   });
 }
+//kick member
+
+async function handleKickMember(userId) {
+  Notiflix.Confirm.show(
+    "Xác nhận",
+    "Bạn chắc chắn muốn xóa thành viên này khỏi board?",
+    "Xóa",
+    "Hủy",
+    async () => {
+      try {
+        Notiflix.Loading.circle("Đang xóa...");
+
+        const res = await fetch(
+          `${API_BASE}/v1/board/${boardId}/members/${userId}`,
+          {
+            method: "DELETE",
+            credentials: "include"
+          }
+        );
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || "Kick member failed");
+        }
+
+        Notiflix.Notify.success("Đã xóa thành viên khỏi board");
+
+        // ✅ Fetch lại danh sách member mới
+        await fetchBoardMembers();
+      } catch (err) {
+        Notiflix.Notify.failure(err.message || "Không thể xóa thành viên");
+        console.error(err);
+      } finally {
+        Notiflix.Loading.remove();
+      }
+    }
+  );
+}
+async function fetchBoardMembers() {
+  const res = await fetch(
+    `${API_BASE}/v1/board/${boardId}/members`,
+    { credentials: "include" }
+  );
+
+  const data = await res.json();
+  renderMembersboard(data.members);
+}
+
 
 //chỉnh role
 document.getElementById("memberForm").addEventListener("change", async (e) => {
@@ -2172,6 +2233,8 @@ function renderActivityText(act) {
       return ` deleted card <b>${act.target.title}</b>`;
     case "CLEAR_CARDS_IN_LIST":
       return ` cleared <b>${act.data.extra.cardCount}</b> cards in list <b>${act.target.title}</b>`;
+    case "DELETE_MEMBER":
+      return `<b>${act.target.title}</b> deleted memmber <b>${act.target.title}</b>`;
     default:
       return ` ${act.action || "did something"}`;
   }
