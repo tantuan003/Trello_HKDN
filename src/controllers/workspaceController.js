@@ -36,10 +36,11 @@ export const getWorkspaceById = async (req, res) => {
 
 
 // 2. Lấy danh sách thành viên theo workspaceId
+// 2. Lấy danh sách thành viên theo workspaceId
 export const getWorkspaceMembers = async (req, res) => {
   try {
     const workspaceId = req.params.workspaceId;
-    const userId = req.user.id; // 🔥 user đang đăng nhập (verifyToken)
+    const userId = req.user.id;
 
     const workspace = await Workspace.findById(workspaceId)
       .populate("owner", "username email avatar")
@@ -56,46 +57,40 @@ export const getWorkspaceMembers = async (req, res) => {
     // Owner
     if (workspace.owner) {
       const ownerId = workspace.owner._id.toString();
-
-      if (ownerId === userId) {
-        currentUserRole = "owner";
-      }
+      if (ownerId === userId) currentUserRole = "owner";
 
       if (!seen.has(ownerId)) {
         allMembers.push({
-          _id: workspace.owner._id,
+          _id: workspace.owner._id,           // userId
           username: workspace.owner.username,
           email: workspace.owner.email,
           avatar: workspace.owner.avatar,
-          role: "owner"
+          role: "owner",
+          memberSubId: null                   // owner không dùng subdoc
         });
         seen.add(ownerId);
       }
     }
 
-    // 👥 Members
+    // Members
     workspace.members.forEach(m => {
       if (!m.user) return;
+      const memberUserId = m.user._id.toString();
+      if (memberUserId === userId) currentUserRole = m.role?.toLowerCase() || "member";
 
-      const memberId = m.user._id.toString();
-
-      if (memberId === userId) {
-        currentUserRole = m.role?.toLowerCase() || "member";
-      }
-
-      if (!seen.has(memberId)) {
+      if (!seen.has(memberUserId)) {
         allMembers.push({
-          _id: m.user._id,
+          _id: m.user._id,                    // userId
           username: m.user.username,
           email: m.user.email,
           avatar: m.user.avatar,
-          role: m.role?.toLowerCase() || "member"
+          role: m.role?.toLowerCase() || "member",
+          memberSubId: m._id                  // ID subdocument trong workspace.members
         });
-        seen.add(memberId);
+        seen.add(memberUserId);
       }
     });
 
-    // ❌ Không phải member
     if (!currentUserRole) {
       return res.status(403).json({ message: "Bạn không thuộc workspace này" });
     }
@@ -103,11 +98,10 @@ export const getWorkspaceMembers = async (req, res) => {
     res.json({
       success: true,
       data: {
-        currentUserRole, // 🔥 FRONTEND CẦN
+        currentUserRole,
         members: allMembers
       }
     });
-
   } catch (err) {
     console.error("ERROR getWorkspaceMembers:", err);
     res.status(500).json({ message: "Server error", error: err.message });
@@ -152,9 +146,9 @@ export const inviteUserByEmail = async (req, res) => {
 
     await workspace.save();
 
-    if (!user.workspaces.includes(workspace._id)) { 
-      user.workspaces.push(workspace._id); 
-      await user.save(); 
+    if (!user.workspaces.includes(workspace._id)) {
+      user.workspaces.push(workspace._id);
+      await user.save();
     }
 
     return res.json({
@@ -316,9 +310,9 @@ export const updateMemberRole = async (req, res) => {
   }
 };
 
-import Board from "../models/BoardModel.js"; 
-import Task from "../models/CardModel.js";  
-import Message from "../models/ListModel.js"; 
+import Board from "../models/BoardModel.js";
+import Task from "../models/CardModel.js";
+import Message from "../models/ListModel.js";
 
 export const deleteWorkspace = async (req, res) => {
   try {
@@ -355,4 +349,30 @@ export const deleteWorkspace = async (req, res) => {
     res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
   }
 };
+
+// controllers/workspaceController.js
+export async function removeMember(req, res) {
+  try {
+    const { workspaceId, memberId } = req.params;
+
+    const workspace = await Workspace.findById(workspaceId);
+    if (!workspace) return res.status(404).json({ message: "Workspace not found" });
+
+    const idx = workspace.members.findIndex(m => m._id.toString() === memberId);
+    if (idx === -1) return res.status(404).json({ message: "Member không tồn tại" });
+
+    // Không cho xóa owner
+    const member = workspace.members[idx];
+    if (member.role === "owner") { return res.status(403).json({ message: "Không thể xóa Owner" }); }
+
+    workspace.members.splice(idx, 1); 
+    await workspace.save();
+
+    return res.json({ message: "Member removed successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+}
+
 
