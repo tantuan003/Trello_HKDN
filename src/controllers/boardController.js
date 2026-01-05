@@ -106,7 +106,7 @@ export const getBoardsByCurrentUser = async (req, res) => {
 export const getBoardById = async (req, res) => {
   try {
     const { boardId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
     const board = await Board.findById(boardId)
       .populate("createdBy", "username email avatar")
@@ -125,12 +125,14 @@ export const getBoardById = async (req, res) => {
 
     let currentUserRole = null;
 
-    /* ===== OWNER ===== */
+    if (board.visibility === "public") {
+      currentUserRole = "null"; 
+    }
+    
     if (board.createdBy?._id.toString() === userId) {
       currentUserRole = "owner";
     }
 
-    /* ===== MEMBER / ADMIN ===== */
     if (!currentUserRole) {
       const member = board.members.find(
         m => m.user?._id.toString() === userId
@@ -141,7 +143,6 @@ export const getBoardById = async (req, res) => {
       }
     }
 
-    /* ===== KHÔNG THUỘC BOARD ===== */
     if (!currentUserRole) {
       return res.status(403).json({ message: "Bạn không thuộc board này" });
     }
@@ -166,8 +167,6 @@ export const getBoardById = async (req, res) => {
     });
   }
 };
-
-
 
 export const getBoardsByWorkspace = async (req, res) => {
   try {

@@ -1248,7 +1248,7 @@ const visibilityMenu = document.getElementById("visibilityMenu");
 visibilityBtn.addEventListener("click", () => {
   moreMenu.classList.add("hidden");
   visibilityMenu.classList.remove("hidden");
-  console.log("visibility hiện tại là ", boardData.visibility)
+  console.log("Visibility: ", boardData.visibility)
   setActiveVisibility(boardData.visibility);
 }
 );
