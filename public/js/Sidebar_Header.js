@@ -195,18 +195,23 @@ async function fetchBoardsForSearch() {
   if (cachedSearchBoards) return cachedSearchBoards;
 
   try {
-    const res = await fetch(`${API_BASE}/v1/board/myboards`, {
-      credentials: "include",
+    const [resMyBoards, resPublicBoards] = await Promise.all([
+      fetch(`${API_BASE}/v1/board/myboards`, { credentials: "include" }),
+      fetch(`${API_BASE}/v1/board/public`, { credentials: "include" })
+    ]);
+
+    const myBoardsJson = await resMyBoards.json();
+    const publicBoardsJson = await resPublicBoards.json();
+
+    const myBoards = Array.isArray(myBoardsJson.data) ? myBoardsJson.data : [];
+    const publicBoards = Array.isArray(publicBoardsJson.data) ? publicBoardsJson.data : [];
+
+    const allBoardsMap = new Map();
+    [...myBoards, ...publicBoards].forEach(b => {
+      if (b?._id) allBoardsMap.set(b._id, b);
     });
 
-    const result = await res.json();
-
-    if (!res.ok || !result.success || !Array.isArray(result.data)) {
-      console.error("Failed to load boards for search:", result);
-      return [];
-    }
-
-    cachedSearchBoards = result.data;
+    cachedSearchBoards = Array.from(allBoardsMap.values());
     return cachedSearchBoards;
 
   } catch (err) {
@@ -262,18 +267,7 @@ async function initGlobalSearch() {
 
     debounceTimer = setTimeout(async () => {
       const boards = await fetchBoardsForSearch();
-      const matches = boards.filter((b) => {
-        const name = normalizeVi(b.name || "");
-        const ws = normalizeVi(b.workspace?.name || "");
-        const keywordMatch = name.includes(keyword) || ws.includes(keyword);
-
-        const isVisible =
-          b.visibility === "public" ||
-          b.visibility === "workspace" ||
-          (b.visibility === "private" && b.owner?._id === currentUserId);
-
-        return keywordMatch && isVisible;
-      });
+      const matches = filterBoardsByVisibility(boards, keyword, currentUserId);
       renderSearchPanel(panel, matches, { mode: "search" });
     }, 200);
   });
@@ -281,6 +275,23 @@ async function initGlobalSearch() {
   document.addEventListener("click", (e) => {
     const isInside = panel.contains(e.target) || input.contains(e.target);
     if (!isInside) panel.classList.remove("is-open");
+  });
+}
+
+function filterBoardsByVisibility(boards, keyword, currentUserId) {
+  const normalizedKeyword = normalizeVi(keyword);
+
+  return boards.filter((b) => {
+    const name = normalizeVi(b.name || "");
+    const ws = normalizeVi(b.workspace?.name || "");
+    const keywordMatch = name.includes(normalizedKeyword) || ws.includes(normalizedKeyword);
+
+    const isVisible =
+      b.visibility === "public" ||
+      (b.visibility === "workspace" && b.workspace?.members?.some(m => m._id === currentUserId)) ||
+      (b.visibility === "private" && b.createdBy?._id === currentUserId);
+
+    return keywordMatch && isVisible;
   });
 }
 

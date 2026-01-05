@@ -1073,7 +1073,7 @@ export const updateListTitle = async (req, res) => {
       target: {
         type: "list",
         id: list._id,
-        title: list.name // snapshot tên mới
+        title: list.name
       },
       data: {
         oldValue: oldName,
@@ -1089,3 +1089,23 @@ export const updateListTitle = async (req, res) => {
     res.status(500).json({ message: "Lỗi server" });
   }
 };
+
+export async function getPublicBoards(req, res) { 
+  try { 
+    const boards = await Board.find({ visibility: "public" })
+    .populate("workspace", "name") 
+    .populate("createdBy", "username email") 
+    .populate("members.user", "username"); 
+
+      res.json({ 
+        success: true, 
+        data: boards 
+      }); 
+    } catch (err) { 
+      console.error("Error fetching public boards:", err); 
+      res.status(500).json({ 
+        success: false, 
+        message: "Lỗi server khi lấy board public" 
+      }); 
+    } 
+  }
