@@ -1,11 +1,30 @@
 import express from "express";
-import { createBoard, getBoardsByCurrentUser, getBoardById, createList, createCard, getCardsByList, inviteUser, getBoardsrecent, getCardById, updateCard, updateCardComplete, getBoardsByWorkspace, clearCardsInList, deleteList, deleteCard, deleteBoard, updateBoardMemberRole, updateBoardTitle, updateBoardVisibility, updateListTitle,removeBoardMember,getBoardMembers } from "../controllers/boardController.js";
-const router = express.Router();
+import { 
+    createBoard,
+    getBoardsByCurrentUser,
+    getBoardById,
+    createList,
+    createCard,
+    getCardsByList,
+    inviteUser,
+    getBoardsrecent,
+    getCardById,
+    updateCard,
+    updateCardComplete,
+    getBoardsByWorkspace,
+    clearCardsInList,
+    deleteList,
+    deleteCard,
+    deleteBoard,updateBoardMemberRole,updateBoardTitle,updateBoardVisibility,updateListTitle, getPublicBoards, removeBoardMember,getBoardMembers } from "../controllers/boardController.js";
+
 import { verifyToken } from "../middlewares/verifyToken.js";
-// POST /v1/board
-router.post("/create", verifyToken, createBoard);
-router.get("/myboards", verifyToken, getBoardsByCurrentUser);
-router.get("/workspace/:workspaceId", verifyToken, getBoardsByWorkspace);
+
+const router = express.Router();
+
+router.post("/create",verifyToken,createBoard);
+router.get("/myboards",verifyToken, getBoardsByCurrentUser);
+router.get("/workspace/:workspaceId",verifyToken, getBoardsByWorkspace);
+router.get("/public", getPublicBoards);
 
 //xoá 
 router.delete("/card/:cardId", verifyToken, deleteCard);
