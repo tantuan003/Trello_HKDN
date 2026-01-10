@@ -15,7 +15,15 @@ import {
     clearCardsInList,
     deleteList,
     deleteCard,
-    deleteBoard,updateBoardMemberRole,updateBoardTitle,updateBoardVisibility,updateListTitle, getPublicBoards, removeBoardMember,getBoardMembers } from "../controllers/boardController.js";
+    deleteBoard,
+    updateBoardMemberRole,
+    updateBoardTitle,
+    updateBoardVisibility,
+    updateListTitle, 
+    getPublicBoards, 
+    removeBoardMember,
+    getBoardMembers 
+} from "../controllers/boardController.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
 
@@ -26,14 +34,11 @@ router.get("/myboards",verifyToken, getBoardsByCurrentUser);
 router.get("/workspace/:workspaceId",verifyToken, getBoardsByWorkspace);
 router.get("/public", getPublicBoards);
 
-//xoá 
 router.delete("/card/:cardId", verifyToken, deleteCard);
 router.delete("/board/:boardId", verifyToken, deleteBoard);
 router.delete("/:listId/clear-cards", verifyToken, clearCardsInList);
 router.delete("/:listId", verifyToken, deleteList);
-// routes/boardRoutes.js
-router.delete("/:boardId/members/:userId",verifyToken,removeBoardMember
-);
+router.delete("/:boardId/members/:userId",verifyToken,removeBoardMember);
 
 //board recent
 router.get("/recent", verifyToken, getBoardsrecent);
