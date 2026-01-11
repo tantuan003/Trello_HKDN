@@ -211,42 +211,52 @@ function attachMemberActions(workspaceId) {
     });
   });
 
-  // Remove member
   document.querySelectorAll(".remove-member").forEach(icon => {
-    icon.addEventListener("click", async (e) => {
-
-      const memberSubId = e.target.dataset.memberId;
-      const userId = e.target.dataset.userId;        
-
-      console.log("Removing:", { workspaceId, memberSubId, userId });
-
-      if (!memberSubId) { 
-        alert("Missing memberSubId."); 
-        return; 
-      }
-
-      const confirmed = confirm("Are you sure you want to remove this member?"); 
-      if (!confirmed) {
-        console.log("Cancelling removing", { workspaceId, memberSubId, userId });
-        return;  
-      }
-
-      try {
-        const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members/${memberSubId}`, {
-          method: "DELETE",
-          credentials: "include"
-        });
-        if (!res.ok) throw new Error("Remove member failed");
-        alert("Member removed!");
-        await loadMembers(workspaceId);
-      } catch (err) {
-        console.error(err);
-        alert("Failed to remove member");
-      }
-    });
+    icon.removeEventListener("click", handleRemoveMember);
+    icon.addEventListener("click", handleRemoveMember);
   });
-}
 
+  async function handleRemoveMember(e) {
+    const btn = e.currentTarget; // icon đang bấm
+    const memberSubId = btn.dataset.memberId;
+    const userId = btn.dataset.userId;
+
+    console.log("Removing:", { workspaceId, memberSubId, userId });
+
+    if (!memberSubId) {
+      alert("Missing memberSubId.");
+      return;
+    }
+
+    const confirmed = confirm("Are you sure you want to remove this member?");
+    if (!confirmed) {
+      console.log("Cancelling removing", { workspaceId, memberSubId, userId });
+      return;
+    }
+
+    btn.disabled = true;
+    btn.title = "Removing...";
+
+    try {
+      const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members/${memberSubId}`, {
+        method: "DELETE",
+        credentials: "include"
+      });
+      if (!res.ok) throw new Error("Remove member failed");
+      alert("Member removed!");
+
+      const memberRow = btn.closest(".member-row");
+      if (memberRow) memberRow.remove();
+
+    } catch (err) {
+      console.error(err);
+      alert("Failed to remove member");
+    } finally {
+      btn.disabled = false;
+      btn.title = "Remove member";
+    }
+  }
+}
 // ---------------- Invite modal ----------------
 function bindInviteModal() {
   const inviteModal = document.getElementById("inviteModal");
