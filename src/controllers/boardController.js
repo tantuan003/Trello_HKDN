@@ -209,7 +209,6 @@ export const createList = async (req, res) => {
     const newList = await List.create({ name, board: boardId, cards: [], createdBy: userId, });
     board.lists.push(newList._id);
     await board.save();
-
     const io = req.app.get("socketio");
     io.to(boardId).emit("newList", newList);
     await logActivity({
@@ -329,6 +328,7 @@ export const getCardById = async (req, res) => {
 };
 
 // mời user
+// mời user
 export const inviteUser = async (req, res) => {
   try {
     const { boardId } = req.params;
@@ -411,13 +411,29 @@ export const inviteUser = async (req, res) => {
 
     await board.save();
 
-    res.status(200).json({
+    // ✅ Lấy lại board đã populate members.user để FE render avatar/username/email ngay
+    const populatedBoard = await Board.findById(boardId).populate({
+      path: "members.user",
+      select: "username email avatar"
+    });
+
+    // ✅ Realtime: đẩy danh sách members mới nhất tới tất cả client đang mở board
+    req.io?.to(boardId.toString()).emit("board:membersUpdated", {
+      boardId: boardId.toString(),
+      members: populatedBoard.members
+    });
+
+    return res.status(200).json({
+      success: true,
       message: "Mời user thành công",
+      members: populatedBoard.members,
+      // giữ lại field member (nếu chỗ nào đó đang dùng)
       member: {
         user: {
           _id: user._id,
           username: user.username,
-          email: user.email
+          email: user.email,
+          avatar: user.avatar
         },
         role: "member"
       }
@@ -425,7 +441,7 @@ export const inviteUser = async (req, res) => {
 
   } catch (err) {
     console.error("❌ inviteUser error:", err);
-    res.status(500).json({ message: "Lỗi server" });
+    return res.status(500).json({ message: "Lỗi server" });
   }
 };
 
@@ -1041,6 +1057,59 @@ export const updateBoardVisibility = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+export const updateBoardBackground = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const { background } = req.body;
+    const userId = req.user?.id;
+
+    const allowGradients = [
+      "gradient-1", "gradient-2", "gradient-3", "gradient-4", "gradient-5", "gradient-6", "gradient-7"
+    ];
+
+    const isGradient = typeof background === "string" && allowGradients.includes(background);
+    const isImage =
+      typeof background === "string" &&
+      (background.startsWith("/uploads/") || background.startsWith("http://") || background.startsWith("https://"));
+
+    if (!isGradient && !isImage) {
+      return res.status(400).json({ success: false, message: "Background không hợp lệ" });
+    }
+
+    // 권한: owner/admin (giống style updateBoardTitle: members.$elemMatch) :contentReference[oaicite:4]{index=4}
+    const board = await Board.findOne({
+      _id: boardId,
+      members: {
+        $elemMatch: { user: userId, role: { $in: ["owner", "admin"] } }
+      }
+    });
+
+    if (!board) {
+      return res.status(403).json({ success: false, message: "Bạn không có quyền đổi background" });
+    }
+
+    const oldBg = board.background;
+    board.background = background;
+    await board.save();
+
+    io.to(boardId).emit("board:backgroundUpdated", { boardId, background });
+
+    await logActivity({
+      boardId: board._id,
+      userId,
+      action: "BOARD_BACKGROUND_CHANGE",
+      target: { type: "board", id: board._id, title: board.name },
+      data: { oldValue: oldBg, newValue: background }
+    });
+
+    return res.json({ success: true, background: board.background });
+  } catch (err) {
+    console.error("updateBoardBackground error:", err);
+    return res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};
+
 
 // sửa têm list
 export const updateListTitle = async (req, res) => {
