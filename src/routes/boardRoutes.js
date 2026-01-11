@@ -1,7 +1,4 @@
 import express from "express";
-import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard,deleteBoard,updateBoardMemberRole,updateBoardTitle,updateBoardVisibility,updateListTitle,updateBoardBackground,
-  uploadBackground } from "../controllers/boardController.js";
-const router = express.Router();
 import { 
     createBoard,
     getBoardsByCurrentUser,
@@ -18,7 +15,16 @@ import {
     clearCardsInList,
     deleteList,
     deleteCard,
-    deleteBoard,updateBoardMemberRole,updateBoardTitle,updateBoardVisibility,updateListTitle, getPublicBoards, removeBoardMember,getBoardMembers } from "../controllers/boardController.js";
+    deleteBoard,
+    updateBoardMemberRole,
+    updateBoardTitle,
+    updateBoardVisibility,
+    updateListTitle, 
+    getPublicBoards, 
+    removeBoardMember,
+    getBoardMembers,updateBoardBackground,uploadBackground
+
+} from "../controllers/boardController.js";
 
 import { verifyToken } from "../middlewares/verifyToken.js";
 
