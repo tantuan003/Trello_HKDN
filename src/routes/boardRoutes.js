@@ -1,4 +1,7 @@
 import express from "express";
+import { createBoard,getBoardsByCurrentUser,getBoardById,createList,createCard,getCardsByList,inviteUser,getBoardsrecent,getCardById,updateCard,updateCardComplete,getBoardsByWorkspace,clearCardsInList,deleteList,deleteCard,deleteBoard,updateBoardMemberRole,updateBoardTitle,updateBoardVisibility,updateListTitle,updateBoardBackground,
+  uploadBackground } from "../controllers/boardController.js";
+const router = express.Router();
 import { 
     createBoard,
     getBoardsByCurrentUser,
@@ -57,6 +60,10 @@ router.put("/:boardId/member-role", verifyToken, updateBoardMemberRole);
 
 //chỉnh tên board
 router.put("/:boardId/title", verifyToken, updateBoardTitle);
+//
+
+router.put("/:boardId/background", verifyToken, updateBoardBackground);
+router.post("/background/upload", verifyToken, uploadBackground);
 //chỉnh visibility
 router.put("/:boardId/visibility", verifyToken, updateBoardVisibility);
 
