@@ -106,7 +106,7 @@ export const getBoardsByCurrentUser = async (req, res) => {
 export const getBoardById = async (req, res) => {
   try {
     const { boardId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
     const board = await Board.findById(boardId)
       .populate("createdBy", "username email avatar")
@@ -125,12 +125,14 @@ export const getBoardById = async (req, res) => {
 
     let currentUserRole = null;
 
-    /* ===== OWNER ===== */
+    if (board.visibility === "public") {
+      currentUserRole = "null"; 
+    }
+    
     if (board.createdBy?._id.toString() === userId) {
       currentUserRole = "owner";
     }
 
-    /* ===== MEMBER / ADMIN ===== */
     if (!currentUserRole) {
       const member = board.members.find(
         m => m.user?._id.toString() === userId
@@ -141,7 +143,6 @@ export const getBoardById = async (req, res) => {
       }
     }
 
-    /* ===== KHÔNG THUỘC BOARD ===== */
     if (!currentUserRole) {
       return res.status(403).json({ message: "Bạn không thuộc board này" });
     }
@@ -166,8 +167,6 @@ export const getBoardById = async (req, res) => {
     });
   }
 };
-
-
 
 export const getBoardsByWorkspace = async (req, res) => {
   try {
@@ -343,6 +342,12 @@ export const inviteUser = async (req, res) => {
     const board = await Board.findById(boardId);
     if (!board) {
       return res.status(404).json({ message: "Board không tồn tại" });
+    }
+
+    if (board.visibility === "private") {
+      return res.status(403).json({
+        message: "Board private, không thể mời thành viên"
+      });
     }
 
     // 1️⃣ Check quyền inviter trong board
@@ -1136,7 +1141,7 @@ export const updateListTitle = async (req, res) => {
       target: {
         type: "list",
         id: list._id,
-        title: list.name // snapshot tên mới
+        title: list.name
       },
       data: {
         oldValue: oldName,
@@ -1150,5 +1155,117 @@ export const updateListTitle = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+export async function getPublicBoards(req, res) { 
+  try { 
+    const boards = await Board.find({ visibility: "public" })
+    .populate("workspace", "name") 
+    .populate("createdBy", "username email") 
+    .populate("members.user", "username"); 
+
+      res.json({ 
+        success: true, 
+        data: boards 
+      }); 
+    } catch (err) { 
+      console.error("Error fetching public boards:", err); 
+      res.status(500).json({ 
+        success: false, 
+        message: "Lỗi server khi lấy board public" 
+      }); 
+    } 
+  }
+export const removeBoardMember = async (req, res) => {
+  try {
+    const { boardId, userId } = req.params;
+    const requesterId = req.user.id;
+
+    const board = await Board.findById(boardId).populate(
+      "members.user",
+      "username email"
+    );
+
+    if (!board) {
+      return res.status(404).json({ message: "Board not found" });
+    }
+
+    // 🔒 Check quyền: chỉ OWNER
+    const requester = board.members.find(
+      m => m.user._id.toString() === requesterId
+    );
+
+    if (!requester || requester.role !== "owner") {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    // ❌ Không cho xoá owner
+    const targetMember = board.members.find(
+      m => m.user._id.toString() === userId
+    );
+
+    if (!targetMember) {
+      return res.status(404).json({ message: "Member not found" });
+    }
+
+    if (targetMember.role === "owner") {
+      return res.status(400).json({ message: "Cannot remove owner" });
+    }
+
+    // 🧹 Remove member
+    board.members = board.members.filter(
+      m => m.user._id.toString() !== userId
+    );
+
+    await board.save();
+
+    // 📝 Log activity
+    await logActivity({
+      boardId: board._id,
+      userId: requesterId, // ✅ actor
+      action: "DELETE_MEMBER",
+      target: {
+        type: "board-member",
+        id: userId,
+        title: targetMember.user.username // ✅ snapshot tên user
+      }
+    });
+
+    return res.json({ message: "Member removed successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getBoardMembers = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const userId = req.user.id;
+
+    const board = await Board.findById(boardId)
+      .select("members")
+      .populate("members.user", "username email avatar");
+
+    if (!board) {
+      return res.status(404).json({ message: "Board not found" });
+    }
+
+    // 🔒 Check: user phải là member của board
+    const isMember = board.members.some(
+      m => m.user._id.toString() === userId
+    );
+
+    if (!isMember) {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    return res.json({
+      members: board.members
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
   }
 };

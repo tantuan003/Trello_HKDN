@@ -46,7 +46,6 @@ loginButton.addEventListener('click', async (e) => {
         localStorage.setItem('token', result.token);
       }
 
-      // Chuyển hướng sau khi hiển thị thông báo một chút
       setTimeout(() => {
         window.location.href = '/home.html';
       }, 1000);
