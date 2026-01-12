@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <title>Trello – Members</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css" />
 
-    <!-- CSS FILES -->
     <link rel="stylesheet" href="css/nav.css">
     <link rel="stylesheet" href="css/members.css">
 </head>
@@ -16,38 +16,50 @@
 
     <div id="app">
 
-        <!-- SIDEBAR -->
         <div id="nav-container"></div>
 
-        <!-- MAIN CONTENT -->
         <main class="main-content">
-                <div class="members-header">
-                    <h2>Members</h2>
-                    <button class="invite-btn"><i class="fas fa-envelope"></i> Invite workspace members</button>
-                </div>
-                
-                <div class="members-desc">
-                    Invite and manage workspace members.
-                </div>
-                
-                <div class="members-list">
-                    <!-- Members sẽ load từ API -->
-                </div>
+            <div class="members-header">
+                <h2>Members</h2>
+                <button class="invite-btn"><i class="fas fa-envelope"></i> Invite Workspace Members</button>
+            </div>
+
+            <div class="members-desc">
+                Invite and manage workspace members.
+            </div>
+
+            <div class="members-list">
+                <!-- Members loading ... -->
+            </div>
         </main>
 
         <!-- Invite Modal -->
         <div id="inviteModal" class="modal">
             <div class="modal-content">
                 <span class="close">&times;</span>
-                <h3>Invite to workspace</h3>
-                <input type="email" id="inviteEmail" placeholder="Email address"/>
+                <h3>Invite to Workspace</h3>
+                <input type="email" id="inviteEmail" placeholder="Email address" />
                 <button id="sendInvite">Invite</button>
+            </div>
+        </div>
+
+        <!-- Confirm Delete Modal -->
+        <div id="confirm-modal" class="confirm-overlay hidden">
+            <div class="confirm-modal">
+                <h3>Confirm to remove member?</h3>
+                <p>...</p>
+
+                <div class="confirm-actions">
+                    <button id="confirm-cancel" class="btn-outline">Cancel</button>
+                    <button id="confirm-ok" class="btn-danger">Yes</button>
+                </div>
             </div>
         </div>
 
     </div>
     <script src="js/nav.js"></script>
     <script type="module" src="js/members.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
 </body>
 
 </html>

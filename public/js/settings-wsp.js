@@ -1,14 +1,9 @@
-// Chỉ khai báo biến visibility ở đây, workspaceId sẽ lấy từ nav.js hoặc từ API
 let currentVisibility = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-  // Load nav và highlight menu
   await loadNav("settings-wsp");
-
-  // Load workspace info
   await loadWorkspaceForSettings();
 
-  // Dropdown toggle
   const changeBtn = document.getElementById("change-visibility-btn");
   const dropdown = document.querySelector(".dropdown");
   const dropdownContent = document.querySelector(".dropdown-content");
@@ -21,14 +16,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   document.addEventListener("click", (e) => {
     if (dropdownContent && dropdownContent.classList.contains("show")) {
-      // nếu click không nằm trong dropdown
       if (!dropdown.contains(e.target)) {
         dropdownContent.classList.remove("show");
       }
     }
   });
 
-  // Dropdown item click
   document.querySelectorAll(".dropdown-item").forEach(item => {
     item.addEventListener("click", async () => {
       const newVisibility = item.dataset.value.toLowerCase();
@@ -37,11 +30,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 
-  // Edit workspace name
   const editBtn = document.getElementById("editWorkspaceName");
   const wsNameDiv = document.getElementById("ws-name");
   if (editBtn && wsNameDiv) {
     editBtn.addEventListener("click", () => enterEditMode(wsNameDiv.textContent));
+  }
+
+  const deleteBtn = document.querySelector(".delete-workspace");
+  if (deleteBtn) {
+    deleteBtn.addEventListener("click", async () => {
+      const wsId = localStorage.getItem("currentWorkspaceId");
+      if (!wsId) {
+        showToast("No workspace selected!", "error");
+        return;
+      }
+      try {
+        const res = await fetch(`http://localhost:8127/v1/workspace/${wsId}`, { credentials: "include" });
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        const workspace = await res.json();
+        openDeleteModal(wsId, workspace.name);
+      } catch (err) {
+        console.error("Error fetching workspace:", err);
+        showToast("Error fetching workspace info!", "error");
+      }
+    });
   }
 });
 
@@ -50,42 +62,35 @@ async function loadWorkspaceForSettings() {
   try {
     const res = await fetch("http://localhost:8127/v1/workspace", { credentials: "include" });
     const workspaces = await res.json();
-
     if (!Array.isArray(workspaces) || workspaces.length === 0) {
       throw new Error("No workspace found");
     }
 
-    // Lấy workspaceId từ URL hoặc localStorage
     let wsId = new URLSearchParams(window.location.search).get("ws") || localStorage.getItem("currentWorkspaceId");
     let workspace = workspaces.find(ws => ws._id === wsId) || workspaces[0];
 
-    // Lưu workspaceId vào localStorage để nav.js dùng chung
     localStorage.setItem("currentWorkspaceId", workspace._id);
-
     currentVisibility = workspace.visibility.toLowerCase();
 
-    // Update URL
     const url = new URL(window.location);
     url.searchParams.set("ws", workspace._id);
     window.history.replaceState({}, "", url);
 
-    // Hiển thị tên workspace
     const wsNameDiv = document.getElementById("ws-name");
     if (wsNameDiv) wsNameDiv.textContent = workspace.name;
 
-    // Hiển thị trạng thái visibility
     updateVisibilityUI(currentVisibility);
     updateWsVisibility(currentVisibility);
   } catch (err) {
     console.error("Error loading workspace:", err);
-    alert("Error loading workspace: " + err.message);
+    showToast("Error loading workspace: " + err.message, "error");
   }
 }
 
 // ---------------- Visibility ----------------
 async function updateVisibilityOnServer(newVisibility) {
   const wsId = localStorage.getItem("currentWorkspaceId");
-  if (!wsId) return alert("Workspace ID not found!");
+  if (!wsId) return showToast("Workspace ID not found!", "error");
 
   try {
     const res = await fetch(`http://localhost:8127/v1/workspace/${wsId}/update-visibility`, {
@@ -100,13 +105,15 @@ async function updateVisibilityOnServer(newVisibility) {
       currentVisibility = newVisibility;
       updateVisibilityUI(newVisibility);
       updateWsVisibility(newVisibility);
-      alert("Workspace visibility updated successfully.");
+      showToast("Workspace visibility updated successfully", "success");
+    } else if (res.status === 403) {
+      showToast("You are not owner of this workspace", "error");
     } else {
-      alert("Failed to update visibility: " + (data.message || "Unknown error"));
+      showToast("Failed to update visibility: " + (data.message || "Unknown error"), "error");
     }
   } catch (err) {
     console.error("Error updating visibility:", err);
-    alert("Error updating visibility.");
+    showToast("Error updating visibility", "error");
   }
 }
 
@@ -127,12 +134,9 @@ function updateVisibilityUI(visibility) {
 function updateWsVisibility(visibility) {
   const wsVisibilityDiv = document.querySelector(".ws-visibility");
   if (!wsVisibilityDiv) return;
-
-  if (visibility === "private") {
-    wsVisibilityDiv.innerHTML = '<i class="fas fa-lock"></i> <span>Private</span>';
-  } else {
-    wsVisibilityDiv.innerHTML = '<i class="fas fa-globe"></i> <span>Public</span>';
-  }
+  wsVisibilityDiv.innerHTML = visibility === "private"
+    ? '<i class="fas fa-lock"></i> <span>Private</span>'
+    : '<i class="fas fa-globe"></i> <span>Public</span>';
 }
 
 // ---------------- Edit workspace name ----------------
@@ -140,7 +144,6 @@ function enterEditMode(oldName) {
   const wsNameWrapper = document.querySelector(".ws-name-wrapper");
   if (!wsNameWrapper) return;
 
-  // Ẩn icon edit khi vào chế độ edit
   const editBtn = document.getElementById("editWorkspaceName");
   if (editBtn) editBtn.style.display = "none";
 
@@ -186,10 +189,7 @@ function enterEditMode(oldName) {
 function saveWorkspaceName(newName, oldName) {
   if (!newName.trim()) return;
   const wsId = localStorage.getItem("currentWorkspaceId");
-  if (!wsId) {
-    alert("Workspace ID not found!");
-    return;
-  }
+  if (!wsId) return showToast("Workspace ID not found!", "error");
 
   fetch(`http://localhost:8127/v1/workspace/${wsId}/update-name`, {
     method: "PUT",
@@ -203,19 +203,20 @@ function saveWorkspaceName(newName, oldName) {
         restoreSpan(newName);
         const wsTitleEl = document.querySelector(".workspace-title");
         if (wsTitleEl) {
-          wsTitleEl.innerHTML = `
-            <span class="ws-icon">${newName.charAt(0).toUpperCase()}</span>
-            ${newName}
-          `;
+          wsTitleEl.innerHTML = `<span class="ws-icon">${newName.charAt(0).toUpperCase()}</span>${newName}`;
         }
+        showToast("Workspace name updated successfully", "success");
+      } else if (res.status === 403) {
+        showToast("You are not owner of this workspace", "error");
+        restoreSpan(oldName);
       } else {
-        alert("Failed to update workspace name!");
+        showToast(data.message || "Failed to update workspace name", "error");
         restoreSpan(oldName);
       }
     })
     .catch(err => {
       console.error(err);
-      alert("Error connecting to server!");
+      showToast("Error connecting to server", "error");
       restoreSpan(oldName);
     });
 }
@@ -228,39 +229,11 @@ function restoreSpan(name) {
   const wrapper = document.getElementById("ws-edit-wrapper");
   if (wrapper) wrapper.replaceWith(span);
 
-  // Hiện lại icon edit khi thoát chế độ edit
   const editBtn = document.getElementById("editWorkspaceName");
   if (editBtn) editBtn.style.display = "inline-block";
 }
 
-// ---------------- Gắn sự kiện cho nút delete ----------------
-const deleteBtn = document.querySelector(".delete-workspace");
-if (deleteBtn) {
-  deleteBtn.addEventListener("click", async () => {
-    const wsId = localStorage.getItem("currentWorkspaceId"); // lấy workspace hiện tại
-    if (!wsId) {
-      alert("No workspace selected!");
-      return;
-    }
-
-    try {
-      // Lấy thông tin workspace để hiển thị tên
-      const res = await fetch(`http://localhost:8127/v1/workspace/${wsId}`, {
-        credentials: "include"
-      });
-      if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const workspace = await res.json();
-
-      // mở modal confirm xoá, truyền id và tên
-      openDeleteModal(wsId, workspace.name);
-    } catch (err) {
-      console.error("Error fetching workspace:", err);
-      alert("Error fetching workspace info!");
-    }
-  });
-}
-
-// ---------------- Hàm mở modal xoá workspace ----------------
+// ---------------- Delete workspace ----------------
 function openDeleteModal(wsId, wsName) {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -295,7 +268,6 @@ function openDeleteModal(wsId, wsName) {
 
   setTimeout(() => overlay.classList.add("show"), 10);
 
-  // Đóng modal
   closeBtn.addEventListener("click", () => {
     overlay.classList.remove("show");
     setTimeout(() => overlay.remove(), 300);
@@ -307,18 +279,11 @@ function openDeleteModal(wsId, wsName) {
     }
   });
 
-  // Kiểm tra input
   input.addEventListener("input", () => {
-    if (input.value.trim() === wsName) {
-      confirmBtn.disabled = false;
-      confirmBtn.classList.add("enabled");
-    } else {
-      confirmBtn.disabled = true;
-      confirmBtn.classList.remove("enabled");
-    }
+    confirmBtn.disabled = input.value.trim() !== wsName;
+    confirmBtn.classList.toggle("enabled", input.value.trim() === wsName);
   });
 
-  // Xác nhận xoá
   confirmBtn.addEventListener("click", async () => {
     try {
       const res = await fetch(`http://localhost:8127/v1/workspace/${wsId}`, {
@@ -326,26 +291,25 @@ function openDeleteModal(wsId, wsName) {
         credentials: "include"
       });
       const data = await res.json();
-
       if (res.ok && data.success) {
-        alert("Workspace deleted successfully!");
-        window.location.href = "/home.html"; // redirect sau khi xoá
+        showToast("Workspace deleted successfully!", "success");
+        window.location.href = "/home.html";
       } else {
-        alert(data.message || "Failed to delete workspace!");
+        showToast(data.message || "Failed to delete workspace!", "error");
       }
     } catch (err) {
       console.error(err);
-      alert("Error connecting to server!");
+      showToast("Error connecting to server!", "error");
     }
-
     overlay.classList.remove("show");
     setTimeout(() => overlay.remove(), 300);
   });
 }
 
-
-
-
-
-
-
+// ---------------- Toastify helper ----------------
+function showToast(message, type = "info") {
+  let bg = "linear-gradient(to right, #2193b0, #6dd5ed)";
+  if (type === "success") bg = "linear-gradient(to right, #4caf50, #2e7d32)";
+  else if (type === "error") bg = "linear-gradient(to right, #f87171, #ef4444)";
+  Toastify({ text: message, duration: 3000, gravity: "top", position: "right", close: true, style: { background: bg } }).showToast();
+}

@@ -1,7 +1,9 @@
 import Workspace from "../models/Workspace.js";
 import User from "../models/UserModel.js";
+import Board from "../models/BoardModel.js";
+import Task from "../models/CardModel.js";
+import Message from "../models/ListModel.js";
 
-// 1. Lấy tất cả workspace của user đang login
 export const getUserWorkspaces = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -15,12 +17,10 @@ export const getUserWorkspaces = async (req, res) => {
 
     res.json(workspaces);
   } catch (err) {
-    res.status(500).json({ message: "Lỗi server", error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 };
 
-
-// 
 export const getWorkspaceById = async (req, res) => {
   try {
     const { workspaceId } = req.params;
@@ -34,9 +34,6 @@ export const getWorkspaceById = async (req, res) => {
   }
 };
 
-
-// 2. Lấy danh sách thành viên theo workspaceId
-// 2. Lấy danh sách thành viên theo workspaceId
 export const getWorkspaceMembers = async (req, res) => {
   try {
     const workspaceId = req.params.workspaceId;
@@ -54,25 +51,23 @@ export const getWorkspaceMembers = async (req, res) => {
     const allMembers = [];
     let currentUserRole = null;
 
-    // Owner
     if (workspace.owner) {
       const ownerId = workspace.owner._id.toString();
       if (ownerId === userId) currentUserRole = "owner";
 
       if (!seen.has(ownerId)) {
         allMembers.push({
-          _id: workspace.owner._id,           // userId
+          _id: workspace.owner._id,
           username: workspace.owner.username,
           email: workspace.owner.email,
           avatar: workspace.owner.avatar,
           role: "owner",
-          memberSubId: null                   // owner không dùng subdoc
+          memberSubId: null
         });
         seen.add(ownerId);
       }
     }
 
-    // Members
     workspace.members.forEach(m => {
       if (!m.user) return;
       const memberUserId = m.user._id.toString();
@@ -80,19 +75,19 @@ export const getWorkspaceMembers = async (req, res) => {
 
       if (!seen.has(memberUserId)) {
         allMembers.push({
-          _id: m.user._id,                    // userId
+          _id: m.user._id,
           username: m.user.username,
           email: m.user.email,
           avatar: m.user.avatar,
           role: m.role?.toLowerCase() || "member",
-          memberSubId: m._id                  // ID subdocument trong workspace.members
+          memberSubId: m._id
         });
         seen.add(memberUserId);
       }
     });
 
     if (!currentUserRole) {
-      return res.status(403).json({ message: "Bạn không thuộc workspace này" });
+      return res.status(403).json({ message: "You are not part of this workspace" });
     }
 
     res.json({
@@ -108,36 +103,32 @@ export const getWorkspaceMembers = async (req, res) => {
   }
 };
 
-
-// 3. Mời user vào workspace theo email
 export const inviteUserByEmail = async (req, res) => {
   try {
     const { workspaceId } = req.params;
     const { email, role } = req.body;
 
-    if (!workspaceId) return res.status(400).json({ message: "workspaceId thiếu" });
-    if (!email) return res.status(400).json({ message: "Email thiếu" });
+    if (!workspaceId) return res.status(400).json({ message: "Missing workspaceId" });
+    if (!email) return res.status(400).json({ message: "Missing email" });
 
     const workspace = await Workspace.findById(workspaceId);
     if (!workspace) {
-      return res.status(404).json({ success: false, message: "Workspace không tồn tại" });
+      return res.status(404).json({ success: false, message: "Workspace does not exist" });
     }
 
     const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user || !user._id) {
-      return res.status(404).json({ success: false, message: "User không tồn tại hoặc không hợp lệ" });
+      return res.status(404).json({ success: false, message: "User does not exist or is invalid" });
     }
 
-    // ✅ Kiểm tra user đã có trong workspace chưa
     const isMember = workspace.members.some(m => {
       const memberId = m.user?._id ? m.user._id.toString() : m.user?.toString();
       return memberId === user._id.toString();
     });
     if (isMember) {
-      return res.status(400).json({ success: false, message: "User đã có trong workspace" });
+      return res.status(400).json({ success: false, message: "User is already a member of this workspace" });
     }
 
-    // 🔹 Thêm user vào members
     workspace.members.push({
       user: user._id,
       role: role || "member",
@@ -153,7 +144,7 @@ export const inviteUserByEmail = async (req, res) => {
 
     return res.json({
       success: true,
-      message: `Đã mời ${user.username} vào workspace với vai trò ${role || "member"}`,
+      message: `Invited ${user.username} to the workspace as ${role || "member"}`,
       invitedUser: {
         _id: user._id,
         username: user.username,
@@ -163,12 +154,10 @@ export const inviteUserByEmail = async (req, res) => {
     });
   } catch (err) {
     console.error("ERROR inviteUserByEmail:", err);
-    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
 };
 
-
-// 4. Cập nhật tên workspace
 export const updateWorkspaceName = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -184,16 +173,15 @@ export const updateWorkspaceName = async (req, res) => {
       return res.status(404).json({ success: false, message: "Workspace not found" });
     }
 
-    // Kiểm tra quyền user
-    const members = Array.isArray(workspace.members) ? workspace.members : [];
-    const isMember = members.some(m => m && m.toString() === userId.toString());
-    const isOwner = workspace.ownerId && workspace.ownerId.toString() === userId.toString();
+    const isOwner = workspace.owner && workspace.owner.toString() === userId.toString();
+    const isMember = workspace.members.some(
+      m => m.user && m.user.toString() === userId.toString()
+    );
 
     if (!isOwner && !isMember) {
       return res.status(403).json({ success: false, message: "No permission to update this workspace" });
     }
 
-    // Cập nhật tên workspace
     workspace.name = name;
     await workspace.save();
 
@@ -204,10 +192,9 @@ export const updateWorkspaceName = async (req, res) => {
   }
 };
 
-// 5. Cập nhật trạng thái công khai/riêng tư của workspace
 export const updateWorkspaceVisibility = async (req, res) => {
   try {
-    const userId = req.user._id;  // user được xác thực từ middleware verifyToken
+    const userId = req.user._id;
     const { workspaceId } = req.params;
     const { visibility } = req.body;
 
@@ -220,7 +207,6 @@ export const updateWorkspaceVisibility = async (req, res) => {
       return res.status(404).json({ success: false, message: "Workspace not found" });
     }
 
-    // Kiểm tra quyền: chỉ owner mới được đổi visibility
     if (workspace.owner.toString() !== userId.toString()) {
       return res.status(403).json({ success: false, message: "No permission to update visibility" });
     }
@@ -243,7 +229,6 @@ export const createWorkspace = async (req, res) => {
     if (!userId) return res.status(401).json({ message: "Unauthorized" });
     if (!name) return res.status(400).json({ message: "Workspace name is required" });
 
-    // Tạo workspace mới
     const workspace = new Workspace({
       name,
       owner: userId,
@@ -259,7 +244,6 @@ export const createWorkspace = async (req, res) => {
 
     await workspace.save();
 
-    // Cập nhật user để lưu reference workspace
     const user = await User.findById(userId);
     if (user) {
       user.workspaces.push(workspace._id);
@@ -268,7 +252,6 @@ export const createWorkspace = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: "Workspace created successfully",
       data: workspace
     });
 
@@ -278,31 +261,29 @@ export const createWorkspace = async (req, res) => {
   }
 };
 
-// edit role cho workspace owner
-
 export const updateMemberRole = async (req, res) => {
   try {
     const { workspaceId, memberId } = req.params;
     const { role } = req.body;
 
     if (!["admin", "member"].includes(role)) {
-      return res.status(400).json({ message: "Role không hợp lệ" });
+      return res.status(400).json({ message: "Invalid role" });
     }
 
-    const workspace = req.workspace; // từ middleware checkOwnerWorkspace
+    const workspace = req.workspace;
 
     const member = workspace.members.find(
       m => m.user.toString() === memberId
     );
 
     if (!member) {
-      return res.status(404).json({ message: "Member không tồn tại" });
+      return res.status(404).json({ message: "Member not found" });
     }
 
     member.role = role;
     await workspace.save();
 
-    res.json({ success: true, message: "Cập nhật role thành công" });
+    res.json({ success: true, message: "Role updated successfully" });
 
   } catch (err) {
     console.error("updateMemberRole error:", err);
@@ -310,47 +291,38 @@ export const updateMemberRole = async (req, res) => {
   }
 };
 
-import Board from "../models/BoardModel.js";
-import Task from "../models/CardModel.js";
-import Message from "../models/ListModel.js";
-
 export const deleteWorkspace = async (req, res) => {
   try {
     const { workspaceId } = req.params;
-    const userId = req.user._id; // user đang đăng nhập
+    const userId = req.user._id;
 
     const workspace = await Workspace.findById(workspaceId);
     if (!workspace) {
-      return res.status(404).json({ success: false, message: "Workspace không tồn tại" });
+      return res.status(404).json({ success: false, message: "Workspace does not exist" });
     }
 
-    // Chỉ owner mới được xóa
     if (workspace.owner.toString() !== userId.toString()) {
-      return res.status(403).json({ success: false, message: "Bạn không có quyền xóa workspace này" });
+      return res.status(403).json({ success: false, message: "You do not have permission to delete this workspace" });
     }
 
-    // Xóa các dữ liệu liên quan
     await Board.deleteMany({ workspace: workspaceId });
     await Task.deleteMany({ workspace: workspaceId });
     await Message.deleteMany({ workspace: workspaceId });
 
-    // Gỡ workspace khỏi tất cả user
     await User.updateMany(
       { workspaces: workspaceId },
       { $pull: { workspaces: workspaceId } }
     );
 
-    // Xóa workspace chính
     await Workspace.findByIdAndDelete(workspaceId);
 
-    return res.json({ success: true, message: "Xóa workspace và dữ liệu liên quan thành công" });
+    return res.json({ success: true, message: "Workspace and related data deleted successfully" });
   } catch (err) {
     console.error("ERROR deleteWorkspace:", err);
-    res.status(500).json({ success: false, message: "Lỗi server", error: err.message });
+    res.status(500).json({ success: false, message: "Server error", error: err.message });
   }
 };
 
-// controllers/workspaceController.js
 export async function removeMember(req, res) {
   try {
     const { workspaceId, memberId } = req.params;
@@ -359,13 +331,14 @@ export async function removeMember(req, res) {
     if (!workspace) return res.status(404).json({ message: "Workspace not found" });
 
     const idx = workspace.members.findIndex(m => m._id.toString() === memberId);
-    if (idx === -1) return res.status(404).json({ message: "Member không tồn tại" });
+    if (idx === -1) return res.status(404).json({ message: "Member not found" });
 
-    // Không cho xóa owner
     const member = workspace.members[idx];
-    if (member.role === "owner") { return res.status(403).json({ message: "Không thể xóa Owner" }); }
+    if (member.role === "owner") {
+      return res.status(403).json({ message: "Cannot remove the owner" });
+    }
 
-    workspace.members.splice(idx, 1); 
+    workspace.members.splice(idx, 1);
     await workspace.save();
 
     return res.json({ message: "Member removed successfully" });
@@ -374,5 +347,3 @@ export async function removeMember(req, res) {
     return res.status(500).json({ message: "Server error" });
   }
 }
-
-

@@ -6,7 +6,6 @@ document.addEventListener("DOMContentLoaded", async () => {
   bindInviteModal();
 });
 
-// ---------------- Init Members Page ----------------
 async function initMembersPage() {
   try {
     const resUser = await fetch(`${API_BASE}/v1/User/me`, { credentials: "include" });
@@ -17,9 +16,7 @@ async function initMembersPage() {
     }
 
     let wsId = new URLSearchParams(window.location.search).get("ws") || localStorage.getItem("currentWorkspaceId");
-
     let workspace = user.workspaces.find(ws => ws._id === wsId) || user.workspaces[0];
-
 
     currentWorkspaceId = workspace._id;
     localStorage.setItem("currentWorkspaceId", currentWorkspaceId);
@@ -46,7 +43,6 @@ async function initMembersPage() {
         if (ws._id === currentWorkspaceId) div.classList.add("active");
 
         div.addEventListener("click", () => {
-
           currentWorkspaceId = ws._id;
           localStorage.setItem("currentWorkspaceId", currentWorkspaceId);
 
@@ -75,7 +71,6 @@ async function initMembersPage() {
   }
 }
 
-// ---------------- Load members ----------------
 async function loadMembers(workspaceId) {
   const membersContainer = document.querySelector(".members-list");
 
@@ -86,8 +81,6 @@ async function loadMembers(workspaceId) {
     const response = await res.json();
     window.currentWorkspaceRole = response.data.currentUserRole;
     const members = response.data.members;
-
-    console.log("Members: ", members);
 
     membersContainer.innerHTML = "";
 
@@ -100,7 +93,6 @@ async function loadMembers(workspaceId) {
       const div = document.createElement("div");
       div.className = "member-row";
 
-      // Avatar
       const avatar = document.createElement("div");
       avatar.className = "avatar";
       if (member.avatar) {
@@ -114,7 +106,6 @@ async function loadMembers(workspaceId) {
         avatar.textContent = "?";
       }
 
-      // Info
       const infoHTML = `
         <div class="member-info">
           <div class="name">${member.username}</div>
@@ -122,7 +113,6 @@ async function loadMembers(workspaceId) {
         </div>
       `;
 
-      // Actions : only members
       let actionsHTML = "";
       if (member.role.toLowerCase() !== "owner") {
         actionsHTML = `
@@ -153,111 +143,196 @@ async function loadMembers(workspaceId) {
   }
 }
 
-// ---------------- Edit/Remove actions ----------------
 function attachMemberActions(workspaceId) {
   document.querySelectorAll(".edit-role").forEach(icon => {
     icon.addEventListener("click", (e) => {
       const userId = e.target.dataset.userId;
       const currentRole = e.target.dataset.currentRole.toLowerCase();
+      const myRole = window.currentWorkspaceRole.toLowerCase();
 
-      // Show dropdown
-      const select = document.createElement("select");
-      select.className = "role-select";
-      select.dataset.userId = userId;
-      select.innerHTML = `
-      <option value="member" ${currentRole === "member" ? "selected" : ""}>Member</option>
-      <option value="admin" ${currentRole === "admin" ? "selected" : ""}>Admin</option>
-    `;
+      let canEdit = false;
+      if (myRole === "owner") canEdit = true;
+      else if (myRole === "admin" && currentRole === "member") canEdit = true;
 
-      e.target.replaceWith(select);
+      if (!canEdit) {
+        Toastify({
+          text: "You do not have permission to edit this role",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          close: true,
+          style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+        }).showToast();
+        return;
+      }
 
-      // Edit role
-      select.addEventListener("change", async () => {
-        const newRole = select.value;
-        try {
-          const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members/${userId}/role`, {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({ role: newRole })
-          });
-          if (!res.ok) throw new Error("Update role failed");
-          alert("Role updated!");
-          await loadMembers(workspaceId);
-        } catch (err) {
-          console.error(err);
-          alert("Failed to update role");
-        }
+      const parent = e.target.closest(".member-actions") || e.target.parentElement;
+
+      const roleMenu = document.createElement("div");
+      roleMenu.className = "inline-role-picker";
+      roleMenu.innerHTML = `
+        <button class="role-btn ${currentRole === 'member' ? 'active' : ''}" data-role="member">Member</button>
+        <button class="role-btn ${currentRole === 'admin' ? 'active' : ''}" data-role="admin">Admin</button>
+      `;
+      icon.replaceWith(roleMenu);
+
+      roleMenu.querySelectorAll(".role-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const newRole = btn.dataset.role;
+          if (newRole === currentRole) return;
+
+          try {
+            const res = await fetch(
+              `${API_BASE}/v1/workspace/${workspaceId}/members/${userId}/role`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ role: newRole })
+              }
+            );
+
+            if (!res.ok) throw new Error();
+
+            Toastify({
+              text: "Role updated successfully",
+              duration: 2000,
+              gravity: "top",
+              position: "right",
+              close: true,
+              style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+            }).showToast();
+
+            await loadMembers(workspaceId);
+
+          } catch (err) {
+            Toastify({
+              text: "Failed to update role",
+              duration: 3000,
+              gravity: "top",
+              position: "right",
+              close: true,
+              style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+            }).showToast();
+          }
+        });
       });
 
-      // Close dropdown
       function handleClickOutside(ev) {
-        if (!select.contains(ev.target)) {
+        if (!roleMenu.contains(ev.target)) {
           const newIcon = document.createElement("i");
           newIcon.className = "fa-solid fa-pen-to-square edit-role";
-          newIcon.dataset.userId = select.dataset.userId;
+          newIcon.dataset.userId = userId;
           newIcon.dataset.currentRole = currentRole;
           newIcon.title = "Edit role";
-
-          select.replaceWith(newIcon);
+          roleMenu.replaceWith(newIcon);
           document.removeEventListener("click", handleClickOutside);
           attachMemberActions(workspaceId);
         }
       }
 
-      setTimeout(() => { 
-        document.addEventListener("click", handleClickOutside); 
+      setTimeout(() => {
+        document.addEventListener("click", handleClickOutside);
       }, 0);
     });
   });
 
-  document.querySelectorAll(".remove-member").forEach(icon => {
-    icon.removeEventListener("click", handleRemoveMember);
-    icon.addEventListener("click", handleRemoveMember);
+
+  document.querySelectorAll(".remove-member").forEach(btn => {
+    btn.removeEventListener("click", handleRemoveMember);
+    btn.addEventListener("click", handleRemoveMember);
   });
 
+  function showConfirmModal(memberName = "this member") {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById("confirm-modal");
+      const textEl = overlay.querySelector("p");
+      const btnOk = document.getElementById("confirm-ok");
+      const btnCancel = document.getElementById("confirm-cancel");
+
+      textEl.textContent = `Are you sure you want to remove ${memberName} from this workspace?`;
+      overlay.classList.remove("hidden");
+
+      const cleanup = () => {
+        overlay.classList.add("hidden");
+        btnOk.onclick = null;
+        btnCancel.onclick = null;
+      };
+
+      btnOk.onclick = () => {
+        cleanup();
+        resolve(true);
+      };
+
+      btnCancel.onclick = () => {
+        cleanup();
+        resolve(false);
+      };
+    });
+  }
+
   async function handleRemoveMember(e) {
-    const btn = e.currentTarget; // icon đang bấm
+    const btn = e.currentTarget;
     const memberSubId = btn.dataset.memberId;
-    const userId = btn.dataset.userId;
 
-    console.log("Removing:", { workspaceId, memberSubId, userId });
-
-    if (!memberSubId) {
-      alert("Missing memberSubId.");
-      return;
-    }
-
-    const confirmed = confirm("Are you sure you want to remove this member?");
-    if (!confirmed) {
-      console.log("Cancelling removing", { workspaceId, memberSubId, userId });
-      return;
-    }
+    const confirmed = await showConfirmModal();
+    if (!confirmed) return;
 
     btn.disabled = true;
     btn.title = "Removing...";
 
     try {
-      const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members/${memberSubId}`, {
-        method: "DELETE",
-        credentials: "include"
-      });
-      if (!res.ok) throw new Error("Remove member failed");
-      alert("Member removed!");
+      const res = await fetch(
+        `${API_BASE}/v1/workspace/${workspaceId}/members/${memberSubId}`,
+        {
+          method: "DELETE",
+          credentials: "include"
+        }
+      );
 
-      const memberRow = btn.closest(".member-row");
-      if (memberRow) memberRow.remove();
+      if (res.status === 403) {
+        Toastify({
+          text: "You are not owner of this workspace",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          close: true,
+          style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+        }).showToast();
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error("Remove member failed");
+      }
+
+      Toastify({
+        text: "Member removed successfully",
+        duration: 2000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+      }).showToast();
+
+      btn.closest(".member-row")?.remove();
 
     } catch (err) {
-      console.error(err);
-      alert("Failed to remove member");
+      Toastify({
+        text: "Something went wrong. Please try again.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
     } finally {
       btn.disabled = false;
       btn.title = "Remove member";
     }
   }
 }
-// ---------------- Invite modal ----------------
+
 function bindInviteModal() {
   const inviteModal = document.getElementById("inviteModal");
   const inviteBtn = document.querySelector(".invite-btn");
@@ -267,11 +342,17 @@ function bindInviteModal() {
 
   if (!inviteModal || !inviteBtn || !closeBtn || !sendBtn || !inviteEmailInput) return;
 
-  // Show modal
   inviteBtn.addEventListener("click", () => {
     const wsId = localStorage.getItem("currentWorkspaceId") || window.currentWorkspaceId;
     if (!wsId) {
-      alert("Missing wsp_id!");
+      Toastify({
+        text: "Missing workspace ID!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
       return;
     }
     inviteModal.classList.add("show");
@@ -280,7 +361,6 @@ function bindInviteModal() {
     inviteEmailInput.focus();
   });
 
-  // Close modal
   closeBtn.addEventListener("click", () => {
     inviteModal.classList.remove("show");
     setTimeout(() => {
@@ -288,7 +368,6 @@ function bindInviteModal() {
     }, 300);
   });
 
-  // Hide modal
   inviteModal.addEventListener("click", (e) => {
     if (e.target === inviteModal) {
       inviteModal.classList.remove("show");
@@ -298,17 +377,30 @@ function bindInviteModal() {
     }
   });
 
-  // Invite logic
   sendBtn.addEventListener("click", async () => {
     const email = inviteEmailInput.value.trim();
     const wsId = localStorage.getItem("currentWorkspaceId") || window.currentWorkspaceId;
 
     if (!email) {
-      alert("Please enter a valid email!");
+      Toastify({
+        text: "Please enter a valid email!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
       return;
     }
     if (!wsId) {
-      alert("Missing wsp_id!");
+      Toastify({
+        text: "Missing workspace ID!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
       return;
     }
 
@@ -324,18 +416,32 @@ function bindInviteModal() {
 
       if (!res.ok) throw new Error(data.message || "Error");
 
-      alert(data.message || "Invitation sent successfully!");
+      Toastify({
+        text: data.message || "Invitation sent successfully!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #4caf50, #2e7d32)" }
+      }).showToast();
+
       inviteModal.classList.remove("show");
       setTimeout(() => {
         inviteModal.style.display = "none";
       }, 300);
 
-      // reload members list
       await loadMembers(wsId);
 
     } catch (err) {
       console.error("Invite error:", err);
-      alert("Error: " + err.message);
+      Toastify({
+        text: "Error: " + err.message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
     }
   });
 }
