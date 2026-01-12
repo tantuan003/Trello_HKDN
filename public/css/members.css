@@ -1,4 +1,3 @@
-/* Reset & base */
 html,
 body {
     width: 100%;
@@ -12,15 +11,12 @@ body {
     background: linear-gradient(135deg, #f9fafc, #eef2f7);
 }
 
-/* Main content */
 .main-content {
     flex: 1;
     padding: 40px;
     box-sizing: border-box;
     min-height: 100vh;
     background: #fff;
-
-    /* trừ sidebar */
     margin-left: 240px;
     max-width: calc(100vw - 240px);
 }
@@ -33,13 +29,11 @@ body {
     margin-right: auto;
 }
 
-/* Header */
 .members-header {
     max-width: 900px;
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -53,7 +47,6 @@ body {
     letter-spacing: 0.5px;
 }
 
-/* Invite Button */
 .invite-btn {
     display: flex;
     align-items: center;
@@ -65,9 +58,7 @@ body {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-
     margin-left: auto;
-
     box-shadow: 0 3px 8px rgba(12, 102, 228, 0.25);
     transition: all 0.25s ease;
 }
@@ -81,14 +72,12 @@ body {
     font-size: 16px;
 }
 
-/* Description */
 .members-desc {
     font-size: 15px;
     color: #5e6c84;
     margin-bottom: 25px;
 }
 
-/* Members List */
 .members-list {
     display: flex;
     flex-direction: column;
@@ -114,14 +103,11 @@ body {
     margin-left: auto;
 }
 
-/* Member actions (edit/remove icons) */
 .member-actions {
     margin-left: auto;
-    /* đẩy sang bên phải */
     display: flex;
     align-items: center;
     gap: 12px;
-    /* khoảng cách giữa 2 icon */
 }
 
 .member-actions i {
@@ -133,11 +119,92 @@ body {
 
 .member-actions i:hover {
     color: #0c66e4;
-    /* đổi màu khi hover */
     transform: scale(1.1);
 }
 
-/* Avatar */
+.confirm-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.confirm-overlay.hidden {
+    display: none;
+}
+
+.confirm-modal {
+    width: 360px;
+    background: #fff;
+    border-radius: 14px;
+    padding: 24px 28px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: fadeIn 0.2s ease-in-out;
+    text-align: center;
+}
+
+.confirm-modal h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #0c66e4;
+}
+
+.confirm-modal p {
+    font-size: 14px;
+    color: #4b5563;
+}
+
+.confirm-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.confirm-actions button {
+    padding: 10px 16px;
+    font-size: 14px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirm-actions #confirm-ok {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+}
+
+.confirm-actions #confirm-ok:hover {
+    transform: translateY(-2px) scale(1.02);
+}
+
+.confirm-actions #confirm-cancel {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.confirm-actions #confirm-cancel:hover {
+    background: #e5e7eb;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
 .avatar {
     width: 48px;
     height: 48px;
@@ -165,7 +232,6 @@ body {
     border-radius: 50%;
 }
 
-/* Member info */
 .member-info {
     display: flex;
     flex-direction: column;
@@ -182,7 +248,6 @@ body {
     font-size: 13px;
 }
 
-/* Overlay */
 .modal {
     position: fixed;
     top: 0;
@@ -204,7 +269,6 @@ body {
     visibility: visible;
 }
 
-/* Modal box */
 .modal-content {
     box-sizing: border-box;
     position: relative;
@@ -227,7 +291,6 @@ body {
     color: #0c66e4;
 }
 
-/* Close button */
 .modal .close {
     position: absolute;
     top: 8px;
@@ -242,7 +305,6 @@ body {
     color: #ef4444;
 }
 
-/* Input */
 #inviteEmail {
     display: block;
     box-sizing: border-box;
@@ -261,7 +323,6 @@ body {
     box-shadow: 0 0 0 2px rgba(12, 102, 228, 0.2);
 }
 
-/* Button */
 #sendInvite {
     padding: 10px 14px;
     font-size: 14px;
@@ -279,7 +340,6 @@ body {
     transform: translateY(-2px) scale(1.02);
 }
 
-/* Animation */
 @keyframes slideDown {
     from {
         transform: translateY(-20px);
@@ -292,7 +352,6 @@ body {
     }
 }
 
-/* Role */
 .role,
 .role-text,
 .role-owner {
@@ -316,31 +375,56 @@ body {
     color: #1e40af;
 }
 
-.role-select {
+.inline-role-picker {
+    display: flex;
+    gap: 6px;
     margin-left: auto;
-    padding: 6px 28px 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 10px;
+    padding: 2px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+}
+
+.inline-role-picker .role-btn {
+    border: none;
+    background: transparent;
+    padding: 6px 16px;
+    border-radius: 8px;
+    cursor: pointer;
     font-size: 14px;
     font-weight: 600;
-    border-radius: 8px;
-    border: 1.5px solid #cbd5e1;
-    background-color: #fff;
-    appearance: none;
-    cursor: pointer;
-    outline: none;
-    background-image: url("data:image/svg+xml,%3Csvg width='14' height='14' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5' stroke='%237b8794' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    transition: border-color 0.25s ease, background-color 0.25s ease;
+    text-transform: uppercase;
+    transition: all 0.2s ease;
+    color: #6b778c;
 }
 
-.role-select:hover {
+.inline-role-picker .role-btn.active {
+    background: linear-gradient(135deg, #0c66e4, #4c9aff);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(12, 102, 228, 0.25);
+}
+
+.inline-role-picker .role-btn:hover:not(.active) {
     background-color: #f1f5f9;
-    border-color: #7b87a4;
+    color: #0c66e4;
 }
 
-.role-select:focus {
-    border-color: #4f46e5;
-    background-color: #eef2ff;
+.inline-role-picker.show {
+    animation: fadeIn 0.15s ease-in-out;
+}
+
+@media (max-width: 600px) {
+    .inline-role-picker {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .inline-role-picker .role-btn {
+        flex: 1;
+        text-align: center;
+    }
 }
 
 @media (max-width: 768px) {
@@ -355,6 +439,7 @@ body {
         max-width: 100%;
     }
 }
+
 @media (max-width: 600px) {
     .member-row {
         flex-direction: column;
@@ -362,7 +447,6 @@ body {
         gap: 6px;
     }
 
-    .role-select,
     .role-text {
         width: 100%;
     }

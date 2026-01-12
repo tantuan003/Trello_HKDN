@@ -9,10 +9,9 @@ loginButton.addEventListener('click', async (e) => {
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
 
-  // Kiểm tra rỗng
   if (!email || !password) {
     Toastify({
-      text: "Vui lòng nhập đầy đủ email và mật khẩu!",
+      text: "Email or password is incorrect!",
       duration: 2000,
       gravity: "top",
       position: "right",
@@ -34,7 +33,7 @@ loginButton.addEventListener('click', async (e) => {
 
     if (response.ok) {
       Toastify({
-        text: "Đăng nhập thành công!",
+        text: "Welcome to Teamhub!",
         duration: 2000,
         gravity: "top",
         position: "right",
@@ -51,7 +50,7 @@ loginButton.addEventListener('click', async (e) => {
       }, 1000);
     } else {
       Toastify({
-        text: result.message || "Đăng nhập thất bại!",
+        text: result.message || "Email or password is incorrect!",
         duration: 2000,
         gravity: "top",
         position: "right",
