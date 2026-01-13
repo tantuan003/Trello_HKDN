@@ -63,7 +63,6 @@ function openDeleteModal(boardId, cardEl) {
         credentials: "include",
       });
 
-      // ✅ JSON safe parse (DELETE đôi khi không trả body)
       let data = null;
       try {
         data = await res.json();
@@ -71,7 +70,7 @@ function openDeleteModal(boardId, cardEl) {
 
       if (!res.ok || (data && data.success === false)) {
         Toastify({
-          text: `❌ ${(data && data.message) || "Xoá board thất bại!"}`,
+          text: `${(data && data.message) || "Xoá board thất bại!"}`,
           duration: 2000,
           gravity: "top",
           position: "right",
@@ -81,13 +80,11 @@ function openDeleteModal(boardId, cardEl) {
         return;
       }
 
-      // ✅ remove UI card
+      // remove UI card
       if (pendingDelete.cardEl) pendingDelete.cardEl.remove();
 
-      // ✅ báo cho global search reload lại list boards
       localStorage.setItem("boardsDirty", "1");
 
-      // ✅ xoá khỏi recent search history nếu có
       try {
         const key = "recentBoardSearches";
         const raw = localStorage.getItem(key);
@@ -101,7 +98,7 @@ function openDeleteModal(boardId, cardEl) {
       } catch { }
 
       Toastify({
-        text: "🗑️ Xoá board thành công!",
+        text: "Xoá board thành công!",
         duration: 2000,
         gravity: "top",
         position: "right",
@@ -109,7 +106,6 @@ function openDeleteModal(boardId, cardEl) {
         backgroundColor: "linear-gradient(to right, #ef4444, #f97316)",
       }).showToast();
 
-      // ✅ reload list boards
       loadRecentlyViewedBoards();
 
       overlay.style.display = "none";
@@ -117,7 +113,7 @@ function openDeleteModal(boardId, cardEl) {
     } catch (err) {
       console.error("Delete board error:", err);
       Toastify({
-        text: "🚫 Lỗi server khi xoá board!",
+        text: "Lỗi server khi xoá board!",
         duration: 2000,
         gravity: "top",
         position: "right",
@@ -343,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const visibility = document.getElementById("visibilitySelect").value;
     if (!name || !workspaceId)
       return Toastify({
-        text: "⚠️ Vui lòng nhập đầy đủ!",
+        text: "Vui lòng nhập đầy đủ!",
         duration: 2000, // 3 giây
         gravity: "top", // top hoặc bottom
         position: "right", // left, center, right
@@ -366,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       if (res.ok) {
         Toastify({
-          text: "✅ Tạo board thành công!",
+          text: "Tạo board thành công!",
           duration: 2000,
           gravity: "top",
           position: "right",
@@ -379,7 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("boardsDirty", "1");
       } else {
         Toastify({
-          text: `❌ ${data.message || "Tạo board thất bại!"}`,
+          text: `${data.message || "Tạo board thất bại!"}`,
           duration: 2000,
           gravity: "top",
           position: "right",
@@ -490,7 +486,7 @@ function attachAddCard(listEl, listId) {
     setTimeout(() => inputContainer.classList.add("show"), 10);
     input.focus();
 
-    // 🔽 Cuộn đến đáy .cards-container
+    // Cuộn đến đáy .cards-container
     setTimeout(() => {
       cardsContainer.scrollTo({
         top: cardsContainer.scrollHeight,
@@ -513,7 +509,7 @@ function attachAddCard(listEl, listId) {
     const cardName = input.value.trim();
     if (!cardName)
       return Toastify({
-        text: "⚠️ Vui lòng nhập tên thẻ!",
+        text: "Vui lòng nhập tên thẻ!",
         duration: 2000,
         gravity: "top",
         position: "right",
