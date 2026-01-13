@@ -1,8 +1,8 @@
 import { socket } from "../js/socket.js";
 import { API_BASE } from "../js/config.js";
 
-const boardCards = document.querySelectorAll(".board-card"); // NodeList
-const cardGrid = document.querySelector(".card-grid"); // chỉ 1 grid
+const boardCards = document.querySelectorAll(".board-card"); 
+const cardGrid = document.querySelector(".card-grid"); 
 const boardView = document.getElementById("boardView");
 const boardTitle = document.getElementById("boardTitle");
 const listsContainer = document.getElementById("listsContainer");
@@ -130,10 +130,6 @@ function openDeleteModal(boardId, cardEl) {
   };
 }
 
-/* ===========================
-   RECENTLY VIEWED
-=========================== */
-
 async function loadRecentlyViewedBoards() {
   const urlParams = new URLSearchParams(window.location.search);
   const workspaceId = urlParams.get("ws");
@@ -183,9 +179,6 @@ function showEmptyRecentlyViewed(container) {
   container.innerHTML = `<p class="no-recent">No recently viewed boards yet.</p>`;
 }
 
-/* ===========================
-   ✅ Tạo card board (SỬA ĐÚNG CHỖ: delete button + hover)
-=========================== */
 function createBoardCard(board) {
   const card = document.createElement("a");
   card.className = "board-card";
@@ -229,42 +222,34 @@ function createBoardCard(board) {
 
   footer.appendChild(title);
 
-  // ✅ Delete button: absolute bottom-right, hover show
   const delBtn = document.createElement("button");
   delBtn.type = "button";
   delBtn.className = "board-delete-btn";
   delBtn.setAttribute("aria-label", "Delete board");
 
   const delIcon = document.createElement("img");
-  delIcon.src = "/uploads/icons8-delete-128.png"; // ✅ fix path
+  delIcon.src = "/uploads/icons8-delete-128.png"; 
   delIcon.alt = "Delete";
   delBtn.appendChild(delIcon);
 
   delBtn.addEventListener("click", (e) => {
-    e.preventDefault();   // chặn <a> navigate
-    e.stopPropagation();  // chặn bubble
-    openDeleteModal(board._id, card); // ✅ dùng modal+API chuẩn bên trên
+    e.preventDefault();   
+    e.stopPropagation(); 
+    openDeleteModal(board._id, card); 
   });
 
   card.appendChild(cover);
   card.appendChild(footer);
-  card.appendChild(delBtn); // ✅ append vào card để absolute đúng góc
+  card.appendChild(delBtn);
 
   return card;
 }
 
-/* ===========================
-   ✅ Realtime: board deleted
-   (Đặt cùng level với các socket.on khác, KHÔNG đặt trong DOMContentLoaded)
-=========================== */
 socket.on("board:deleted", ({ boardId }) => {
   const card = document.querySelector(`.board-card[data-board-id="${boardId}"]`);
   if (card) card.remove();
 });
 
-/* ===========================
-   inject sidebar + load boards
-=========================== */
 async function inject(file, targetSelector) {
   try {
     const res = await fetch(file, { cache: "no-store" });
