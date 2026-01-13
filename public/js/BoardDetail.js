@@ -22,7 +22,7 @@ const cardUIMap = new Map();
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
 if (!boardId) {
-  alert("Board không tồn tại!");
+  Notiflix.Notify.failure("Board không tồn tại")
   window.location.href = "./Boards.html";
 }
 document.addEventListener('DOMContentLoaded', async () => {
@@ -144,7 +144,7 @@ async function renderBoardWithLists() {
               await updateBoardTitle(newTitle);
             } catch (err) {
               boardTitle.innerText = oldTitle;
-              alert("Không thể cập nhật tên board");
+              Notiflix.Notify.failure("Không thể cập nhật tên board")
             }
           }
 
@@ -200,7 +200,7 @@ async function updateBoardTitle(title) {
       credentials: "include"
     });
   } catch (err) {
-    alert("Cập nhật board thất bại");
+    Notiflix.Notify.failure("Cập nhật board thất bại");
     console.error(err);
   }
 }
@@ -210,8 +210,8 @@ function applyBoardBackground(bg) {
   if (!boardPage) return;
 
   const allGradientClasses = [
-    "body-gradient-1","body-gradient-2","body-gradient-3",
-    "body-gradient-4","body-gradient-5","body-gradient-6","body-gradient-7",
+    "body-gradient-1", "body-gradient-2", "body-gradient-3",
+    "body-gradient-4", "body-gradient-5", "body-gradient-6", "body-gradient-7",
   ];
 
   if (bg.startsWith("gradient")) {
@@ -456,6 +456,7 @@ function createListElement(list) {
         const labelColor = document.createElement("div");
         labelColor.className = "card-label";
         labelColor.style.background = color;
+        labelColor.dataset.color = color;
         labelsEl.appendChild(labelColor);
       });
 
@@ -917,7 +918,7 @@ function attachAddCard(listEl, listId) {
   // thêm card
   saveBtn.addEventListener("click", async () => {
     const cardName = input.value.trim();
-    if (!cardName) return alert("Vui lòng nhập tên thẻ!");
+    if (!cardName) return Notiflix.Notify.failure("Vui lòng nhập tên thẻ");;
 
     saveBtn.disabled = true;
 
@@ -968,7 +969,7 @@ const newListTitle = document.getElementById("newListTitle");
 
 addListBtn.addEventListener("click", async () => {
   const title = newListTitle.value.trim();
-  if (!title) return alert("Please enter list title");
+  if (!title) return  Notiflix.Notify.failure("Vui lòng nhập tên list");
 
   try {
     await fetch(`${API_BASE}/v1/board/create-list/${currentBoardId}`, {
@@ -980,7 +981,7 @@ addListBtn.addEventListener("click", async () => {
 
   } catch (err) {
     console.error(err);
-    alert("Failed to add list");
+    Notiflix.Notify.failure("Lỗi khi thêm list")
   }
 
 });
@@ -1196,7 +1197,7 @@ function renderMembersboard(members) {
     row.appendChild(avatar);
     row.appendChild(info);
     row.appendChild(roleWrap);
-     if (currentboardRole === "owner" && member.role !== "owner") {
+    if (currentboardRole === "owner" && member.role !== "owner") {
       const kickBtn = document.createElement("button");
       kickBtn.className = "kick-member-btn";
       kickBtn.textContent = "✕";
@@ -1269,7 +1270,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
 
   // 🔒 chỉ owner mới được chỉnh (phòng hờ)
   if (window.currentboardRole !== "owner") {
-    alert("Bạn không có quyền chỉnh role");
+    Notiflix.Notify.failure("Bạn không có quyền chỉnh role")
     return;
   }
 
@@ -1294,7 +1295,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.message || "Không thể cập nhật role");
+      Notiflix.Notify.failure("Không thể cập nhật role")
       return;
     }
 
@@ -1307,7 +1308,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
 
   } catch (err) {
     console.error("Update role error:", err);
-    alert("Lỗi server");
+    Notiflix.Notify.failure("Lỗi server")
   }
 });
 
@@ -1563,7 +1564,7 @@ async function openCardDetail(cardId) {
     credentials: "include"
   });
   const result = await res.json();
-  if (!result.success) return alert(result.message || "Lỗi khi tải chi tiết card");
+  if (!result.success) return Notiflix.Notify.failure("Lỗi khi tải card")
 
   currentCard = result.data;
   socket.emit("card:join", currentCard._id);
@@ -1649,8 +1650,12 @@ function showCardDetailModal(card) {
   updateDueStatus();
 
   // Lắng nghe khi người dùng chỉnh
-  dateInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
-  timeInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
+  [dateInput, timeInput].forEach(input => {
+    input.addEventListener("change", () => {
+      updateDueStatus();
+      saveDueDate();
+    });
+  });
   // Comments
   renderComments(card.comments || []);
 
@@ -2008,13 +2013,28 @@ socket.on("card:assignedMembersUpdated", ({ cardId, assignedMembers: updated }) 
 // Nhận realtime
 socket.off("card:labelAdded");
 socket.on("card:labelAdded", ({ cardId, color }) => {
+  // Cập nhật badge / nhãn ngoài list
   boardData.lists.forEach(list => {
     const card = list.cards.find(c => c._id === cardId);
     if (card && !card.labels.includes(color)) {
       card.labels.push(color);
+
+      // Update DOM ngoài list
+      const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+      if (cardEl) {
+        const labelsContainer = cardEl.querySelector(".card-labels");
+        if (labelsContainer) {
+          // Tạo thẻ label
+          const labelEl = document.createElement("span");
+          labelEl.className = "card-label";
+          labelEl.style.backgroundColor = color;
+          labelEl.dataset.color = color;
+          labelsContainer.appendChild(labelEl);
+        }
+      }
     }
   });
-  renderBoardWithLists();
+
   if (currentCard && currentCard._id === cardId) {
     currentCard.labels.push(color);
 
@@ -2081,34 +2101,49 @@ function openLabelPopup(cardId) {
 
   popup.style.display = "flex";
 }
+// Xóa label khỏi popup modal
 function removeLabelFromCard(color) {
   const labelsEl = document.getElementById("cardLabels");
+  if (!labelsEl) return;
 
-  Array.from(labelsEl.children).forEach(span => {
-    if (span.dataset.color === color) {
-      span.remove();
-    }
-  });
+  // Tìm span có data-color = color và remove
+  const labelEl = labelsEl.querySelector(`.card-label[data-color='${color}']`);
+  if (labelEl) labelEl.remove();
 
-  // remove trong client copy
-  currentCard.labels = currentCard.labels.filter(c => c !== color);
+  // Cập nhật client copy
+  if (currentCard) {
+    currentCard.labels = currentCard.labels.filter(c => c !== color);
+  }
 }
 
+// Lắng nghe socket realtime
+socket.off("card:labelRemoved");
 socket.on("card:labelRemoved", ({ cardId, color }) => {
+  // 1️⃣ Cập nhật state boardData
   boardData.lists.forEach(list => {
     const card = list.cards.find(c => c._id === cardId);
-    if (card) {
-      card.labels = card.labels.filter(c => c !== color);
-    }
+    if (card) card.labels = card.labels.filter(c => c !== color);
   });
-  renderBoardWithLists();
 
+  // 2️⃣ Update DOM card ngoài list
+  const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+  if (cardEl) {
+    const labelsContainer = cardEl.querySelector(".card-labels");
+    if (labelsContainer) {
+      const safeColor = color.replace("#", "\\#");
+      const labelEl = labelsContainer.querySelector(`.card-label[data-color='${safeColor}']`);
+
+      if (labelEl) labelEl.remove();
+    }
+  }
+
+  // 3️⃣ Update modal nếu đang mở
   if (currentCard && currentCard._id === cardId) {
-    currentCard.labels = currentCard.labels.filter(c => c !== color);
-    const labelsEl = document.getElementById("cardLabels");
-    if (labelsEl) removeLabelFromCard(color);
+    removeLabelFromCard(color);
   }
 });
+
+
 
 
 // Nút tắt popup
@@ -2146,28 +2181,48 @@ function formatDateDMY(date) {
   const d = String(date.getDate()).padStart(2, '0');
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const y = date.getFullYear();
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  return `${d}/${m}/${y} ${h}:${min}`;
+  return `${d}/${m}/${y}`;
 }
 
 // Lấy giá trị từ input date + time
 function getDueDateTime() {
-  const dateInput = document.getElementById("cardDueDate").value;
-  const timeInput = document.getElementById("cardDueTime").value || "00:00";
+  const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+  if (!dateInput || !timeInput) return null;
 
-  if (!dateInput) return null;
+  const date = dateInput.value;
+  const time = timeInput.value;
+  if (!date || !time) return null;
 
-  const [yyyy, mm, dd] = dateInput.split("-").map(Number);
-  const [hh, min] = timeInput.split(":").map(Number);
-
-  const due = new Date(yyyy, mm - 1, dd, hh, min);
-  return due;
+  return new Date(`${date}T${time}:00`);
 }
 
-// Cập nhật trạng thái hiển thị
 function updateDueStatus() {
+  const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+  const statusEl = document.getElementById("dueDateStatus");
+
+  if (!dateInput || !timeInput || !statusEl) return;
+
   const due = getDueDateTime();
+  if (!due) {
+    statusEl.textContent = "";
+    statusEl.className = "due-status";
+    return;
+  }
+
+  const diff = due - new Date();
+  statusEl.textContent = formatDateDMY(due) + " đến hạn";
+
+  statusEl.className =
+    diff < 0 ? "due-status overdue" :
+      diff < 24 * 60 * 60 * 1000 ? "due-status warning" :
+        "due-status normal";
+}
+
+
+// Cập nhật trạng thái hiển thị
+function updateDueStatusFromDate(due) {
   const statusEl = document.getElementById("dueDateStatus");
 
   if (!due) {
@@ -2177,46 +2232,111 @@ function updateDueStatus() {
   }
 
   const diff = due - new Date();
-
   statusEl.textContent = formatDateDMY(due) + " đến hạn";
 
-  if (diff < 0) statusEl.className = "due-status overdue";
-  else if (diff < 24 * 60 * 60 * 1000) statusEl.className = "due-status warning";
-  else statusEl.className = "due-status normal";
+  statusEl.className =
+    diff < 0
+      ? "due-status overdue"
+      : diff < 86400000
+        ? "due-status warning"
+        : "due-status normal";
 }
+
 
 // Gửi lên server + realtime
 function saveDueDate() {
   const due = getDueDateTime();
-  if (!due) return;
+  if (!due || !currentCard?._id) return;
 
+  // 1️⃣ cập nhật state ngay
   currentCard.dueDate = due;
 
+  // 2️⃣ gửi lên server
   socket.emit("card:updateDueDate", {
     cardId: currentCard._id,
-    dueDate: due
+    dueDate: due.toISOString()
   });
+
+  // 3️⃣ update modal ngay (local) để tránh bị reset
+  updateDueStatus();
+  updateBoardViewDueStatusUI(currentCard._id, due);
 }
 
+
+function updateDueDateInState(cardId, dueDate) {
+  if (!boardData?.lists) return;
+
+  for (const list of boardData.lists) {
+    const card = list.cards?.find(c => c._id === cardId);
+    if (card) {
+      card.dueDate = dueDate;
+      break;
+    }
+  }
+}
+
+function updateBoardViewDueStatusUI(cardId, dueDate) {
+  const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+  console.log("Updating badge for card:", cardId, "cardEl:", cardEl);
+
+  if (!cardEl) {
+    requestAnimationFrame(() => updateBoardViewDueStatusUI(cardId, dueDate));
+    return;
+  }
+
+  const badge = cardEl.querySelector(".card-due");
+  if (!badge) return;
+  const diffDays = new Date(dueDate) - new Date();
+  if (diffDays < 0) badge.style.backgroundColor = "#ff4d4f"; // đỏ quá hạn
+  else if (diffDays <= 2) badge.style.backgroundColor = "#f2d600"; // vàng gần hạn
+  else badge.style.backgroundColor = "#32ee0cff"; // xanh còn nhiều thời gian
+  badge.innerHTML = "";
+
+  // Tạo icon
+  const icon = document.createElement("img");
+  icon.src = "uploads/clock-countdown-black.svg";
+  icon.alt = "calendar";
+  icon.style.width = "16px";
+  icon.style.height = "16px";
+  // Tạo text
+  const text = document.createElement("span");
+  text.textContent = formatDateDMY(new Date(dueDate));
+
+  // Append icon + text
+  badge.appendChild(icon);
+  badge.appendChild(text);
+}
+
+
+
+
 // Lắng nghe realtime
-socket.on("card:dueDateUpdated", ({ dueDate }) => {
-  const due = new Date(dueDate);
-  const dateInput = document.getElementById("cardDueDate");
-  const timeInput = document.getElementById("cardDueTime");
+socket.on("card:dueDateUpdated", ({ cardId, dueDate }) => {
+  console.log("Received dueDateUpdated:", cardId, dueDate);
+  // 1️⃣ update board state
+  updateDueDateInState(cardId, dueDate);
 
-  // Hiển thị input theo local
-  const yyyy = due.getFullYear();
-  const mm = String(due.getMonth() + 1).padStart(2, '0');
-  const dd = String(due.getDate()).padStart(2, '0');
-  dateInput.value = `${yyyy}-${mm}-${dd}`;
+  // 2️⃣ update badge ngoài board
+  updateBoardViewDueStatusUI(cardId, dueDate);
 
-  const hh = String(due.getHours()).padStart(2, '0');
-  const min = String(due.getMinutes()).padStart(2, '0');
-  timeInput.value = `${hh}:${min}`;
 
-  updateDueStatus();
-  renderBoardWithLists()
+  // 3️⃣ update modal nếu đang mở card này
+  if (currentCard?._id === cardId) {
+    const due = new Date(dueDate);
+    const yyyy = due.getFullYear();
+    const mm = String(due.getMonth() + 1).padStart(2, "0");
+    const dd = String(due.getDate()).padStart(2, "0");
+    const hh = String(due.getHours()).padStart(2, "0");
+    const min = String(due.getMinutes()).padStart(2, "0");
+
+    document.getElementById("cardDueDate").value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById("cardDueTime").value = `${hh}:${min}`;
+
+    updateDueStatus();
+  }
+
 });
+
 
 //comment
 // Khi mở card, render comment
