@@ -301,34 +301,36 @@ io.on("connection", (socket) => {
   socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
     try {
       const card = await Card.findById(cardId)
-        .populate({
-          path: "list",
-          populate: { path: "board" }
-        });
-
+        .populate({ path: "list", populate: { path: "board" } });
       if (!card) return;
 
       card.dueDate = dueDate;
       await card.save();
 
-      // Gửi realtime cho client đang mở card detail
+      const boardId = card.list.board._id.toString();
+
+      // Gửi realtime cho modal đang mở (nếu có)
       io.to(cardId).emit("card:dueDateUpdated", {
         cardId,
         dueDate: card.dueDate
       });
 
-      // Gửi cho tất cả client trong board view
-      if (card.list && card.list.board && card.list.board._id) {
-        io.to(card.list.board._id.toString()).emit("card:dueDateUpdated", {
-          cardId,
-          dueDate: card.dueDate
-        });
-      }
+      // Gửi realtime cho tất cả client đang xem board
+      io.to(card.list.board._id.toString()).emit("card:dueDateUpdated", {
+        cardId,
+        dueDate: card.dueDate
+      });
+      // Server
+      console.log("Emit to card:", cardId, "board:", boardId);
+
 
     } catch (err) {
       console.error("Error updating due date:", err);
     }
   });
+
+
+
 
   // Thêm attachment
   socket.on("card:updateAttachments", async ({ cardId, file }) => {

@@ -1649,8 +1649,12 @@ function showCardDetailModal(card) {
   updateDueStatus();
 
   // Lắng nghe khi người dùng chỉnh
-  dateInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
-  timeInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
+  [dateInput, timeInput].forEach(input => {
+  input.addEventListener("change", () => {
+    updateDueStatus();
+    saveDueDate();
+  });
+});
   // Comments
   renderComments(card.comments || []);
 
@@ -2146,28 +2150,48 @@ function formatDateDMY(date) {
   const d = String(date.getDate()).padStart(2, '0');
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const y = date.getFullYear();
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  return `${d}/${m}/${y} ${h}:${min}`;
+  return `${d}/${m}/${y}`;
 }
 
 // Lấy giá trị từ input date + time
 function getDueDateTime() {
-  const dateInput = document.getElementById("cardDueDate").value;
-  const timeInput = document.getElementById("cardDueTime").value || "00:00";
+  const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+  if (!dateInput || !timeInput) return null;
 
-  if (!dateInput) return null;
+  const date = dateInput.value;
+  const time = timeInput.value;
+  if (!date || !time) return null;
 
-  const [yyyy, mm, dd] = dateInput.split("-").map(Number);
-  const [hh, min] = timeInput.split(":").map(Number);
-
-  const due = new Date(yyyy, mm - 1, dd, hh, min);
-  return due;
+  return new Date(`${date}T${time}:00`);
 }
 
-// Cập nhật trạng thái hiển thị
 function updateDueStatus() {
+  const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+  const statusEl = document.getElementById("dueDateStatus");
+
+  if (!dateInput || !timeInput || !statusEl) return;
+
   const due = getDueDateTime();
+  if (!due) {
+    statusEl.textContent = "";
+    statusEl.className = "due-status";
+    return;
+  }
+
+  const diff = due - new Date();
+  statusEl.textContent = formatDateDMY(due) + " đến hạn";
+
+  statusEl.className =
+    diff < 0 ? "due-status overdue" :
+    diff < 24 * 60 * 60 * 1000 ? "due-status warning" :
+    "due-status normal";
+}
+
+
+// Cập nhật trạng thái hiển thị
+function updateDueStatusFromDate(due) {
   const statusEl = document.getElementById("dueDateStatus");
 
   if (!due) {
@@ -2177,46 +2201,115 @@ function updateDueStatus() {
   }
 
   const diff = due - new Date();
-
   statusEl.textContent = formatDateDMY(due) + " đến hạn";
 
-  if (diff < 0) statusEl.className = "due-status overdue";
-  else if (diff < 24 * 60 * 60 * 1000) statusEl.className = "due-status warning";
-  else statusEl.className = "due-status normal";
+  statusEl.className =
+    diff < 0
+      ? "due-status overdue"
+      : diff < 86400000
+      ? "due-status warning"
+      : "due-status normal";
 }
+
 
 // Gửi lên server + realtime
 function saveDueDate() {
   const due = getDueDateTime();
-  if (!due) return;
+  if (!due || !currentCard?._id) return;
 
+  // 1️⃣ cập nhật state ngay
   currentCard.dueDate = due;
 
+  // 2️⃣ gửi lên server
   socket.emit("card:updateDueDate", {
     cardId: currentCard._id,
-    dueDate: due
+    dueDate: due.toISOString()
   });
+
+  // 3️⃣ update modal ngay (local) để tránh bị reset
+  updateDueStatus();
+  updateBoardViewDueStatusUI(currentCard._id, due);
 }
 
+
+function updateDueDateInState(cardId, dueDate) {
+  if (!boardData?.lists) return;
+
+  for (const list of boardData.lists) {
+    const card = list.cards?.find(c => c._id === cardId);
+    if (card) {
+      card.dueDate = dueDate;
+      break;
+    }
+  }
+}
+
+function updateBoardViewDueStatusUI(cardId, dueDate) {
+  const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+  console.log("Updating badge for card:", cardId, "cardEl:", cardEl);
+
+  if (!cardEl) {
+    requestAnimationFrame(() => updateBoardViewDueStatusUI(cardId, dueDate));
+    return;
+  }
+
+  const badge = cardEl.querySelector(".card-due");
+  if (!badge) return;
+  const diffDays = new Date(dueDate) - new Date();
+  if (diffDays < 0) badge.style.backgroundColor = "#ff4d4f"; // đỏ quá hạn
+      else if (diffDays <= 2) badge.style.backgroundColor = "#f2d600"; // vàng gần hạn
+      else badge.style.backgroundColor = "#32ee0cff"; // xanh còn nhiều thời gian
+  badge.innerHTML = "";
+
+  // Tạo icon
+  const icon = document.createElement("img");
+  icon.src = "uploads/clock-countdown-black.svg";
+  icon.alt = "calendar";
+  icon.style.width = "16px";
+  icon.style.height = "16px";
+  // Tạo text
+  const text = document.createElement("span");
+  text.textContent = formatDateDMY(new Date(dueDate));
+
+  // Append icon + text
+  badge.appendChild(icon);
+  badge.appendChild(text);
+}
+
+
+
+
 // Lắng nghe realtime
-socket.on("card:dueDateUpdated", ({ dueDate }) => {
-  const due = new Date(dueDate);
-  const dateInput = document.getElementById("cardDueDate");
-  const timeInput = document.getElementById("cardDueTime");
+socket.on("card:dueDateUpdated", ({ cardId, dueDate }) => {
+   console.log("Received dueDateUpdated:", cardId, dueDate);
+  // 1️⃣ update board state
+  updateDueDateInState(cardId, dueDate);
 
-  // Hiển thị input theo local
-  const yyyy = due.getFullYear();
-  const mm = String(due.getMonth() + 1).padStart(2, '0');
-  const dd = String(due.getDate()).padStart(2, '0');
-  dateInput.value = `${yyyy}-${mm}-${dd}`;
+  // 2️⃣ update badge ngoài board
+  updateBoardViewDueStatusUI(cardId, dueDate);
+  
 
-  const hh = String(due.getHours()).padStart(2, '0');
-  const min = String(due.getMinutes()).padStart(2, '0');
-  timeInput.value = `${hh}:${min}`;
+  // 3️⃣ update modal nếu đang mở card này
+  if (currentCard?._id === cardId) {
+    const due = new Date(dueDate);
+    const yyyy = due.getFullYear();
+    const mm = String(due.getMonth() + 1).padStart(2, "0");
+    const dd = String(due.getDate()).padStart(2, "0");
+    const hh = String(due.getHours()).padStart(2, "0");
+    const min = String(due.getMinutes()).padStart(2, "0");
 
-  updateDueStatus();
-  renderBoardWithLists()
+    document.getElementById("cardDueDate").value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById("cardDueTime").value = `${hh}:${min}`;
+
+    updateDueStatus();
+  }
+  
 });
+
+
+
+
+
 
 //comment
 // Khi mở card, render comment
