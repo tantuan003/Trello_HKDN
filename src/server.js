@@ -187,31 +187,37 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("card:removeLabel", async ({ cardId, color }) => {
-    try {
-      const card = await Card.findById(cardId)
-        .populate({
-          path: "list",
-          populate: { path: "board" }
-        });
+ socket.on("card:removeLabel", async ({ cardId, color }) => {
+  try {
+    const card = await Card.findById(cardId)
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
 
-      if (!card) return;
+    if (!card) return;
 
-      // Remove label
+    // Remove label nếu có
+    if (card.labels.includes(color)) {
       card.labels = card.labels.filter(c => c !== color);
       await card.save();
-
-      // Emit tới card detail (nếu đang mở)
-      io.to(card._id.toString()).emit("card:labelRemoved", { cardId, color });
-
-      // Emit tới tất cả client ở board (board list view)
-      if (card.list && card.list.board && card.list.board._id) {
-        io.to(card.list.board._id.toString()).emit("card:labelRemoved", { cardId, color });
-      }
-    } catch (err) {
-      console.error("Error removing label:", err);
     }
-  });
+
+    // Emit tới modal đang mở
+    io.to(card._id.toString()).emit("card:labelRemoved", { cardId, color });
+
+    // Emit tới tất cả client trong board (bao gồm board view)
+    if (card.list?.board?._id) {
+      io.to(card.list.board._id.toString()).emit("card:labelRemoved", { cardId, color });
+    }
+
+    console.log("Label removed emit to card:", cardId, "board:", card.list.board._id.toString());
+
+  } catch (err) {
+    console.error("Error removing card label:", err);
+  }
+});
+
   socket.on("card:assignMember", async ({ cardId, userId }) => {
     try {
       const card = await Card.findById(cardId)

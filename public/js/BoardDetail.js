@@ -210,8 +210,8 @@ function applyBoardBackground(bg) {
   if (!boardPage) return;
 
   const allGradientClasses = [
-    "body-gradient-1","body-gradient-2","body-gradient-3",
-    "body-gradient-4","body-gradient-5","body-gradient-6","body-gradient-7",
+    "body-gradient-1", "body-gradient-2", "body-gradient-3",
+    "body-gradient-4", "body-gradient-5", "body-gradient-6", "body-gradient-7",
   ];
 
   if (bg.startsWith("gradient")) {
@@ -456,6 +456,7 @@ function createListElement(list) {
         const labelColor = document.createElement("div");
         labelColor.className = "card-label";
         labelColor.style.background = color;
+        labelColor.dataset.color = color;
         labelsEl.appendChild(labelColor);
       });
 
@@ -1196,7 +1197,7 @@ function renderMembersboard(members) {
     row.appendChild(avatar);
     row.appendChild(info);
     row.appendChild(roleWrap);
-     if (currentboardRole === "owner" && member.role !== "owner") {
+    if (currentboardRole === "owner" && member.role !== "owner") {
       const kickBtn = document.createElement("button");
       kickBtn.className = "kick-member-btn";
       kickBtn.textContent = "✕";
@@ -1650,11 +1651,11 @@ function showCardDetailModal(card) {
 
   // Lắng nghe khi người dùng chỉnh
   [dateInput, timeInput].forEach(input => {
-  input.addEventListener("change", () => {
-    updateDueStatus();
-    saveDueDate();
+    input.addEventListener("change", () => {
+      updateDueStatus();
+      saveDueDate();
+    });
   });
-});
   // Comments
   renderComments(card.comments || []);
 
@@ -2012,13 +2013,28 @@ socket.on("card:assignedMembersUpdated", ({ cardId, assignedMembers: updated }) 
 // Nhận realtime
 socket.off("card:labelAdded");
 socket.on("card:labelAdded", ({ cardId, color }) => {
+  // Cập nhật badge / nhãn ngoài list
   boardData.lists.forEach(list => {
     const card = list.cards.find(c => c._id === cardId);
     if (card && !card.labels.includes(color)) {
       card.labels.push(color);
+
+      // Update DOM ngoài list
+      const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+      if (cardEl) {
+        const labelsContainer = cardEl.querySelector(".card-labels");
+        if (labelsContainer) {
+          // Tạo thẻ label
+          const labelEl = document.createElement("span");
+          labelEl.className = "card-label";
+          labelEl.style.backgroundColor = color;
+          labelEl.dataset.color = color;
+          labelsContainer.appendChild(labelEl);
+        }
+      }
     }
   });
-  renderBoardWithLists();
+
   if (currentCard && currentCard._id === cardId) {
     currentCard.labels.push(color);
 
@@ -2085,34 +2101,49 @@ function openLabelPopup(cardId) {
 
   popup.style.display = "flex";
 }
+// Xóa label khỏi popup modal
 function removeLabelFromCard(color) {
   const labelsEl = document.getElementById("cardLabels");
+  if (!labelsEl) return;
 
-  Array.from(labelsEl.children).forEach(span => {
-    if (span.dataset.color === color) {
-      span.remove();
-    }
-  });
+  // Tìm span có data-color = color và remove
+  const labelEl = labelsEl.querySelector(`.card-label[data-color='${color}']`);
+  if (labelEl) labelEl.remove();
 
-  // remove trong client copy
-  currentCard.labels = currentCard.labels.filter(c => c !== color);
+  // Cập nhật client copy
+  if (currentCard) {
+    currentCard.labels = currentCard.labels.filter(c => c !== color);
+  }
 }
 
+// Lắng nghe socket realtime
+socket.off("card:labelRemoved");
 socket.on("card:labelRemoved", ({ cardId, color }) => {
+  // 1️⃣ Cập nhật state boardData
   boardData.lists.forEach(list => {
     const card = list.cards.find(c => c._id === cardId);
-    if (card) {
-      card.labels = card.labels.filter(c => c !== color);
-    }
+    if (card) card.labels = card.labels.filter(c => c !== color);
   });
-  renderBoardWithLists();
 
+  // 2️⃣ Update DOM card ngoài list
+  const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+  if (cardEl) {
+    const labelsContainer = cardEl.querySelector(".card-labels");
+    if (labelsContainer) {
+      const safeColor = color.replace("#", "\\#");
+      const labelEl = labelsContainer.querySelector(`.card-label[data-color='${safeColor}']`);
+
+      if (labelEl) labelEl.remove();
+    }
+  }
+
+  // 3️⃣ Update modal nếu đang mở
   if (currentCard && currentCard._id === cardId) {
-    currentCard.labels = currentCard.labels.filter(c => c !== color);
-    const labelsEl = document.getElementById("cardLabels");
-    if (labelsEl) removeLabelFromCard(color);
+    removeLabelFromCard(color);
   }
 });
+
+
 
 
 // Nút tắt popup
@@ -2185,8 +2216,8 @@ function updateDueStatus() {
 
   statusEl.className =
     diff < 0 ? "due-status overdue" :
-    diff < 24 * 60 * 60 * 1000 ? "due-status warning" :
-    "due-status normal";
+      diff < 24 * 60 * 60 * 1000 ? "due-status warning" :
+        "due-status normal";
 }
 
 
@@ -2207,8 +2238,8 @@ function updateDueStatusFromDate(due) {
     diff < 0
       ? "due-status overdue"
       : diff < 86400000
-      ? "due-status warning"
-      : "due-status normal";
+        ? "due-status warning"
+        : "due-status normal";
 }
 
 
@@ -2257,8 +2288,8 @@ function updateBoardViewDueStatusUI(cardId, dueDate) {
   if (!badge) return;
   const diffDays = new Date(dueDate) - new Date();
   if (diffDays < 0) badge.style.backgroundColor = "#ff4d4f"; // đỏ quá hạn
-      else if (diffDays <= 2) badge.style.backgroundColor = "#f2d600"; // vàng gần hạn
-      else badge.style.backgroundColor = "#32ee0cff"; // xanh còn nhiều thời gian
+  else if (diffDays <= 2) badge.style.backgroundColor = "#f2d600"; // vàng gần hạn
+  else badge.style.backgroundColor = "#32ee0cff"; // xanh còn nhiều thời gian
   badge.innerHTML = "";
 
   // Tạo icon
@@ -2281,13 +2312,13 @@ function updateBoardViewDueStatusUI(cardId, dueDate) {
 
 // Lắng nghe realtime
 socket.on("card:dueDateUpdated", ({ cardId, dueDate }) => {
-   console.log("Received dueDateUpdated:", cardId, dueDate);
+  console.log("Received dueDateUpdated:", cardId, dueDate);
   // 1️⃣ update board state
   updateDueDateInState(cardId, dueDate);
 
   // 2️⃣ update badge ngoài board
   updateBoardViewDueStatusUI(cardId, dueDate);
-  
+
 
   // 3️⃣ update modal nếu đang mở card này
   if (currentCard?._id === cardId) {
@@ -2303,12 +2334,8 @@ socket.on("card:dueDateUpdated", ({ cardId, dueDate }) => {
 
     updateDueStatus();
   }
-  
+
 });
-
-
-
-
 
 
 //comment
