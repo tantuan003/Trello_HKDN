@@ -1,7 +1,6 @@
 /* ===== Boards page ===== */
 .content-boards {
   flex: 1;
-  width: 80.75%;
   background: #fff;
   padding: 12px 28px 28px; /* giảm padding-top để không bị đẩy xuống */
   min-height: calc(100vh - var(--header-h));

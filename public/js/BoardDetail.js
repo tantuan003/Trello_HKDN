@@ -22,7 +22,7 @@ const cardUIMap = new Map();
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
 if (!boardId) {
-  alert("Board không tồn tại!");
+  Notiflix.Notify.failure("Board không tồn tại")
   window.location.href = "./Boards.html";
 }
 document.addEventListener('DOMContentLoaded', async () => {
@@ -144,7 +144,7 @@ async function renderBoardWithLists() {
               await updateBoardTitle(newTitle);
             } catch (err) {
               boardTitle.innerText = oldTitle;
-              alert("Không thể cập nhật tên board");
+              Notiflix.Notify.failure("Không thể cập nhật tên board")
             }
           }
 
@@ -200,7 +200,7 @@ async function updateBoardTitle(title) {
       credentials: "include"
     });
   } catch (err) {
-    alert("Cập nhật board thất bại");
+    Notiflix.Notify.failure("Cập nhật board thất bại");
     console.error(err);
   }
 }
@@ -918,7 +918,7 @@ function attachAddCard(listEl, listId) {
   // thêm card
   saveBtn.addEventListener("click", async () => {
     const cardName = input.value.trim();
-    if (!cardName) return alert("Vui lòng nhập tên thẻ!");
+    if (!cardName) return Notiflix.Notify.failure("Vui lòng nhập tên thẻ");;
 
     saveBtn.disabled = true;
 
@@ -969,7 +969,7 @@ const newListTitle = document.getElementById("newListTitle");
 
 addListBtn.addEventListener("click", async () => {
   const title = newListTitle.value.trim();
-  if (!title) return alert("Please enter list title");
+  if (!title) return  Notiflix.Notify.failure("Vui lòng nhập tên list");
 
   try {
     await fetch(`${API_BASE}/v1/board/create-list/${currentBoardId}`, {
@@ -981,7 +981,7 @@ addListBtn.addEventListener("click", async () => {
 
   } catch (err) {
     console.error(err);
-    alert("Failed to add list");
+    Notiflix.Notify.failure("Lỗi khi thêm list")
   }
 
 });
@@ -1270,7 +1270,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
 
   // 🔒 chỉ owner mới được chỉnh (phòng hờ)
   if (window.currentboardRole !== "owner") {
-    alert("Bạn không có quyền chỉnh role");
+    Notiflix.Notify.failure("Bạn không có quyền chỉnh role")
     return;
   }
 
@@ -1295,7 +1295,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.message || "Không thể cập nhật role");
+      Notiflix.Notify.failure("Không thể cập nhật role")
       return;
     }
 
@@ -1308,7 +1308,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
 
   } catch (err) {
     console.error("Update role error:", err);
-    alert("Lỗi server");
+    Notiflix.Notify.failure("Lỗi server")
   }
 });
 
@@ -1564,7 +1564,7 @@ async function openCardDetail(cardId) {
     credentials: "include"
   });
   const result = await res.json();
-  if (!result.success) return alert(result.message || "Lỗi khi tải chi tiết card");
+  if (!result.success) return Notiflix.Notify.failure("Lỗi khi tải card")
 
   currentCard = result.data;
   socket.emit("card:join", currentCard._id);
