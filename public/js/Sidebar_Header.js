@@ -433,11 +433,11 @@ export function initUserMenu() {
       const html = await resHtml.text();
       profileContainer.innerHTML = `<button class="profile-modal-close"><i class="fa-solid fa-x"></i></button>${html}`;
 
-      const modalCloseBtn = profileContainer.querySelector(".profile-modal-close"); 
-      if (modalCloseBtn) { 
-        modalCloseBtn.addEventListener("click", () => { 
-          profileModal.style.display = "none"; 
-        }); 
+      const modalCloseBtn = profileContainer.querySelector(".profile-modal-close");
+      if (modalCloseBtn) {
+        modalCloseBtn.addEventListener("click", () => {
+          profileModal.style.display = "none";
+        });
       }
 
       if (!document.getElementById("profileCSS")) {
@@ -469,7 +469,7 @@ export function initUserMenu() {
       const avatarWrapper = profileContainer.querySelector(".avatar-wrapper img");
       if (avatarWrapper) {
         avatarWrapper.src = user.avatar || "/images/default-avatar.png";
-        avatarWrapper.style.display = "block"; 
+        avatarWrapper.style.display = "block";
       }
 
       profileContainer.querySelectorAll("#password, #retype-password").forEach(i => i.value = "");
@@ -482,7 +482,7 @@ export function initUserMenu() {
       profileContainer.innerHTML = `<button class="profile-modal-close"><i class="fa-solid fa-x"></i></button>
       <div style="color:red">Lỗi load profile: ${err.message}</div>`;
 
-      const modalCloseBtn = profileContainer.querySelector(".profile-modal-close"); 
+      const modalCloseBtn = profileContainer.querySelector(".profile-modal-close");
       if (modalCloseBtn) {
         modalCloseBtn.addEventListener("click", () => {
           profileModal.style.display = "none";
@@ -607,4 +607,3 @@ form.addEventListener("submit", async e => {
     alert("Error: " + err.message);
   }
 });
-

@@ -2,7 +2,7 @@
 .content-boards {
   flex: 1;
   background: #fff;
-  padding: 12px 28px 28px; /* giảm padding-top để không bị đẩy xuống */
+  padding: 12px 28px 28px; 
   min-height: calc(100vh - var(--header-h));
   overflow-y: auto;
   transition: all 0.3s ease;
