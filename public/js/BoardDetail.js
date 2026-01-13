@@ -447,6 +447,9 @@ function createListElement(list) {
     // Tạo topBar (luôn có)
     const topBar = document.createElement("div");
     topBar.className = "card-topbar";
+    const cardlabels = document.createElement("div");
+    cardlabels.className = "card-labels"
+    topBar.appendChild(cardlabels);
     // --- LABELS (nếu có) ---
     if (Array.isArray(card.labels) && card.labels.length > 0) {
       const labelsEl = document.createElement("div");
