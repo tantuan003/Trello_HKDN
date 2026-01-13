@@ -584,7 +584,7 @@ window.addEventListener("click", e => {
 form.addEventListener("submit", async e => {
   e.preventDefault();
   const name = input.value.trim();
-  if (!name) return alert("Vui lòng nhập tên workspace");
+  if (!name) return Notiflix.Notify.failure("Vui lòng nhập tên workspace");
 
   try {
     const res = await fetch(`${API_BASE}/v1/workspace/create`, {
@@ -596,8 +596,8 @@ form.addEventListener("submit", async e => {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Lỗi tạo workspace");
+    Notiflix.Notify.success("Tạo workspace thành công");
 
-    alert(data.message);
     modal.style.display = "none";
 
     // reload danh sách workspace
