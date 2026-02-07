@@ -1,12 +1,11 @@
-// ---------------- Members Page ----------------
 import { API_BASE } from "../js/config.js";
+
 document.addEventListener("DOMContentLoaded", async () => {
   await loadNav("members");
   await initMembersPage();
   bindInviteModal();
 });
 
-// ---------------- Init Members Page ----------------
 async function initMembersPage() {
   try {
     const resUser = await fetch(`${API_BASE}/v1/User/me`, { credentials: "include" });
@@ -17,9 +16,7 @@ async function initMembersPage() {
     }
 
     let wsId = new URLSearchParams(window.location.search).get("ws") || localStorage.getItem("currentWorkspaceId");
-
     let workspace = user.workspaces.find(ws => ws._id === wsId) || user.workspaces[0];
-
 
     currentWorkspaceId = workspace._id;
     localStorage.setItem("currentWorkspaceId", currentWorkspaceId);
@@ -46,7 +43,6 @@ async function initMembersPage() {
         if (ws._id === currentWorkspaceId) div.classList.add("active");
 
         div.addEventListener("click", () => {
-
           currentWorkspaceId = ws._id;
           localStorage.setItem("currentWorkspaceId", currentWorkspaceId);
 
@@ -69,102 +65,27 @@ async function initMembersPage() {
     }
 
     await loadMembers(currentWorkspaceId);
-
   } catch (err) {
     console.error(err);
     document.querySelector(".members-list").innerHTML = "<p>Error loading workspace or members</p>";
   }
 }
 
-function canEditRole(member) {
-  if (!window.currentWorkspaceRole) return false;
-
-  const currentUserRole = window.currentWorkspaceRole.toLowerCase();
-  const targetRole = member.role.toLowerCase();
-
-  // ❌ Không ai được sửa Owner
-  if (targetRole === "owner") return false;
-
-  // ✅ Chỉ Owner mới được sửa role
-  if (currentUserRole === "owner") return true;
-
-  return false;
-}
-function attachRoleChangeEvents(workspaceId) {
-  const selects = document.querySelectorAll(".role-select");
-
-  selects.forEach(select => {
-    select.addEventListener("change", async (e) => {
-      const memberId = e.target.dataset.userId;
-      const newRole = e.target.value;
-
-      const oldRole = e.target.getAttribute("data-old-role");
-
-      // UI optimistic
-      e.target.disabled = true;
-
-      try {
-        const res = await fetch(
-          `${API_BASE}/v1/workspace/${workspaceId}/members/${memberId}/role`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({ role: newRole })
-          }
-        );
-
-        if (!res.ok) {
-          throw new Error("Update role failed");
-        }
-
-        // cập nhật old role
-        e.target.setAttribute("data-old-role", newRole);
-
-        console.log(`✅ Role updated: ${memberId} → ${newRole}`);
-
-      } catch (err) {
-        console.error(err);
-
-        // rollback UI nếu lỗi
-        if (oldRole) {
-          e.target.value = oldRole;
-        }
-
-        alert("Không thể cập nhật role. Vui lòng thử lại.");
-      } finally {
-        e.target.disabled = false;
-      }
-    });
-
-    // lưu role cũ để rollback
-    select.setAttribute("data-old-role", select.value);
-  });
-}
-
-
-
-// ---------------- Load members ----------------
 async function loadMembers(workspaceId) {
   const membersContainer = document.querySelector(".members-list");
 
   try {
     const res = await fetch(`${API_BASE}/v1/workspace/${workspaceId}/members`, { credentials: "include" });
-    if (!res.ok) throw new Error("Không thể load danh sách members");
+    if (!res.ok) throw new Error("Failed to load members list!");
 
     const response = await res.json();
-
     window.currentWorkspaceRole = response.data.currentUserRole;
     const members = response.data.members;
-
-    console.log("Members: ", members);
 
     membersContainer.innerHTML = "";
 
     if (!members.length) {
-      membersContainer.innerHTML = "<p>Chưa có member nào trong workspace</p>";
+      membersContainer.innerHTML = "<p>No members in this workspace</p>";
       return;
     }
 
@@ -172,7 +93,6 @@ async function loadMembers(workspaceId) {
       const div = document.createElement("div");
       div.className = "member-row";
 
-      // Avatar
       const avatar = document.createElement("div");
       avatar.className = "avatar";
       if (member.avatar) {
@@ -186,43 +106,233 @@ async function loadMembers(workspaceId) {
         avatar.textContent = "?";
       }
 
-      // 🔽 Role select
-      let roleHTML = "";
+      const infoHTML = `
+        <div class="member-info">
+          <div class="name">${member.username}</div>
+          <div class="email">${member.email}</div>
+        </div>
+      `;
 
-      if (member.role.toLowerCase() === "owner") {
-        roleHTML = `<div class="role-owner">OWNER</div>`;
-      } else if (canEditRole(member)) {
-        roleHTML = `
-          <select class="role-select" data-user-id="${member._id}" data-old-role="${member.role}">
-            <option value="member" ${member.role === "member" ? "selected" : ""}>Member</option>
-            <option value="admin" ${member.role === "admin" ? "selected" : ""}>Admin</option>
-          </select>
-          `;
+      let actionsHTML = "";
+      if (member.role.toLowerCase() !== "owner") {
+        actionsHTML = `
+          <div class="member-actions">
+            <i class="fa-solid fa-pen-to-square edit-role"
+              data-user-id="${member._id}"             
+              data-current-role="${member.role}"
+              title="Edit role"></i>
+            <i class="fa-solid fa-user-minus remove-member"
+              data-member-id="${member.memberSubId}"    
+              data-user-id="${member._id}"
+              title="Remove member"></i>
+          </div>
+        `;
       } else {
-        roleHTML = `<div class="role-text">${member.role}</div>`;
+        actionsHTML = `<div class="role-owner">OWNER</div>`;
       }
 
-      div.innerHTML = `
-    <div class="member-info">
-      <div class="name">${member.username}</div>
-      <div class="email">${member.email}</div>
-    </div>
-    ${roleHTML}
-  `;
+      div.innerHTML = infoHTML + actionsHTML;
       div.prepend(avatar);
       membersContainer.appendChild(div);
     });
-    attachRoleChangeEvents(workspaceId);
 
+    attachMemberActions(workspaceId);
   } catch (err) {
     console.error(err);
     membersContainer.innerHTML = "<p>Error loading members list</p>";
   }
 }
 
+function attachMemberActions(workspaceId) {
+  document.querySelectorAll(".edit-role").forEach(icon => {
+    icon.addEventListener("click", (e) => {
+      const userId = e.target.dataset.userId;
+      const currentRole = e.target.dataset.currentRole.toLowerCase();
+      const myRole = window.currentWorkspaceRole.toLowerCase();
+
+      let canEdit = false;
+      if (myRole === "owner") canEdit = true;
+      else if (myRole === "admin" && currentRole === "member") canEdit = true;
+
+      if (!canEdit) {
+        Toastify({
+          text: "You do not have permission to edit this role",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          close: true,
+          style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+        }).showToast();
+        return;
+      }
+
+      const parent = e.target.closest(".member-actions") || e.target.parentElement;
+
+      const roleMenu = document.createElement("div");
+      roleMenu.className = "inline-role-picker";
+      roleMenu.innerHTML = `
+        <button class="role-btn ${currentRole === 'member' ? 'active' : ''}" data-role="member">Member</button>
+        <button class="role-btn ${currentRole === 'admin' ? 'active' : ''}" data-role="admin">Admin</button>
+      `;
+      icon.replaceWith(roleMenu);
+
+      roleMenu.querySelectorAll(".role-btn").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const newRole = btn.dataset.role;
+          if (newRole === currentRole) return;
+
+          try {
+            const res = await fetch(
+              `${API_BASE}/v1/workspace/${workspaceId}/members/${userId}/role`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({ role: newRole })
+              }
+            );
+
+            if (!res.ok) throw new Error();
+
+            Toastify({
+              text: "Role updated successfully",
+              duration: 2000,
+              gravity: "top",
+              position: "right",
+              close: true,
+              style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+            }).showToast();
+
+            await loadMembers(workspaceId);
+
+          } catch (err) {
+            Toastify({
+              text: "Failed to update role",
+              duration: 3000,
+              gravity: "top",
+              position: "right",
+              close: true,
+              style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+            }).showToast();
+          }
+        });
+      });
+
+      function handleClickOutside(ev) {
+        if (!roleMenu.contains(ev.target)) {
+          const newIcon = document.createElement("i");
+          newIcon.className = "fa-solid fa-pen-to-square edit-role";
+          newIcon.dataset.userId = userId;
+          newIcon.dataset.currentRole = currentRole;
+          newIcon.title = "Edit role";
+          roleMenu.replaceWith(newIcon);
+          document.removeEventListener("click", handleClickOutside);
+          attachMemberActions(workspaceId);
+        }
+      }
+
+      setTimeout(() => {
+        document.addEventListener("click", handleClickOutside);
+      }, 0);
+    });
+  });
 
 
-// ---------------- Invite modal ----------------
+  document.querySelectorAll(".remove-member").forEach(btn => {
+    btn.removeEventListener("click", handleRemoveMember);
+    btn.addEventListener("click", handleRemoveMember);
+  });
+
+  function showConfirmModal(memberName = "this member") {
+    return new Promise((resolve) => {
+      const overlay = document.getElementById("confirm-modal");
+      const textEl = overlay.querySelector("p");
+      const btnOk = document.getElementById("confirm-ok");
+      const btnCancel = document.getElementById("confirm-cancel");
+
+      textEl.textContent = `Are you sure you want to remove ${memberName} from this workspace?`;
+      overlay.classList.remove("hidden");
+
+      const cleanup = () => {
+        overlay.classList.add("hidden");
+        btnOk.onclick = null;
+        btnCancel.onclick = null;
+      };
+
+      btnOk.onclick = () => {
+        cleanup();
+        resolve(true);
+      };
+
+      btnCancel.onclick = () => {
+        cleanup();
+        resolve(false);
+      };
+    });
+  }
+
+  async function handleRemoveMember(e) {
+    const btn = e.currentTarget;
+    const memberSubId = btn.dataset.memberId;
+
+    const confirmed = await showConfirmModal();
+    if (!confirmed) return;
+
+    btn.disabled = true;
+    btn.title = "Removing...";
+
+    try {
+      const res = await fetch(
+        `${API_BASE}/v1/workspace/${workspaceId}/members/${memberSubId}`,
+        {
+          method: "DELETE",
+          credentials: "include"
+        }
+      );
+
+      if (res.status === 403) {
+        Toastify({
+          text: "You are not owner of this workspace",
+          duration: 3000,
+          gravity: "top",
+          position: "right",
+          close: true,
+          style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+        }).showToast();
+        return;
+      }
+
+      if (!res.ok) {
+        throw new Error("Remove member failed");
+      }
+
+      Toastify({
+        text: "Member removed successfully",
+        duration: 2000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #00b09b, #96c93d)" }
+      }).showToast();
+
+      btn.closest(".member-row")?.remove();
+
+    } catch (err) {
+      Toastify({
+        text: "Something went wrong. Please try again.",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
+    } finally {
+      btn.disabled = false;
+      btn.title = "Remove member";
+    }
+  }
+}
+
 function bindInviteModal() {
   const inviteModal = document.getElementById("inviteModal");
   const inviteBtn = document.querySelector(".invite-btn");
@@ -232,11 +342,17 @@ function bindInviteModal() {
 
   if (!inviteModal || !inviteBtn || !closeBtn || !sendBtn || !inviteEmailInput) return;
 
-  // Mở modal
   inviteBtn.addEventListener("click", () => {
     const wsId = localStorage.getItem("currentWorkspaceId") || window.currentWorkspaceId;
     if (!wsId) {
-      alert("Workspace chưa được chọn!");
+      Toastify({
+        text: "Missing workspace ID!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
       return;
     }
     inviteModal.classList.add("show");
@@ -245,7 +361,6 @@ function bindInviteModal() {
     inviteEmailInput.focus();
   });
 
-  // Đóng modal bằng nút close
   closeBtn.addEventListener("click", () => {
     inviteModal.classList.remove("show");
     setTimeout(() => {
@@ -253,7 +368,6 @@ function bindInviteModal() {
     }, 300);
   });
 
-  // Đóng modal khi click ra ngoài
   inviteModal.addEventListener("click", (e) => {
     if (e.target === inviteModal) {
       inviteModal.classList.remove("show");
@@ -263,17 +377,30 @@ function bindInviteModal() {
     }
   });
 
-  // Gửi invite
   sendBtn.addEventListener("click", async () => {
     const email = inviteEmailInput.value.trim();
     const wsId = localStorage.getItem("currentWorkspaceId") || window.currentWorkspaceId;
 
     if (!email) {
-      alert("Vui lòng nhập email!");
+      Toastify({
+        text: "Please enter a valid email!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
       return;
     }
     if (!wsId) {
-      alert("Workspace chưa được chọn!");
+      Toastify({
+        text: "Missing workspace ID!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
       return;
     }
 
@@ -287,20 +414,34 @@ function bindInviteModal() {
 
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.message || "Không thể mời user");
+      if (!res.ok) throw new Error(data.message || "Error");
 
-      alert(data.message || "Invitation sent successfully!");
+      Toastify({
+        text: data.message || "Invitation sent successfully!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #4caf50, #2e7d32)" }
+      }).showToast();
+
       inviteModal.classList.remove("show");
       setTimeout(() => {
         inviteModal.style.display = "none";
       }, 300);
 
-      // reload members list
       await loadMembers(wsId);
 
     } catch (err) {
       console.error("Invite error:", err);
-      alert("Error: " + err.message);
+      Toastify({
+        text: "Error: " + err.message,
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        close: true,
+        style: { background: "linear-gradient(to right, #f87171, #ef4444)" }
+      }).showToast();
     }
   });
 }

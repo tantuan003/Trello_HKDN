@@ -7,12 +7,12 @@ export const registerUser = async (req, res) => {
     const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "Thiếu dữ liệu bắt buộc" });
+      return res.status(400).json({ message: "Please enter required input!" });
     }
 
     const existingUser = await User.findOne({ email: email.toLowerCase() });
     if (existingUser) {
-      return res.status(400).json({ message: "Email đã được sử dụng" });
+      return res.status(400).json({ message: "Email existed!" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -27,7 +27,7 @@ export const registerUser = async (req, res) => {
     await newUser.save();
 
     const workspace = new Workspace({
-      name: `Workspace của ${username}`,
+      name: `${username}'s Workspace`,
       owner: newUser._id,
       members: [
         { user: newUser._id, role: "owner", joinedAt: new Date() }
@@ -39,11 +39,11 @@ export const registerUser = async (req, res) => {
     newUser.workspaces.push(workspace._id);
     await newUser.save();
 
-    res.status(201).json({ success: true, message: "Đăng ký thành công", user: newUser });
+    res.status(201).json({ success: true, message: "Successfully signing up!", user: newUser });
 
   } catch (error) {
     console.error("ERROR registerUser:", error);
-    res.status(500).json({ message: "Lỗi server", error: error.message });
+    res.status(500).json({ message: "Error", error: error.message });
   }
 };
 

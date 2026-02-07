@@ -106,7 +106,7 @@ export const getBoardsByCurrentUser = async (req, res) => {
 export const getBoardById = async (req, res) => {
   try {
     const { boardId } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id;
 
     const board = await Board.findById(boardId)
       .populate("createdBy", "username email avatar")
@@ -125,12 +125,14 @@ export const getBoardById = async (req, res) => {
 
     let currentUserRole = null;
 
-    /* ===== OWNER ===== */
+    if (board.visibility === "public") {
+      currentUserRole = "null"; 
+    }
+    
     if (board.createdBy?._id.toString() === userId) {
       currentUserRole = "owner";
     }
 
-    /* ===== MEMBER / ADMIN ===== */
     if (!currentUserRole) {
       const member = board.members.find(
         m => m.user?._id.toString() === userId
@@ -141,7 +143,6 @@ export const getBoardById = async (req, res) => {
       }
     }
 
-    /* ===== KHÔNG THUỘC BOARD ===== */
     if (!currentUserRole) {
       return res.status(403).json({ message: "Bạn không thuộc board này" });
     }
@@ -166,8 +167,6 @@ export const getBoardById = async (req, res) => {
     });
   }
 };
-
-
 
 export const getBoardsByWorkspace = async (req, res) => {
   try {
@@ -210,7 +209,6 @@ export const createList = async (req, res) => {
     const newList = await List.create({ name, board: boardId, cards: [], createdBy: userId, });
     board.lists.push(newList._id);
     await board.save();
-
     const io = req.app.get("socketio");
     io.to(boardId).emit("newList", newList);
     await logActivity({
@@ -224,8 +222,8 @@ export const createList = async (req, res) => {
       },
       data: {
         newValue: newList.name,
-        extra:{
-          boardname:board.name
+        extra: {
+          boardname: board.name
         }
       }
     });
@@ -330,6 +328,7 @@ export const getCardById = async (req, res) => {
 };
 
 // mời user
+// mời user
 export const inviteUser = async (req, res) => {
   try {
     const { boardId } = req.params;
@@ -343,6 +342,12 @@ export const inviteUser = async (req, res) => {
     const board = await Board.findById(boardId);
     if (!board) {
       return res.status(404).json({ message: "Board không tồn tại" });
+    }
+
+    if (board.visibility === "private") {
+      return res.status(403).json({
+        message: "Board private, không thể mời thành viên"
+      });
     }
 
     // 1️⃣ Check quyền inviter trong board
@@ -406,13 +411,29 @@ export const inviteUser = async (req, res) => {
 
     await board.save();
 
-    res.status(200).json({
+    // ✅ Lấy lại board đã populate members.user để FE render avatar/username/email ngay
+    const populatedBoard = await Board.findById(boardId).populate({
+      path: "members.user",
+      select: "username email avatar"
+    });
+
+    // ✅ Realtime: đẩy danh sách members mới nhất tới tất cả client đang mở board
+    req.io?.to(boardId.toString()).emit("board:membersUpdated", {
+      boardId: boardId.toString(),
+      members: populatedBoard.members
+    });
+
+    return res.status(200).json({
+      success: true,
       message: "Mời user thành công",
+      members: populatedBoard.members,
+      // giữ lại field member (nếu chỗ nào đó đang dùng)
       member: {
         user: {
           _id: user._id,
           username: user.username,
-          email: user.email
+          email: user.email,
+          avatar: user.avatar
         },
         role: "member"
       }
@@ -420,7 +441,7 @@ export const inviteUser = async (req, res) => {
 
   } catch (err) {
     console.error("❌ inviteUser error:", err);
-    res.status(500).json({ message: "Lỗi server" });
+    return res.status(500).json({ message: "Lỗi server" });
   }
 };
 
@@ -567,12 +588,23 @@ export const updateCardComplete = async (req, res) => {
     if (!card) {
       return res.status(404).json({ message: "Card not found" });
     }
+    // ✅ lấy boardId từ list
+    const list = await List.findById(card.list).select("board");
+
+    if (!list) {
+      return res.status(404).json({ message: "List not found" });
+    }
 
     // Emit realtime nếu bạn dùng socket.io
-    req.io?.to(cardId).emit("card:completeUpdated", {
-      cardId,
-      complete
-    });
+    req.io?.to(list.board.toString()).emit(
+      "card:completeUpdated",
+      {
+        cardId: card._id,
+        complete: card.complete,
+        listId: card.list
+      }
+    );
+
 
     return res.json({
       message: "Card updated successfully",
@@ -613,7 +645,7 @@ export const clearCardsInList = async (req, res) => {
     if (!member || !["owner", "admin"].includes(member.role)) {
       return res.status(403).json({ message: "Bạn không có quyền xoá card" });
     }
-     const cardCount = await Card.countDocuments({ list: listId });
+    const cardCount = await Card.countDocuments({ list: listId });
 
     if (cardCount === 0) {
       return res.json({ message: "List không có card để xoá", listId });
@@ -761,7 +793,7 @@ export const deleteCard = async (req, res) => {
     if (!member || (!["owner", "admin"].includes(member.role) && !isCreator)) {
       return res.status(403).json({ message: "Bạn không có quyền xoá card này" });
     }
-      await logActivity({
+    await logActivity({
       boardId: list.board,
       userId,
       action: "DELETE_CARD",
@@ -1026,6 +1058,59 @@ export const updateBoardVisibility = async (req, res) => {
   }
 };
 
+export const updateBoardBackground = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const { background } = req.body;
+    const userId = req.user?.id;
+
+    const allowGradients = [
+      "gradient-1", "gradient-2", "gradient-3", "gradient-4", "gradient-5", "gradient-6", "gradient-7"
+    ];
+
+    const isGradient = typeof background === "string" && allowGradients.includes(background);
+    const isImage =
+      typeof background === "string" &&
+      (background.startsWith("/uploads/") || background.startsWith("http://") || background.startsWith("https://"));
+
+    if (!isGradient && !isImage) {
+      return res.status(400).json({ success: false, message: "Background không hợp lệ" });
+    }
+
+    // 권한: owner/admin (giống style updateBoardTitle: members.$elemMatch) :contentReference[oaicite:4]{index=4}
+    const board = await Board.findOne({
+      _id: boardId,
+      members: {
+        $elemMatch: { user: userId, role: { $in: ["owner", "admin"] } }
+      }
+    });
+
+    if (!board) {
+      return res.status(403).json({ success: false, message: "Bạn không có quyền đổi background" });
+    }
+
+    const oldBg = board.background;
+    board.background = background;
+    await board.save();
+
+    io.to(boardId).emit("board:backgroundUpdated", { boardId, background });
+
+    await logActivity({
+      boardId: board._id,
+      userId,
+      action: "BOARD_BACKGROUND_CHANGE",
+      target: { type: "board", id: board._id, title: board.name },
+      data: { oldValue: oldBg, newValue: background }
+    });
+
+    return res.json({ success: true, background: board.background });
+  } catch (err) {
+    console.error("updateBoardBackground error:", err);
+    return res.status(500).json({ success: false, message: "Lỗi server" });
+  }
+};
+
+
 // sửa têm list
 export const updateListTitle = async (req, res) => {
   try {
@@ -1056,7 +1141,7 @@ export const updateListTitle = async (req, res) => {
       target: {
         type: "list",
         id: list._id,
-        title: list.name // snapshot tên mới
+        title: list.name
       },
       data: {
         oldValue: oldName,
@@ -1070,5 +1155,117 @@ export const updateListTitle = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Lỗi server" });
+  }
+};
+
+export async function getPublicBoards(req, res) { 
+  try { 
+    const boards = await Board.find({ visibility: "public" })
+    .populate("workspace", "name") 
+    .populate("createdBy", "username email") 
+    .populate("members.user", "username"); 
+
+      res.json({ 
+        success: true, 
+        data: boards 
+      }); 
+    } catch (err) { 
+      console.error("Error fetching public boards:", err); 
+      res.status(500).json({ 
+        success: false, 
+        message: "Lỗi server khi lấy board public" 
+      }); 
+    } 
+  }
+export const removeBoardMember = async (req, res) => {
+  try {
+    const { boardId, userId } = req.params;
+    const requesterId = req.user.id;
+
+    const board = await Board.findById(boardId).populate(
+      "members.user",
+      "username email"
+    );
+
+    if (!board) {
+      return res.status(404).json({ message: "Board not found" });
+    }
+
+    // 🔒 Check quyền: chỉ OWNER
+    const requester = board.members.find(
+      m => m.user._id.toString() === requesterId
+    );
+
+    if (!requester || requester.role !== "owner") {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    // ❌ Không cho xoá owner
+    const targetMember = board.members.find(
+      m => m.user._id.toString() === userId
+    );
+
+    if (!targetMember) {
+      return res.status(404).json({ message: "Member not found" });
+    }
+
+    if (targetMember.role === "owner") {
+      return res.status(400).json({ message: "Cannot remove owner" });
+    }
+
+    // 🧹 Remove member
+    board.members = board.members.filter(
+      m => m.user._id.toString() !== userId
+    );
+
+    await board.save();
+
+    // 📝 Log activity
+    await logActivity({
+      boardId: board._id,
+      userId: requesterId, // ✅ actor
+      action: "DELETE_MEMBER",
+      target: {
+        type: "board-member",
+        id: userId,
+        title: targetMember.user.username // ✅ snapshot tên user
+      }
+    });
+
+    return res.json({ message: "Member removed successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getBoardMembers = async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const userId = req.user.id;
+
+    const board = await Board.findById(boardId)
+      .select("members")
+      .populate("members.user", "username email avatar");
+
+    if (!board) {
+      return res.status(404).json({ message: "Board not found" });
+    }
+
+    // 🔒 Check: user phải là member của board
+    const isMember = board.members.some(
+      m => m.user._id.toString() === userId
+    );
+
+    if (!isMember) {
+      return res.status(403).json({ message: "Permission denied" });
+    }
+
+    return res.json({
+      members: board.members
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Server error" });
   }
 };

@@ -1,8 +1,8 @@
 import { socket } from "../js/socket.js";
 import { API_BASE } from "../js/config.js";
 
-const boardCards = document.querySelectorAll(".board-card"); // NodeList
-const cardGrid = document.querySelector(".card-grid"); // chỉ 1 grid
+const boardCards = document.querySelectorAll(".board-card"); 
+const cardGrid = document.querySelector(".card-grid"); 
 const boardView = document.getElementById("boardView");
 const boardTitle = document.getElementById("boardTitle");
 const listsContainer = document.getElementById("listsContainer");
@@ -63,7 +63,6 @@ function openDeleteModal(boardId, cardEl) {
         credentials: "include",
       });
 
-      // ✅ JSON safe parse (DELETE đôi khi không trả body)
       let data = null;
       try {
         data = await res.json();
@@ -71,7 +70,7 @@ function openDeleteModal(boardId, cardEl) {
 
       if (!res.ok || (data && data.success === false)) {
         Toastify({
-          text: `❌ ${(data && data.message) || "Xoá board thất bại!"}`,
+          text: `${(data && data.message) || "Xoá board thất bại!"}`,
           duration: 2000,
           gravity: "top",
           position: "right",
@@ -81,13 +80,11 @@ function openDeleteModal(boardId, cardEl) {
         return;
       }
 
-      // ✅ remove UI card
+      // remove UI card
       if (pendingDelete.cardEl) pendingDelete.cardEl.remove();
 
-      // ✅ báo cho global search reload lại list boards
       localStorage.setItem("boardsDirty", "1");
 
-      // ✅ xoá khỏi recent search history nếu có
       try {
         const key = "recentBoardSearches";
         const raw = localStorage.getItem(key);
@@ -101,7 +98,7 @@ function openDeleteModal(boardId, cardEl) {
       } catch { }
 
       Toastify({
-        text: "🗑️ Xoá board thành công!",
+        text: "Xoá board thành công!",
         duration: 2000,
         gravity: "top",
         position: "right",
@@ -109,7 +106,6 @@ function openDeleteModal(boardId, cardEl) {
         backgroundColor: "linear-gradient(to right, #ef4444, #f97316)",
       }).showToast();
 
-      // ✅ reload list boards
       loadRecentlyViewedBoards();
 
       overlay.style.display = "none";
@@ -117,7 +113,7 @@ function openDeleteModal(boardId, cardEl) {
     } catch (err) {
       console.error("Delete board error:", err);
       Toastify({
-        text: "🚫 Lỗi server khi xoá board!",
+        text: "Lỗi server khi xoá board!",
         duration: 2000,
         gravity: "top",
         position: "right",
@@ -129,10 +125,6 @@ function openDeleteModal(boardId, cardEl) {
     }
   };
 }
-
-/* ===========================
-   RECENTLY VIEWED
-=========================== */
 
 async function loadRecentlyViewedBoards() {
   const urlParams = new URLSearchParams(window.location.search);
@@ -183,9 +175,6 @@ function showEmptyRecentlyViewed(container) {
   container.innerHTML = `<p class="no-recent">No recently viewed boards yet.</p>`;
 }
 
-/* ===========================
-   ✅ Tạo card board (SỬA ĐÚNG CHỖ: delete button + hover)
-=========================== */
 function createBoardCard(board) {
   const card = document.createElement("a");
   card.className = "board-card";
@@ -229,42 +218,34 @@ function createBoardCard(board) {
 
   footer.appendChild(title);
 
-  // ✅ Delete button: absolute bottom-right, hover show
   const delBtn = document.createElement("button");
   delBtn.type = "button";
   delBtn.className = "board-delete-btn";
   delBtn.setAttribute("aria-label", "Delete board");
 
   const delIcon = document.createElement("img");
-  delIcon.src = "/uploads/icons8-delete-128.png"; // ✅ fix path
+  delIcon.src = "/uploads/icons8-delete-128.png"; 
   delIcon.alt = "Delete";
   delBtn.appendChild(delIcon);
 
   delBtn.addEventListener("click", (e) => {
-    e.preventDefault();   // chặn <a> navigate
-    e.stopPropagation();  // chặn bubble
-    openDeleteModal(board._id, card); // ✅ dùng modal+API chuẩn bên trên
+    e.preventDefault();   
+    e.stopPropagation(); 
+    openDeleteModal(board._id, card); 
   });
 
   card.appendChild(cover);
   card.appendChild(footer);
-  card.appendChild(delBtn); // ✅ append vào card để absolute đúng góc
+  card.appendChild(delBtn);
 
   return card;
 }
 
-/* ===========================
-   ✅ Realtime: board deleted
-   (Đặt cùng level với các socket.on khác, KHÔNG đặt trong DOMContentLoaded)
-=========================== */
 socket.on("board:deleted", ({ boardId }) => {
   const card = document.querySelector(`.board-card[data-board-id="${boardId}"]`);
   if (card) card.remove();
 });
 
-/* ===========================
-   inject sidebar + load boards
-=========================== */
 async function inject(file, targetSelector) {
   try {
     const res = await fetch(file, { cache: "no-store" });
@@ -358,7 +339,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const visibility = document.getElementById("visibilitySelect").value;
     if (!name || !workspaceId)
       return Toastify({
-        text: "⚠️ Vui lòng nhập đầy đủ!",
+        text: "Vui lòng nhập đầy đủ!",
         duration: 2000, // 3 giây
         gravity: "top", // top hoặc bottom
         position: "right", // left, center, right
@@ -381,7 +362,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const data = await res.json();
       if (res.ok) {
         Toastify({
-          text: "✅ Tạo board thành công!",
+          text: "Tạo board thành công!",
           duration: 2000,
           gravity: "top",
           position: "right",
@@ -394,7 +375,7 @@ document.addEventListener("DOMContentLoaded", () => {
         localStorage.setItem("boardsDirty", "1");
       } else {
         Toastify({
-          text: `❌ ${data.message || "Tạo board thất bại!"}`,
+          text: `${data.message || "Tạo board thất bại!"}`,
           duration: 2000,
           gravity: "top",
           position: "right",
@@ -505,7 +486,7 @@ function attachAddCard(listEl, listId) {
     setTimeout(() => inputContainer.classList.add("show"), 10);
     input.focus();
 
-    // 🔽 Cuộn đến đáy .cards-container
+    // Cuộn đến đáy .cards-container
     setTimeout(() => {
       cardsContainer.scrollTo({
         top: cardsContainer.scrollHeight,
@@ -528,7 +509,7 @@ function attachAddCard(listEl, listId) {
     const cardName = input.value.trim();
     if (!cardName)
       return Toastify({
-        text: "⚠️ Vui lòng nhập tên thẻ!",
+        text: "Vui lòng nhập tên thẻ!",
         duration: 2000,
         gravity: "top",
         position: "right",
@@ -603,12 +584,26 @@ const inviteForm = document.getElementById("inviteForm");
 if (inviteForm) {
   inviteForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+
+    if (currentBoardVisibility === "private") {
+      Toastify({
+        text: "Board private, không thể mời thành viên!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#9C27B0",
+        close: true,
+        stopOnFocus: true,
+      }).showToast();
+      return;
+    }
+
     const boardId = currentBoardId;
     const email = inviteForm.querySelector("input").value.trim();
 
     if (!email) {
       Toastify({
-        text: "⚠️ Vui lòng nhập email!",
+        text: "Vui lòng nhập email!",
         duration: 3000,
         gravity: "top",
         position: "right",
@@ -631,7 +626,7 @@ if (inviteForm) {
 
       if (res.ok) {
         Toastify({
-          text: "✅ Mời thành công!",
+          text: "Mời thành công!",
           duration: 3000,
           gravity: "top",
           position: "right",
@@ -643,7 +638,7 @@ if (inviteForm) {
         inviteForm.reset();
       } else {
         Toastify({
-          text: `❌ ${data.message || "Mời thất bại!"}`,
+          text: data.message || "Mời thất bại!",
           duration: 3000,
           gravity: "top",
           position: "right",
@@ -655,7 +650,7 @@ if (inviteForm) {
     } catch (err) {
       console.error(err);
       Toastify({
-        text: "🚫 Lỗi server, vui lòng thử lại sau!",
+        text: "Lỗi server, vui lòng thử lại sau!",
         duration: 3000,
         gravity: "top",
         position: "right",
@@ -667,7 +662,7 @@ if (inviteForm) {
   });
 }
 
-//bật tắt invite
+// Bật/tắt invite form
 document.addEventListener("DOMContentLoaded", () => {
   const inviteIcon = document.getElementById("invite-icon");
   const inviteFormContainer = document.getElementById("inviteFormContainer");
@@ -676,6 +671,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
   inviteIcon.addEventListener("click", (e) => {
     e.stopPropagation();
+
+    // Nếu board private thì hiện message và không mở form
+    if (currentBoardVisibility === "private") {
+      Toastify({
+        text: "Board private, không thể mở form mời!",
+        duration: 3000,
+        gravity: "top",
+        position: "right",
+        backgroundColor: "#9C27B0",
+        close: true,
+        stopOnFocus: true,
+      }).showToast();
+      return;
+    }
+
+    // Nếu không phải private thì toggle form
     inviteFormContainer.classList.toggle("hidden");
     inviteIcon.style.display = "none";
   });
@@ -687,6 +698,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+
 
 function addListToBoard(list) {
   const listsContainer = document.getElementById("listsContainer");

@@ -187,31 +187,37 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("card:removeLabel", async ({ cardId, color }) => {
-    try {
-      const card = await Card.findById(cardId)
-        .populate({
-          path: "list",
-          populate: { path: "board" }
-        });
+ socket.on("card:removeLabel", async ({ cardId, color }) => {
+  try {
+    const card = await Card.findById(cardId)
+      .populate({
+        path: "list",
+        populate: { path: "board" }
+      });
 
-      if (!card) return;
+    if (!card) return;
 
-      // Remove label
+    // Remove label nếu có
+    if (card.labels.includes(color)) {
       card.labels = card.labels.filter(c => c !== color);
       await card.save();
-
-      // Emit tới card detail (nếu đang mở)
-      io.to(card._id.toString()).emit("card:labelRemoved", { cardId, color });
-
-      // Emit tới tất cả client ở board (board list view)
-      if (card.list && card.list.board && card.list.board._id) {
-        io.to(card.list.board._id.toString()).emit("card:labelRemoved", { cardId, color });
-      }
-    } catch (err) {
-      console.error("Error removing label:", err);
     }
-  });
+
+    // Emit tới modal đang mở
+    io.to(card._id.toString()).emit("card:labelRemoved", { cardId, color });
+
+    // Emit tới tất cả client trong board (bao gồm board view)
+    if (card.list?.board?._id) {
+      io.to(card.list.board._id.toString()).emit("card:labelRemoved", { cardId, color });
+    }
+
+    console.log("Label removed emit to card:", cardId, "board:", card.list.board._id.toString());
+
+  } catch (err) {
+    console.error("Error removing card label:", err);
+  }
+});
+
   socket.on("card:assignMember", async ({ cardId, userId }) => {
     try {
       const card = await Card.findById(cardId)
@@ -301,34 +307,36 @@ io.on("connection", (socket) => {
   socket.on("card:updateDueDate", async ({ cardId, dueDate }) => {
     try {
       const card = await Card.findById(cardId)
-        .populate({
-          path: "list",
-          populate: { path: "board" }
-        });
-
+        .populate({ path: "list", populate: { path: "board" } });
       if (!card) return;
 
       card.dueDate = dueDate;
       await card.save();
 
-      // Gửi realtime cho client đang mở card detail
+      const boardId = card.list.board._id.toString();
+
+      // Gửi realtime cho modal đang mở (nếu có)
       io.to(cardId).emit("card:dueDateUpdated", {
         cardId,
         dueDate: card.dueDate
       });
 
-      // Gửi cho tất cả client trong board view
-      if (card.list && card.list.board && card.list.board._id) {
-        io.to(card.list.board._id.toString()).emit("card:dueDateUpdated", {
-          cardId,
-          dueDate: card.dueDate
-        });
-      }
+      // Gửi realtime cho tất cả client đang xem board
+      io.to(card.list.board._id.toString()).emit("card:dueDateUpdated", {
+        cardId,
+        dueDate: card.dueDate
+      });
+      // Server
+      console.log("Emit to card:", cardId, "board:", boardId);
+
 
     } catch (err) {
       console.error("Error updating due date:", err);
     }
   });
+
+
+
 
   // Thêm attachment
   socket.on("card:updateAttachments", async ({ cardId, file }) => {

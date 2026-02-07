@@ -20,8 +20,10 @@
     <div id="boardView" class="boardView">
       <!-- Header board -->
       <div id="inviteUser">
-        <h2 id="boardTitle">Board Title</h2>
-
+        <div class="left-header">
+          <i class="fa-solid fa-backward" id="back-list-board"></i>
+          <h2 id="boardTitle">Board Title</h2>
+        </div>
         <div class="invite-right">
           <div id="assignedAvatars"></div>
           <i class="fa-solid fa-user-plus" id="invite-icon"></i>
@@ -83,6 +85,30 @@
 
           </div>
         </div>
+        <div id="backgroundMenu" class="dropdown-menu hidden">
+          <label>
+            <i class="fa-solid fa-arrow-left back-btn" id="backToMoreFromBackground"></i>
+            Background
+          </label>
+
+          <div class="bg-grid">
+            <div class="bg-option gradient-1" data-bg="gradient-1"></div>
+            <div class="bg-option gradient-2" data-bg="gradient-2"></div>
+            <div class="bg-option gradient-3" data-bg="gradient-3"></div>
+            <div class="bg-option gradient-4" data-bg="gradient-4"></div>
+            <div class="bg-option gradient-5" data-bg="gradient-5"></div>
+            <div class="bg-option gradient-6" data-bg="gradient-6"></div>
+            <div class="bg-option gradient-7" data-bg="gradient-7"></div>
+          </div>
+
+          <div class="bg-upload">
+            <input type="file" id="bgUploadInput" accept="image/*" hidden />
+            <button id="bgUploadBtn" class="bg-upload-btn">
+              Upload image
+            </button>
+          </div>
+        </div>
+
         <!-- Overlay -->
         <div id="memberModal" class="modal-overlay hidden">
           <div class="modal-box">
@@ -226,7 +252,7 @@
 
   <script type="module" src="js/BoardDetail.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
-    <!-- JS Notiflix -->
+  <!-- JS Notiflix -->
   <script src="https://cdn.jsdelivr.net/npm/notiflix/dist/notiflix-aio-3.2.6.min.js"></script>
 
 </body>

@@ -34,15 +34,20 @@ body {
   gap: 16px;
 }
 
-#profileContainer .modal-close {
+#profileContainer .profile-modal-close {
   position: absolute;
   top: 12px;
   right: 12px;
-  font-size: 28px;
-  background: none;
+  background: transparent;
   border: none;
   cursor: pointer;
-  color: #333;
+  font-size: 18px;
+  color: #666;
+  transition: color 0.2s;
+}
+
+#profileContainer .profile-modal-close:hover {
+  color: #e74c3c;
 }
 
 /* ---- Profile Wrapper ---- */
@@ -276,6 +281,14 @@ hr {
 
 /* ---- Responsive ---- */
 @media (max-width: 768px) {
+  #profileContainer {
+    width: 95%;
+    max-width: none;
+    height: auto;
+    max-height: none;
+    overflow-y: visible;
+  }
+
   .form-row {
     flex-direction: column;
     gap: 24px;

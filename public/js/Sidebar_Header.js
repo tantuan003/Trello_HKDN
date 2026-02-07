@@ -195,28 +195,30 @@ async function fetchBoardsForSearch() {
   if (cachedSearchBoards) return cachedSearchBoards;
 
   try {
-    const res = await fetch(`${API_BASE}/v1/board/myboards`, {
-      credentials: "include",
+    const [resMyBoards, resPublicBoards] = await Promise.all([
+      fetch(`${API_BASE}/v1/board/myboards`, { credentials: "include" }),
+      fetch(`${API_BASE}/v1/board/public`, { credentials: "include" })
+    ]);
+
+    const myBoardsJson = await resMyBoards.json();
+    const publicBoardsJson = await resPublicBoards.json();
+
+    const myBoards = Array.isArray(myBoardsJson.data) ? myBoardsJson.data : [];
+    const publicBoards = Array.isArray(publicBoardsJson.data) ? publicBoardsJson.data : [];
+
+    const allBoardsMap = new Map();
+    [...myBoards, ...publicBoards].forEach(b => {
+      if (b?._id) allBoardsMap.set(b._id, b);
     });
 
-    const result = await res.json();
-
-    // ❌ res.ok nhưng data sai format
-    if (!res.ok || !result.success || !Array.isArray(result.data)) {
-      console.error("Không thể load boards cho search:", result);
-      return [];
-    }
-
-    // ✅ LẤY ĐÚNG ARRAY
-    cachedSearchBoards = result.data;
+    cachedSearchBoards = Array.from(allBoardsMap.values());
     return cachedSearchBoards;
 
   } catch (err) {
-    console.error("Lỗi fetch boards cho search:", err);
+    console.error("Error fetching boards for search:", err);
     return [];
   }
 }
-
 
 function normalizeVi(str = "") {
   return str
@@ -228,12 +230,24 @@ function normalizeVi(str = "") {
     .trim();
 }
 
-function initGlobalSearch() {
+async function initGlobalSearch() {
   const input = document.querySelector(".searchbar input");
   const panel = document.getElementById("globalSearchResults");
   if (!input || !panel) return;
 
   let debounceTimer = null;
+  let currentUserId = null;
+
+  // Get current user
+  try {
+    const resUser = await fetch(`${API_BASE}/v1/User/me`, { credentials: "include" });
+    if (resUser.ok) {
+      const user = await resUser.json();
+      currentUserId = user._id;
+    }
+  } catch (err) {
+    console.error("Failed to get current user:", err);
+  }
 
   input.addEventListener("focus", () => {
     if (input.value.trim() !== "") return;
@@ -245,21 +259,15 @@ function initGlobalSearch() {
     const keyword = normalizeVi(input.value);
     clearTimeout(debounceTimer);
 
-    // Không có keyword → quay lại hiển thị lịch sử
     if (!keyword) {
       const history = loadSearchHistory();
       renderSearchPanel(panel, history, { mode: "history" });
       return;
     }
 
-    // Debounce 200ms rồi search
     debounceTimer = setTimeout(async () => {
       const boards = await fetchBoardsForSearch();
-      const matches = boards.filter((b) => {
-        const name = normalizeVi(b.name || "");
-        const ws = normalizeVi(b.workspace?.name || "");
-        return name.includes(keyword) || ws.includes(keyword);
-      });
+      const matches = filterBoardsByVisibility(boards, keyword, currentUserId);
       renderSearchPanel(panel, matches, { mode: "search" });
     }, 200);
   });
@@ -267,6 +275,23 @@ function initGlobalSearch() {
   document.addEventListener("click", (e) => {
     const isInside = panel.contains(e.target) || input.contains(e.target);
     if (!isInside) panel.classList.remove("is-open");
+  });
+}
+
+function filterBoardsByVisibility(boards, keyword, currentUserId) {
+  const normalizedKeyword = normalizeVi(keyword);
+
+  return boards.filter((b) => {
+    const name = normalizeVi(b.name || "");
+    const ws = normalizeVi(b.workspace?.name || "");
+    const keywordMatch = name.includes(normalizedKeyword) || ws.includes(normalizedKeyword);
+
+    const isVisible =
+      b.visibility === "public" ||
+      (b.visibility === "workspace" && b.workspace?.members?.some(m => m._id === currentUserId)) ||
+      (b.visibility === "private" && b.createdBy?._id === currentUserId);
+
+    return keywordMatch && isVisible;
   });
 }
 
@@ -324,13 +349,9 @@ function renderSearchPanel(panel, boards, { mode }) {
       thumb.style.backgroundSize = "cover";
       thumb.style.backgroundPosition = "center";
       thumb.style.backgroundRepeat = "no-repeat";
-    }
-    // 🔥 MÀU (class gradient,…)
-    else if (bg) {
+    } else if (bg) {
       thumb.classList.add(bg);
-    }
-    // fallback
-    else {
+    } else {
       thumb.classList.add("gradient-1");
     }
 
@@ -361,6 +382,7 @@ function renderSearchPanel(panel, boards, { mode }) {
 
   panel.classList.add("is-open");
 }
+
 
 // ================= INIT =================
 export function initUserMenu() {
@@ -409,7 +431,14 @@ export function initUserMenu() {
       const resHtml = await fetch("/profile.html");
       if (!resHtml.ok) throw new Error("Không load được profile.html");
       const html = await resHtml.text();
-      profileContainer.innerHTML = `<button class="profile-modal-close">&times;</button>${html}`;
+      profileContainer.innerHTML = `<button class="profile-modal-close"><i class="fa-solid fa-x"></i></button>${html}`;
+
+      const modalCloseBtn = profileContainer.querySelector(".profile-modal-close");
+      if (modalCloseBtn) {
+        modalCloseBtn.addEventListener("click", () => {
+          profileModal.style.display = "none";
+        });
+      }
 
       if (!document.getElementById("profileCSS")) {
         const link = document.createElement("link");
@@ -440,7 +469,7 @@ export function initUserMenu() {
       const avatarWrapper = profileContainer.querySelector(".avatar-wrapper img");
       if (avatarWrapper) {
         avatarWrapper.src = user.avatar || "/images/default-avatar.png";
-        avatarWrapper.style.display = "block"; 
+        avatarWrapper.style.display = "block";
       }
 
       profileContainer.querySelectorAll("#password, #retype-password").forEach(i => i.value = "");
@@ -450,14 +479,16 @@ export function initUserMenu() {
       profileContainer.dataset.loaded = "1";
 
     } catch (err) {
-      profileContainer.innerHTML = `<button class="profile-modal-close">&times;</button>
+      profileContainer.innerHTML = `<button class="profile-modal-close"><i class="fa-solid fa-x"></i></button>
       <div style="color:red">Lỗi load profile: ${err.message}</div>`;
-    }
-  });
 
-  profileContainer.addEventListener("click", (e) => {
-    if (e.target.classList.contains("profile-modal-close")) {
-      profileModal.style.display = "none";
+      const modalCloseBtn = profileContainer.querySelector(".profile-modal-close");
+      if (modalCloseBtn) {
+        modalCloseBtn.addEventListener("click", () => {
+          profileModal.style.display = "none";
+        });
+      }
+
     }
   });
 
@@ -553,7 +584,7 @@ window.addEventListener("click", e => {
 form.addEventListener("submit", async e => {
   e.preventDefault();
   const name = input.value.trim();
-  if (!name) return alert("Vui lòng nhập tên workspace");
+  if (!name) return Notiflix.Notify.failure("Vui lòng nhập tên workspace");
 
   try {
     const res = await fetch(`${API_BASE}/v1/workspace/create`, {
@@ -565,8 +596,8 @@ form.addEventListener("submit", async e => {
 
     const data = await res.json();
     if (!res.ok) throw new Error(data.message || "Lỗi tạo workspace");
+    Notiflix.Notify.success("Tạo workspace thành công");
 
-    alert(data.message);
     modal.style.display = "none";
 
     // reload danh sách workspace
@@ -576,4 +607,3 @@ form.addEventListener("submit", async e => {
     alert("Error: " + err.message);
   }
 });
-

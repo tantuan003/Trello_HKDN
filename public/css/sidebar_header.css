@@ -542,14 +542,15 @@ body {
   position: absolute;
   right: 0;
   top: 42px;
-  min-width: 160px;
+  min-width: 180px;
   background: #fff;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, .12);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
   display: none;
   z-index: 999;
   overflow: hidden;
+  font-family: inherit;
 }
 
 .user-dropdown.is-open {
@@ -557,17 +558,32 @@ body {
 }
 
 .user-dropdown__item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   width: 100%;
-  padding: 10px 12px;
+  padding: 10px 14px;
   border: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 14px;
+  color: #333;
+  transition: background 0.2s, color 0.2s;
 }
 
 .user-dropdown__item:hover {
   background: var(--hover);
+  color: var(--primary);
+}
+
+.user-dropdown__item i {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: center;
+  font-size: 16px;
+  color: #666;
 }
 
 /* Responsive */
@@ -600,7 +616,7 @@ body {
   border-radius: 4px;
   line-height: 1;
   transition: all 0.2s ease;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 #addWorkspaceBtn:hover {

@@ -18,11 +18,11 @@ let boardData = {
 // Map lưu các hàm render UI của từng card
 const cardUIActions = {};
 
-
+const cardUIMap = new Map();
 const currentBoardId = boardId; // gán biến chung cho toàn file
 
 if (!boardId) {
-  alert("Board không tồn tại!");
+  Notiflix.Notify.failure("Board không tồn tại")
   window.location.href = "./Boards.html";
 }
 document.addEventListener('DOMContentLoaded', async () => {
@@ -75,13 +75,17 @@ async function renderBoardWithLists() {
     return;
   }
 
+  Notiflix.Loading.standard("Loading...");
+
   try {
     const res = await fetch(`${API_BASE}/v1/board/${currentBoardId}`);
     const result = await res.json();
 
-    if (!result.success) return;
+    if (!result.success) {
+      Notiflix.Notify.failure("Không thể tải board");
+      return;
+    }
 
-    // ✅ LẤY ĐÚNG DATA
     const { board, currentUserRole } = result.data;
 
     window.currentboardRole = currentUserRole;
@@ -90,26 +94,13 @@ async function renderBoardWithLists() {
     boardData.lists = board.lists;
     boardData.members = board.members;
     boardData.visibility = board.visibility;
+
     renderAssignedMembersinvite(members);
 
-    // socket
     socket.emit("joinBoard", currentBoardId);
-    socket.on("connect", () => {
-      socket.emit("joinBoard", currentBoardId);
-    });
 
     const { background, lists } = board;
-
-    const sidebar = document.querySelector(".sidebar");
-    if (sidebar) sidebar.style.display = "none";
-
-    const shell = document.getElementById("app-shell");
-    if (shell) {
-      shell.style.display = "block";
-      shell.style.gridTemplateColumns = "";
-      shell.style.width = "100%";
-    }
-
+    boardData.background = background;
     let isEditing = false;
 
     const boardTitle = document.getElementById("boardTitle");
@@ -153,7 +144,7 @@ async function renderBoardWithLists() {
               await updateBoardTitle(newTitle);
             } catch (err) {
               boardTitle.innerText = oldTitle;
-              alert("Không thể cập nhật tên board");
+              Notiflix.Notify.failure("Không thể cập nhật tên board")
             }
           }
 
@@ -185,14 +176,17 @@ async function renderBoardWithLists() {
 
     listsContainer.innerHTML = "";
     lists.forEach(list => {
-      const listEl = createListElement(list);
-      listsContainer.appendChild(listEl);
+      listsContainer.appendChild(createListElement(list));
     });
 
   } catch (err) {
     console.error("Error loading board:", err);
+    Notiflix.Notify.failure("Có lỗi khi tải board");
+  } finally {
+    Notiflix.Loading.remove();
   }
 }
+
 async function updateBoardTitle(title) {
   const boardId = new URLSearchParams(window.location.search).get("id");
   console.log("🔥 CALL API updateBoardTitle:", title);
@@ -206,7 +200,7 @@ async function updateBoardTitle(title) {
       credentials: "include"
     });
   } catch (err) {
-    alert("Cập nhật board thất bại");
+    Notiflix.Notify.failure("Cập nhật board thất bại");
     console.error(err);
   }
 }
@@ -215,23 +209,24 @@ function applyBoardBackground(bg) {
   const boardPage = document.body;
   if (!boardPage) return;
 
-  if (bg.startsWith("gradient")) {
-    const className = `body-${bg}`;
-    boardPage.classList.add(className);
+  const allGradientClasses = [
+    "body-gradient-1", "body-gradient-2", "body-gradient-3",
+    "body-gradient-4", "body-gradient-5", "body-gradient-6", "body-gradient-7",
+  ];
 
-    // Xóa backgroundImage nếu trước đó có
+  if (bg.startsWith("gradient")) {
+    boardPage.classList.remove(...allGradientClasses);
+    boardPage.classList.add(`body-${bg}`);
     boardPage.style.backgroundImage = "";
   } else {
-    // ảnh
+    boardPage.classList.remove(...allGradientClasses);
     boardPage.style.backgroundImage = `url('${bg}')`;
     boardPage.style.backgroundSize = "cover";
     boardPage.style.backgroundPosition = "center";
     boardPage.style.backgroundRepeat = "no-repeat";
-
-    // Xóa class gradient nếu trước đó có
-    boardPage.classList.remove("body-gradient-1", "body-gradient-2", "body-gradient-3");
   }
 }
+
 
 //realtime cho việc sửa tên board
 socket.on("board:titleUpdated", (data) => {
@@ -452,6 +447,9 @@ function createListElement(list) {
     // Tạo topBar (luôn có)
     const topBar = document.createElement("div");
     topBar.className = "card-topbar";
+    const cardlabels = document.createElement("div");
+    cardlabels.className = "card-labels"
+    topBar.appendChild(cardlabels);
     // --- LABELS (nếu có) ---
     if (Array.isArray(card.labels) && card.labels.length > 0) {
       const labelsEl = document.createElement("div");
@@ -461,6 +459,7 @@ function createListElement(list) {
         const labelColor = document.createElement("div");
         labelColor.className = "card-label";
         labelColor.style.background = color;
+        labelColor.dataset.color = color;
         labelsEl.appendChild(labelColor);
       });
 
@@ -532,9 +531,6 @@ function createListElement(list) {
       );
     });
 
-
-
-
     // Gộp vào wrapper
     actionsWrap.appendChild(deleteBtn);
     actionsWrap.appendChild(checkboxEl);
@@ -572,6 +568,7 @@ function createListElement(list) {
     cardEl.appendChild(titleEl);
     // --- Due date (trái) ---
     let dueEl = null;
+    let diffdayFallback = 0;
     const leftEl = document.createElement("div");
     leftEl.style.display = "flex";
     leftEl.style.alignItems = "center";
@@ -606,10 +603,11 @@ function createListElement(list) {
       due.setHours(0, 0, 0, 0); // bỏ giờ phút giây
 
       const diffDays = (due - now) / (1000 * 60 * 60 * 24);
+      diffdayFallback = diffDays;
 
       if (diffDays < 0) dueEl.style.backgroundColor = "#ff4d4f"; // đỏ quá hạn
       else if (diffDays <= 2) dueEl.style.backgroundColor = "#f2d600"; // vàng gần hạn
-      else dueEl.style.backgroundColor = "#61bd4f"; // xanh còn nhiều thời gian
+      else dueEl.style.backgroundColor = "#32ee0cff"; // xanh còn nhiều thời gian
     }
     // --- Middle (attachments + comments) ---
     const midEl = document.createElement("div");
@@ -687,7 +685,6 @@ function createListElement(list) {
       membersEl.appendChild(memberEl);
     });
 
-
     // Thêm due date + members vào footer
     if (dueEl) footerEl.appendChild(dueEl);
     footerEl.appendChild(midEl);
@@ -696,34 +693,70 @@ function createListElement(list) {
     cardEl.appendChild(footerEl);
     cardEl.appendChild(completeFooter);
 
+    if (card.complete === true && dueEl) {
+      dueEl.style.backgroundColor = "#32ee0cff";
+    }
+
+
+    function applyCompleteUI(isComplete) {
+      if (isComplete) {
+        renderCompleteElement();
+        if (card.dueDate)
+          dueEl.style.backgroundColor = "#32ee0cff";
+        return;
+      }
+      completeFooter.innerHTML = "";
+
+      if (diffdayFallback < 0 && card.dueDate) {
+        dueEl.style.backgroundColor = "#ff4d4f";
+      } else if (diffdayFallback <= 2 && card.dueDate) {
+        dueEl.style.backgroundColor = "#f2d600";
+      } else if (diffdayFallback > 2 && card.dueDate) {
+        dueEl.style.backgroundColor = "#32ee0cff";
+      }
+    }
+
+    cardUIMap.set(card._id, {
+      card,
+      checkboxEl,
+      applyCompleteUI
+    });
     //checkbox render   
     // --- CLICK CHECKBOX ---
-    checkboxEl.addEventListener("click", async (e) => {
+    checkboxEl.addEventListener("click", e => e.stopPropagation());
+
+    checkboxEl.addEventListener("change", async e => {
       e.stopPropagation();
 
-      const isComplete = checkboxEl.checked;
+      const nextValue = checkboxEl.checked;
+      const prevValue = card.isCompleted;
 
-      // UI local (client A)
-      if (isComplete) renderCompleteElement();
-      else completeFooter.innerHTML = "";
+      // Optimistic UI
+      card.isCompleted = nextValue;
+      applyCompleteUI(nextValue);
 
-      // Emit realtime
-      socket.emit("card:completeToggle", {
-        cardId: card._id,
-        complete: isComplete
-      });
-
-      // Update DB
       try {
-        await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
+        const res = await fetch(`${API_BASE}/v1/board/complete/${card._id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ complete: isComplete })
+          body: JSON.stringify({ complete: nextValue })
         });
+
+        if (!res.ok) throw new Error();
+
       } catch (err) {
-        console.error("Error updating card complete:", err);
+        // Rollback
+        card.isCompleted = prevValue;
+        checkboxEl.checked = prevValue;
+        applyCompleteUI(prevValue);
+
+        Notiflix.Notify.failure("Không thể cập nhật trạng thái");
       }
     });
+
+
+
+
     // ⭐ Sự kiện mở chi tiết
     cardEl.addEventListener("click", () => {
       openCardDetail(card._id);
@@ -767,26 +800,60 @@ socket.on("card-deleted", ({ cardId }) => {
 
 
 socket.on("card:completeUpdated", ({ cardId, complete }) => {
-  const ui = cardUIActions[cardId];
-  if (!ui) return;
+  const entry = cardUIMap.get(cardId);
+  if (!entry) return;
 
-  // Cập nhật checkbox
-  ui.checkboxEl.checked = complete;
+  const { card, checkboxEl, applyCompleteUI } = entry;
 
-  // Cập nhật UI
-  if (complete) {
-    ui.render();      // ✔ gọi hàm render đúng
-  } else {
-    const footer = ui.checkboxEl
-      .closest(".card")
-      .querySelector(".card-complete-footer");
-    if (footer) footer.innerHTML = "";
+  card.isCompleted = complete;
+  checkboxEl.checked = complete;
+  applyCompleteUI(complete);
+});
+// ✅ Realtime: cập nhật danh sách members (cách A)
+socket.off("board:membersUpdated");
+socket.on("board:membersUpdated", ({ boardId: bId, members: newMembers }) => {
+  if (String(bId) !== String(currentBoardId)) return;
+  if (!Array.isArray(newMembers)) return;
+
+  members = newMembers;
+  boardData.members = newMembers;
+
+  renderAssignedMembersinvite(newMembers);
+
+  // Nếu modal manage member đang mở → render lại
+  const memberModal = document.getElementById("memberModal");
+  if (memberModal && !memberModal.classList.contains("hidden")) {
+    renderMembersboard(newMembers);
+  }
+
+  // Nếu popup assign đang mở → reload list
+  const assignPopup = document.getElementById("assignPopup");
+  if (assignPopup && assignPopup.style.display === "flex") {
+    const q = document.getElementById("assignSearch")?.value || "";
+    loadAssignList(q);
   }
 });
 
+socket.on("board:memberInvited", ({ boardId: bId, member }) => {
+  if (String(bId) !== String(currentBoardId)) return;
+  if (!member?.user?._id) return;
 
+  // tránh add trùng
+  const existed = members.some(m => m?.user?._id === member.user._id);
+  if (existed) return;
 
+  members.push(member);
+  boardData.members = members;
 
+  // cập nhật dải avatar trên header
+  renderAssignedMembersinvite(members);
+
+  // nếu modal manage member đang mở thì re-render
+  const memberModal = document.getElementById("memberModal");
+  if (memberModal && !memberModal.classList.contains("hidden")) {
+    renderMembersboard(members);
+  }
+});
 
 
 
@@ -854,7 +921,7 @@ function attachAddCard(listEl, listId) {
   // thêm card
   saveBtn.addEventListener("click", async () => {
     const cardName = input.value.trim();
-    if (!cardName) return alert("Vui lòng nhập tên thẻ!");
+    if (!cardName) return Notiflix.Notify.failure("Vui lòng nhập tên thẻ");;
 
     saveBtn.disabled = true;
 
@@ -905,7 +972,7 @@ const newListTitle = document.getElementById("newListTitle");
 
 addListBtn.addEventListener("click", async () => {
   const title = newListTitle.value.trim();
-  if (!title) return alert("Please enter list title");
+  if (!title) return  Notiflix.Notify.failure("Vui lòng nhập tên list");
 
   try {
     await fetch(`${API_BASE}/v1/board/create-list/${currentBoardId}`, {
@@ -917,7 +984,7 @@ addListBtn.addEventListener("click", async () => {
 
   } catch (err) {
     console.error(err);
-    alert("Failed to add list");
+    Notiflix.Notify.failure("Lỗi khi thêm list")
   }
 
 });
@@ -980,6 +1047,25 @@ inviteForm.addEventListener("submit", async (e) => {
       }).showToast();
 
       inviteForm.reset(); // Xóa giá trị input sau khi gửi
+
+      // ✅ Fallback: update UI ngay từ response (đề phòng socket đến chậm/mất)
+      if (Array.isArray(data.members)) {
+        members = data.members;
+        boardData.members = data.members;
+        renderAssignedMembersinvite(members);
+
+        const memberModal = document.getElementById("memberModal");
+        if (memberModal && !memberModal.classList.contains("hidden")) {
+          renderMembersboard(members);
+        }
+      } else if (data.member?.user?._id) {
+        const existed = members.some(m => m?.user?._id === data.member.user._id);
+        if (!existed) {
+          members.push(data.member);
+          boardData.members = members;
+          renderAssignedMembersinvite(members);
+        }
+      }
     } else {
       Toastify({
         text: `❌ ${data.message || "Mời thất bại!"}`,
@@ -1019,7 +1105,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Click ra ngoài sẽ ẩn form
   document.addEventListener("click", (e) => {
     if (!inviteFormContainer.contains(e.target) && e.target !== inviteIcon) {
-      inviteIcon.style.display = "block";
+      inviteIcon.style.display = "flex";
       inviteFormContainer.classList.add("hidden");
     }
   });
@@ -1114,10 +1200,71 @@ function renderMembersboard(members) {
     row.appendChild(avatar);
     row.appendChild(info);
     row.appendChild(roleWrap);
+    if (currentboardRole === "owner" && member.role !== "owner") {
+      const kickBtn = document.createElement("button");
+      kickBtn.className = "kick-member-btn";
+      kickBtn.textContent = "✕";
+      kickBtn.title = "Remove member";
+
+      kickBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        handleKickMember(member.user._id);
+      });
+
+      row.appendChild(kickBtn);
+    }
 
     container.appendChild(row);
   });
 }
+//kick member
+
+async function handleKickMember(userId) {
+  Notiflix.Confirm.show(
+    "Xác nhận",
+    "Bạn chắc chắn muốn xóa thành viên này khỏi board?",
+    "Xóa",
+    "Hủy",
+    async () => {
+      try {
+        Notiflix.Loading.circle("Đang xóa...");
+
+        const res = await fetch(
+          `${API_BASE}/v1/board/${boardId}/members/${userId}`,
+          {
+            method: "DELETE",
+            credentials: "include"
+          }
+        );
+
+        if (!res.ok) {
+          const errData = await res.json();
+          throw new Error(errData.message || "Kick member failed");
+        }
+
+        Notiflix.Notify.success("Đã xóa thành viên khỏi board");
+
+        // ✅ Fetch lại danh sách member mới
+        await fetchBoardMembers();
+      } catch (err) {
+        Notiflix.Notify.failure(err.message || "Không thể xóa thành viên");
+        console.error(err);
+      } finally {
+        Notiflix.Loading.remove();
+      }
+    }
+  );
+}
+async function fetchBoardMembers() {
+  const res = await fetch(
+    `${API_BASE}/v1/board/${boardId}/members`,
+    { credentials: "include" }
+  );
+
+  const data = await res.json();
+  renderMembersboard(data.members);
+}
+
 
 //chỉnh role
 document.getElementById("memberForm").addEventListener("change", async (e) => {
@@ -1126,7 +1273,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
 
   // 🔒 chỉ owner mới được chỉnh (phòng hờ)
   if (window.currentboardRole !== "owner") {
-    alert("Bạn không có quyền chỉnh role");
+    Notiflix.Notify.failure("Bạn không có quyền chỉnh role")
     return;
   }
 
@@ -1151,7 +1298,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
     const data = await res.json();
 
     if (!res.ok) {
-      alert(data.message || "Không thể cập nhật role");
+      Notiflix.Notify.failure("Không thể cập nhật role")
       return;
     }
 
@@ -1164,7 +1311,7 @@ document.getElementById("memberForm").addEventListener("change", async (e) => {
 
   } catch (err) {
     console.error("Update role error:", err);
-    alert("Lỗi server");
+    Notiflix.Notify.failure("Lỗi server")
   }
 });
 
@@ -1232,9 +1379,10 @@ const visibilityMenu = document.getElementById("visibilityMenu");
 visibilityBtn.addEventListener("click", () => {
   moreMenu.classList.add("hidden");
   visibilityMenu.classList.remove("hidden");
-  console.log("visibility hiện tại là ", boardData.visibility)
+  console.log("Visibility: ", boardData.visibility)
   setActiveVisibility(boardData.visibility);
-});
+}
+);
 
 //quay lại menu
 visibilityMenu.addEventListener("click", (e) => {
@@ -1252,7 +1400,7 @@ document.querySelectorAll(".visibility-option").forEach(item => {
   item.addEventListener("click", async () => {
     const newVisibility = item.dataset.value;
 
-    // không gọi API nếu chọn lại cái cũ
+    // Không gọi API nếu chọn lại cái cũ
     if (newVisibility === boardData.visibility) {
       visibilityMenu.classList.add("hidden");
       moreMenu.classList.remove("hidden");
@@ -1260,30 +1408,40 @@ document.querySelectorAll(".visibility-option").forEach(item => {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/v1/board/${boardId}/visibility`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ visibility: newVisibility })
-      });
+      Notiflix.Loading.standard("Updating...");
+      const res = await fetch(
+        `${API_BASE}/v1/board/${boardId}/visibility`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ visibility: newVisibility })
+        }
+      );
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message);
+      Notiflix.Loading.remove();
+      if (!res.ok) throw new Error(data.message || "Update failed");
 
       // update state
       boardData.visibility = data.visibility;
 
       // update UI
       setActiveVisibility(boardData.visibility);
-      console.log("Visibility updated:", boardData.visibility);
+
+      // notify success
+      Notiflix.Notify.success("Board visibility updated");
+
+      visibilityMenu.classList.add("hidden");
+      moreMenu.classList.remove("hidden");
 
     } catch (err) {
-      alert(err);
-      console.error(err);
+      Notiflix.Notify.failure(err.message || "Something went wrong");
     }
   });
 });
+
 
 
 //lấy visibility
@@ -1296,6 +1454,109 @@ function setActiveVisibility(visibility) {
     );
   });
 }
+const backgroundBtn = document.querySelector(".fa-palette").parentElement;
+const backgroundMenu = document.getElementById("backgroundMenu");
+const bgUploadBtn = document.getElementById("bgUploadBtn");
+const bgUploadInput = document.getElementById("bgUploadInput");
+
+backgroundBtn.addEventListener("click", () => {
+  moreMenu.classList.add("hidden");
+  backgroundMenu.classList.remove("hidden");
+  setActiveBackground(boardData.background);
+});
+
+backgroundMenu.addEventListener("click", (e) => {
+  e.stopPropagation();
+
+  if (e.target.closest("#backgroundMenu .back-btn")) {
+    backgroundMenu.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  }
+});
+
+function setActiveBackground(bg) {
+  document.querySelectorAll(".bg-option").forEach(el => {
+    el.classList.toggle("active", el.dataset.bg === bg);
+  });
+}
+
+async function updateBoardBackground(bg) {
+  const boardId = new URLSearchParams(window.location.search).get("id");
+
+  Notiflix.Loading.standard("Updating...");
+  try {
+    const res = await fetch(`${API_BASE}/v1/board/${boardId}/background`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ background: bg }),
+      credentials: "include"
+    });
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Update failed");
+
+    boardData.background = data.background;
+    applyBoardBackground(boardData.background); // hàm có sẵn :contentReference[oaicite:9]{index=9}
+    setActiveBackground(boardData.background);
+
+    Notiflix.Notify.success("Background updated");
+  } catch (err) {
+    Notiflix.Notify.failure(err.message || "Something went wrong");
+  } finally {
+    Notiflix.Loading.remove();
+  }
+}
+
+// click chọn gradient
+document.querySelectorAll(".bg-option").forEach(el => {
+  el.addEventListener("click", async () => {
+    const bg = el.dataset.bg;
+    if (bg === boardData.background) return;
+    await updateBoardBackground(bg);
+    backgroundMenu.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  });
+});
+
+// upload ảnh
+bgUploadBtn.addEventListener("click", () => bgUploadInput.click());
+
+bgUploadInput.addEventListener("change", async () => {
+  const file = bgUploadInput.files?.[0];
+  if (!file) return;
+
+  Notiflix.Loading.standard("Uploading...");
+  try {
+    const fd = new FormData();
+    fd.append("background", file);
+
+    const upRes = await fetch(`${API_BASE}/v1/board/background/upload`, {
+      method: "POST",
+      body: fd,
+      credentials: "include"
+    });
+
+    const upData = await upRes.json();
+    if (!upRes.ok) throw new Error(upData.message || "Upload failed");
+
+    await updateBoardBackground(upData.imageUrl); // `/uploads/...` :contentReference[oaicite:10]{index=10}
+
+    backgroundMenu.classList.add("hidden");
+    moreMenu.classList.remove("hidden");
+  } catch (err) {
+    Notiflix.Notify.failure(err.message || "Upload failed");
+  } finally {
+    Notiflix.Loading.remove();
+    bgUploadInput.value = "";
+  }
+});
+
+// realtime
+socket.on("board:backgroundUpdated", ({ background }) => {
+  boardData.background = background;
+  applyBoardBackground(background);
+  setActiveBackground(background);
+});
 
 
 
@@ -1306,7 +1567,7 @@ async function openCardDetail(cardId) {
     credentials: "include"
   });
   const result = await res.json();
-  if (!result.success) return alert(result.message || "Lỗi khi tải chi tiết card");
+  if (!result.success) return Notiflix.Notify.failure("Lỗi khi tải card")
 
   currentCard = result.data;
   socket.emit("card:join", currentCard._id);
@@ -1392,8 +1653,12 @@ function showCardDetailModal(card) {
   updateDueStatus();
 
   // Lắng nghe khi người dùng chỉnh
-  dateInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
-  timeInput.addEventListener("change", () => { updateDueStatus(); saveDueDate(); });
+  [dateInput, timeInput].forEach(input => {
+    input.addEventListener("change", () => {
+      updateDueStatus();
+      saveDueDate();
+    });
+  });
   // Comments
   renderComments(card.comments || []);
 
@@ -1751,13 +2016,28 @@ socket.on("card:assignedMembersUpdated", ({ cardId, assignedMembers: updated }) 
 // Nhận realtime
 socket.off("card:labelAdded");
 socket.on("card:labelAdded", ({ cardId, color }) => {
+  // Cập nhật badge / nhãn ngoài list
   boardData.lists.forEach(list => {
     const card = list.cards.find(c => c._id === cardId);
     if (card && !card.labels.includes(color)) {
       card.labels.push(color);
+
+      // Update DOM ngoài list
+      const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+      if (cardEl) {
+        const labelsContainer = cardEl.querySelector(".card-labels");
+        if (labelsContainer) {
+          // Tạo thẻ label
+          const labelEl = document.createElement("span");
+          labelEl.className = "card-label";
+          labelEl.style.backgroundColor = color;
+          labelEl.dataset.color = color;
+          labelsContainer.appendChild(labelEl);
+        }
+      }
     }
   });
-  renderBoardWithLists();
+
   if (currentCard && currentCard._id === cardId) {
     currentCard.labels.push(color);
 
@@ -1770,7 +2050,7 @@ socket.on("card:labelAdded", ({ cardId, color }) => {
 });
 
 // Mảng màu
-const colors = ["#61bd4f", "#f2d600", "#ff9f1a", "#eb5a46", "#c377e0"];
+const colors = ["#2eeb08ff", "#edd72dff", "#ff9f1a", "#f0270cff", "#ae16ebff"];
 
 // Thêm label vào DOM
 function addLabelToCard(color) {
@@ -1824,34 +2104,49 @@ function openLabelPopup(cardId) {
 
   popup.style.display = "flex";
 }
+// Xóa label khỏi popup modal
 function removeLabelFromCard(color) {
   const labelsEl = document.getElementById("cardLabels");
+  if (!labelsEl) return;
 
-  Array.from(labelsEl.children).forEach(span => {
-    if (span.dataset.color === color) {
-      span.remove();
-    }
-  });
+  // Tìm span có data-color = color và remove
+  const labelEl = labelsEl.querySelector(`.card-label[data-color='${color}']`);
+  if (labelEl) labelEl.remove();
 
-  // remove trong client copy
-  currentCard.labels = currentCard.labels.filter(c => c !== color);
+  // Cập nhật client copy
+  if (currentCard) {
+    currentCard.labels = currentCard.labels.filter(c => c !== color);
+  }
 }
 
+// Lắng nghe socket realtime
+socket.off("card:labelRemoved");
 socket.on("card:labelRemoved", ({ cardId, color }) => {
+  // 1️⃣ Cập nhật state boardData
   boardData.lists.forEach(list => {
     const card = list.cards.find(c => c._id === cardId);
-    if (card) {
-      card.labels = card.labels.filter(c => c !== color);
-    }
+    if (card) card.labels = card.labels.filter(c => c !== color);
   });
-  renderBoardWithLists();
 
+  // 2️⃣ Update DOM card ngoài list
+  const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+  if (cardEl) {
+    const labelsContainer = cardEl.querySelector(".card-labels");
+    if (labelsContainer) {
+      const safeColor = color.replace("#", "\\#");
+      const labelEl = labelsContainer.querySelector(`.card-label[data-color='${safeColor}']`);
+
+      if (labelEl) labelEl.remove();
+    }
+  }
+
+  // 3️⃣ Update modal nếu đang mở
   if (currentCard && currentCard._id === cardId) {
-    currentCard.labels = currentCard.labels.filter(c => c !== color);
-    const labelsEl = document.getElementById("cardLabels");
-    if (labelsEl) removeLabelFromCard(color);
+    removeLabelFromCard(color);
   }
 });
+
+
 
 
 // Nút tắt popup
@@ -1889,28 +2184,48 @@ function formatDateDMY(date) {
   const d = String(date.getDate()).padStart(2, '0');
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const y = date.getFullYear();
-  const h = String(date.getHours()).padStart(2, '0');
-  const min = String(date.getMinutes()).padStart(2, '0');
-  return `${d}/${m}/${y} ${h}:${min}`;
+  return `${d}/${m}/${y}`;
 }
 
 // Lấy giá trị từ input date + time
 function getDueDateTime() {
-  const dateInput = document.getElementById("cardDueDate").value;
-  const timeInput = document.getElementById("cardDueTime").value || "00:00";
+  const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+  if (!dateInput || !timeInput) return null;
 
-  if (!dateInput) return null;
+  const date = dateInput.value;
+  const time = timeInput.value;
+  if (!date || !time) return null;
 
-  const [yyyy, mm, dd] = dateInput.split("-").map(Number);
-  const [hh, min] = timeInput.split(":").map(Number);
-
-  const due = new Date(yyyy, mm - 1, dd, hh, min);
-  return due;
+  return new Date(`${date}T${time}:00`);
 }
 
-// Cập nhật trạng thái hiển thị
 function updateDueStatus() {
+  const dateInput = document.getElementById("cardDueDate");
+  const timeInput = document.getElementById("cardDueTime");
+  const statusEl = document.getElementById("dueDateStatus");
+
+  if (!dateInput || !timeInput || !statusEl) return;
+
   const due = getDueDateTime();
+  if (!due) {
+    statusEl.textContent = "";
+    statusEl.className = "due-status";
+    return;
+  }
+
+  const diff = due - new Date();
+  statusEl.textContent = formatDateDMY(due) + " đến hạn";
+
+  statusEl.className =
+    diff < 0 ? "due-status overdue" :
+      diff < 24 * 60 * 60 * 1000 ? "due-status warning" :
+        "due-status normal";
+}
+
+
+// Cập nhật trạng thái hiển thị
+function updateDueStatusFromDate(due) {
   const statusEl = document.getElementById("dueDateStatus");
 
   if (!due) {
@@ -1920,46 +2235,111 @@ function updateDueStatus() {
   }
 
   const diff = due - new Date();
-
   statusEl.textContent = formatDateDMY(due) + " đến hạn";
 
-  if (diff < 0) statusEl.className = "due-status overdue";
-  else if (diff < 24 * 60 * 60 * 1000) statusEl.className = "due-status warning";
-  else statusEl.className = "due-status normal";
+  statusEl.className =
+    diff < 0
+      ? "due-status overdue"
+      : diff < 86400000
+        ? "due-status warning"
+        : "due-status normal";
 }
+
 
 // Gửi lên server + realtime
 function saveDueDate() {
   const due = getDueDateTime();
-  if (!due) return;
+  if (!due || !currentCard?._id) return;
 
+  // 1️⃣ cập nhật state ngay
   currentCard.dueDate = due;
 
+  // 2️⃣ gửi lên server
   socket.emit("card:updateDueDate", {
     cardId: currentCard._id,
-    dueDate: due
+    dueDate: due.toISOString()
   });
+
+  // 3️⃣ update modal ngay (local) để tránh bị reset
+  updateDueStatus();
+  updateBoardViewDueStatusUI(currentCard._id, due);
 }
 
+
+function updateDueDateInState(cardId, dueDate) {
+  if (!boardData?.lists) return;
+
+  for (const list of boardData.lists) {
+    const card = list.cards?.find(c => c._id === cardId);
+    if (card) {
+      card.dueDate = dueDate;
+      break;
+    }
+  }
+}
+
+function updateBoardViewDueStatusUI(cardId, dueDate) {
+  const cardEl = document.querySelector(`.card[data-id='${cardId}']`);
+  console.log("Updating badge for card:", cardId, "cardEl:", cardEl);
+
+  if (!cardEl) {
+    requestAnimationFrame(() => updateBoardViewDueStatusUI(cardId, dueDate));
+    return;
+  }
+
+  const badge = cardEl.querySelector(".card-due");
+  if (!badge) return;
+  const diffDays = new Date(dueDate) - new Date();
+  if (diffDays < 0) badge.style.backgroundColor = "#ff4d4f"; // đỏ quá hạn
+  else if (diffDays <= 2) badge.style.backgroundColor = "#f2d600"; // vàng gần hạn
+  else badge.style.backgroundColor = "#32ee0cff"; // xanh còn nhiều thời gian
+  badge.innerHTML = "";
+
+  // Tạo icon
+  const icon = document.createElement("img");
+  icon.src = "uploads/clock-countdown-black.svg";
+  icon.alt = "calendar";
+  icon.style.width = "16px";
+  icon.style.height = "16px";
+  // Tạo text
+  const text = document.createElement("span");
+  text.textContent = formatDateDMY(new Date(dueDate));
+
+  // Append icon + text
+  badge.appendChild(icon);
+  badge.appendChild(text);
+}
+
+
+
+
 // Lắng nghe realtime
-socket.on("card:dueDateUpdated", ({ dueDate }) => {
-  const due = new Date(dueDate);
-  const dateInput = document.getElementById("cardDueDate");
-  const timeInput = document.getElementById("cardDueTime");
+socket.on("card:dueDateUpdated", ({ cardId, dueDate }) => {
+  console.log("Received dueDateUpdated:", cardId, dueDate);
+  // 1️⃣ update board state
+  updateDueDateInState(cardId, dueDate);
 
-  // Hiển thị input theo local
-  const yyyy = due.getFullYear();
-  const mm = String(due.getMonth() + 1).padStart(2, '0');
-  const dd = String(due.getDate()).padStart(2, '0');
-  dateInput.value = `${yyyy}-${mm}-${dd}`;
+  // 2️⃣ update badge ngoài board
+  updateBoardViewDueStatusUI(cardId, dueDate);
 
-  const hh = String(due.getHours()).padStart(2, '0');
-  const min = String(due.getMinutes()).padStart(2, '0');
-  timeInput.value = `${hh}:${min}`;
 
-  updateDueStatus();
-  renderBoardWithLists()
+  // 3️⃣ update modal nếu đang mở card này
+  if (currentCard?._id === cardId) {
+    const due = new Date(dueDate);
+    const yyyy = due.getFullYear();
+    const mm = String(due.getMonth() + 1).padStart(2, "0");
+    const dd = String(due.getDate()).padStart(2, "0");
+    const hh = String(due.getHours()).padStart(2, "0");
+    const min = String(due.getMinutes()).padStart(2, "0");
+
+    document.getElementById("cardDueDate").value = `${yyyy}-${mm}-${dd}`;
+    document.getElementById("cardDueTime").value = `${hh}:${min}`;
+
+    updateDueStatus();
+  }
+
 });
+
 
 //comment
 // Khi mở card, render comment
@@ -2075,6 +2455,13 @@ activityMenu.addEventListener("click", (e) => {
   }
 });
 
+//back về trang list board
+const backlistboard = document.getElementById("back-list-board")
+backlistboard.addEventListener("click", (e) => {
+  e.stopPropagation();
+  window.history.back();
+})
+
 // đổ dữ liệu acitivity
 
 function loadActivities() {
@@ -2138,6 +2525,8 @@ function renderActivityText(act) {
       return ` deleted card <b>${act.target.title}</b>`;
     case "CLEAR_CARDS_IN_LIST":
       return ` cleared <b>${act.data.extra.cardCount}</b> cards in list <b>${act.target.title}</b>`;
+    case "DELETE_MEMBER":
+      return `<b>${act.target.title}</b> deleted memmber <b>${act.target.title}</b>`;
     default:
       return ` ${act.action || "did something"}`;
   }
